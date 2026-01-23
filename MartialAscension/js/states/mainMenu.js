@@ -4,15 +4,21 @@ let singleBtn, multiBtn;
 // Called from sketch.js preload()
 function preloadMainMenu() {
   metalFont = loadFont("Assets/fonts/MetalMania-Regular.ttf");
+
+  FIGHTERS.forEach(fighter => {
+    fighter.img = loadImage(fighter.imagePath);
+  });
+
+  // Inside your preload() function in sketch.js
+  STAGES.forEach(stage => {
+    stage.img = loadImage(stage.path);
+  });
 }
 
-// Called from sketch.js draw()
-function drawMenu() {
+// NEW: This function handles the "Responsive" math
+function setupMenuLayout() {
   let centerX = width / 2;
   let centerY = height / 2;
-
-  drawTitle("Martial Ascension", centerX, centerY - height * 0.25, width * 0.1);
-  drawText("Click to proceed", centerX, centerY - height * 0.01, width * 0.015);
 
   singleBtn = {
     x: centerX,
@@ -27,6 +33,15 @@ function drawMenu() {
     w: width * 0.3,
     h: height * 0.05
   };
+}
+
+function drawMenu() {
+  // We no longer define buttons here, we just draw them
+  let centerX = width / 2;
+  let centerY = height / 2;
+
+  drawTitle("Martial Ascension", centerX, centerY - height * 0.25, width * 0.1);
+  drawText("Click to proceed", centerX, centerY - height * 0.01, width * 0.015);
 
   drawButton("Single Player", singleBtn);
   drawButton("Multiplayer", multiBtn);
@@ -34,14 +49,19 @@ function drawMenu() {
   drawText("Starloom 2025", centerX, height - height * 0.05, width * 0.015);
 }
 
-// Called from sketch.js mousePressed()
+// Updated handleMenuClick in mainMenu.js
 function handleMenuClick() {
   if (isHovering(singleBtn)) {
-    currentState = GAME_STATE.CHARACTER_SELECT;
+    // Optional: add a 'clicked' sound or visual effect here
+    setTimeout(() => {
+      currentState = GAME_STATE.CHARACTER_SELECT;
+    }, 500); // 0.5 second delay
   }
 
   if (isHovering(multiBtn)) {
-    console.log("Multiplayer Selected");
+    setTimeout(() => {
+      currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
+    }, 500); // 0.5 second delay
   }
 }
 

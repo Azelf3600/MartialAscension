@@ -1,4 +1,4 @@
-function drawStageSelect() {
+function drawStageSelectMulti() {
   // 1. Draw the Dynamic Background
   let currentStage = STAGES[selectedStage];
   
@@ -65,7 +65,7 @@ function drawStageSelect() {
   });
 
   // 4. Confirmation Prompt
-  drawText("CLICK TO START THE MATCH", width / 2, height * 0.92, width * 0.015);
+  drawText("CLICK TO THE MATCH", width / 2, height * 0.92, width * 0.015);
   
   drawBackButton();
 }
