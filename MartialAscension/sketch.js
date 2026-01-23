@@ -15,11 +15,13 @@ function draw() {
   drawMenu();
 }
 
+//MAIN MENU
+
 function drawMenu() {
   let centerX = width / 2;
   let centerY = height / 2;
 
-  // 🔥 TITLE WITH RED BORDER
+  // TITLE WITH RED BORDER
   drawTitle("Martial Ascension", centerX, centerY - height * 0.25, width * 0.1);
 
   drawText("Click to proceed", centerX, centerY - height * 0.01, width * 0.015);
@@ -45,7 +47,7 @@ function drawMenu() {
   drawText("Starloom 2025", centerX, height - height * 0.05, width * 0.015);
 }
 
-// 🔥 Title with red stroke
+// Title with red stroke
 function drawTitle(content, x, y, size) {
   push();
   textFont(metalFont);
@@ -57,7 +59,7 @@ function drawTitle(content, x, y, size) {
   pop();
 }
 
-// 🔥 Button with hover underline
+// Button with hover underline
 function drawButton(label, btn) {
   push();
   textFont(metalFont);
@@ -110,3 +112,5 @@ function mousePressed() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
+
+//CHARACTER SELECT FOR MULTIPLAYER
