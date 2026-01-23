@@ -1,18 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Martial Ascension</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="sketch.js"></script>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- p5 core -->
+  <script src="libs/p5.min.js"></script>
+
+  <!-- DATA -->
+  <script src="js/data/characters.js"></script>
+  <script src="js/data/combo.js"></script>
+  <script src="js/data/stages.js"></script>
+
+  <!-- SYSTEMS -->
+  <script src="js/systems/inputSystem.js"></script>
+  <script src="js/systems/comboSystem.js"></script>
+  <script src="js/systems/collisionSystem.js"></script>
+  <script src="js/systems/cinematicSystem.js"></script>
+  <script src="js/systems/cameraSystem.js"></script>
+
+  <!-- ENTITIES -->
+  <script src="js/entities/fighter.js"></script>
+  <script src="js/entities/hitbox.js"></script>
+  <script src="js/entities/projectile.js"></script>
+  <script src="js/entities/stage.js"></script>
+
+  <!-- STATES (SCREENS) -->
+  <script src="js/states/mainMenu.js"></script>
+  <script src="js/states/characterSelect.js"></script>
+  <script src="js/states/stageSelect.js"></script>
+  <script src="js/states/match.js"></script>
+  <script src="js/states/pauseMenu.js"></script>
+
+  <!-- p5 ENTRY POINT (MUST BE LAST) -->
+  <script src="js/sketch.js"></script>
+
 </body>
 </html>
