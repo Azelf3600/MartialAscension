@@ -1,16 +1,27 @@
 function drawStageSelect() {
-  // 1. Draw the Dynamic Background
+// 1. Draw the Dynamic Background (Cover Logic)
   let currentStage = STAGES[selectedStage];
   
-  push();
-  if (currentStage.img) {
-    // Fill the whole screen with the hovered stage image
-    tint(150); // Dim it slightly so UI stands out
-    image(currentStage.img, 0, 0, width, height);
+  if (currentStage && currentStage.img) {
+    push();
+    tint(150); // Dim it slightly
+    
+    // Calculate the scale needed to cover the screen
+    let scale = Math.max(width / currentStage.img.width, height / currentStage.img.height);
+    
+    // Calculate new dimensions
+    let newW = currentStage.img.width * scale;
+    let newH = currentStage.img.height * scale;
+    
+    // Center the zoomed image
+    let offX = (width - newW) / 2;
+    let offY = (height - newH) / 2;
+    
+    image(currentStage.img, offX, offY, newW, newH);
+    pop();
   } else {
     background(30);
   }
-  pop();
 
   // 2. Title
   drawTitle("SELECT ARENA", width / 2, height * 0.15, width * 0.05);

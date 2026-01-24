@@ -23,19 +23,21 @@ function setupMenuLayout() {
   singleBtn = {
     x: centerX,
     y: centerY + height * 0.05,
-    w: width * 0.3,
-    h: height * 0.05
+    w: width * 0.4, // Increased width slightly for bigger hover text
+    h: height * 0.1  // Increased height for bigger hover text
   };
 
   multiBtn = {
     x: centerX,
     y: centerY + height * 0.15,
-    w: width * 0.3,
-    h: height * 0.05
+    w: width * 0.4,
+    h: height * 0.1
   };
 }
 
 function drawMenu() {
+  background(20); 
+  
   let centerX = width / 2;
   let centerY = height / 2;
 
@@ -78,20 +80,21 @@ function drawTitle(content, x, y, size) {
 function drawButton(label, btn) {
   push();
   textFont(metalFont);
-  textSize(width * 0.035);
-  fill(255);
-  noStroke();
-  text(label, btn.x, btn.y);
-
+  
+  // 1. Determine size and stroke based on hover
   if (isHovering(btn)) {
-    let textW = textWidth(label);
-    let underlineY = btn.y + height * 0.055;
-
-    stroke(255);
-    strokeWeight(3);
-    line(btn.x - textW / 2, underlineY, btn.x + textW / 2, underlineY);
+    textSize(width * 0.045); // Larger font on hover (was 0.035)
+    stroke(180, 0, 0);       // Red outline (matching title)
+    strokeWeight(6);         // Thick outline
+  } else {
+    textSize(width * 0.035); // Normal size
+    noStroke();              // No outline
   }
 
+  // 2. Draw the text
+  fill(255);
+  textAlign(CENTER, CENTER);
+  text(label, btn.x, btn.y);
   pop();
 }
 

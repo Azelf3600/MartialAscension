@@ -3,8 +3,8 @@ let p2Selected = 1; // Default P2 to the second character
 let p1Ready = false;
 let p2Ready = false;
 
-function drawCharacterSelectMulti() {
-  background(10);
+function drawCharacterSelectMulti() { 
+  background(20);
   
   let centerX = width / 2;
   
@@ -13,7 +13,7 @@ function drawCharacterSelectMulti() {
   textAlign(CENTER, CENTER);
   textSize(width * 0.15);
   fill(255, 5);
-  drawTitle("VS", centerX, height * 0.4, width * 0.2);
+  drawTitle("VS", centerX, height * 0.4, width * 0.15);
   pop();
 
   push();
@@ -74,7 +74,20 @@ function drawCharacterSelectMulti() {
     
     fill(20);
     rect(x, y, iconSize, iconSize, 5);
-    if (fighter.img) image(fighter.img, x + 5, y + 5, iconSize - 10, iconSize - 10);
+    if (fighter.img) {
+    let imgRatio = fighter.img.width / fighter.img.height;
+    let iW, iH;
+    if (imgRatio > 1) { // Wider than tall
+        iW = iconSize - 10;
+        iH = iW / imgRatio;
+    } else { // Taller than wide
+        iH = iconSize - 10;
+        iW = iH * imgRatio;
+    }
+    let ox = (iconSize - iW) / 2;
+    let oy = (iconSize - iH) / 2;
+    image(fighter.img, x + ox, y + oy, iW, iH); 
+    }
     pop();
     
     // Player Tags (P1/P2 indicators on the icons)
@@ -93,6 +106,7 @@ function drawCharacterSelectMulti() {
 function drawMultiplayerPreview(posX, index, isReady) {
   let fighter = FIGHTERS[index];
   let previewW = width * 0.3;
+  let previewH = height * 0.5; // The intended area height
   
   push();
   if (isReady) {
@@ -102,15 +116,35 @@ function drawMultiplayerPreview(posX, index, isReady) {
   }
 
   if (fighter.img) {
-    // Mirror Player 2's image so they face Player 1
+    // 1. Calculate Aspect Ratio
+    let imgRatio = fighter.img.width / fighter.img.height;
+    let areaRatio = previewW / previewH;
+
+    let drawW, drawH;
+
+    // 2. Determine scaling to prevent stretching
+    if (imgRatio > areaRatio) {
+      drawW = previewW;
+      drawH = previewW / imgRatio;
+    } else {
+      drawH = previewH;
+      drawW = drawH * imgRatio;
+    }
+
+    // 3. Center and Draw
+    let yOffset = (previewH - drawH) / 2;
+    let xOffset = (previewW - drawW) / 2;
+
     if (posX > 0) {
+      // Mirror Player 2 (Right side)
       push();
-      translate(posX + previewW, height * 0.2);
+      translate(posX + xOffset + drawW, height * 0.2 + yOffset);
       scale(-1, 1);
-      image(fighter.img, 0, 0, previewW, height * 0.5);
+      image(fighter.img, 0, 0, drawW, drawH);
       pop();
     } else {
-      image(fighter.img, posX, height * 0.2, previewW, height * 0.5);
+      // Player 1 (Left side)
+      image(fighter.img, posX + xOffset, height * 0.2 + yOffset, drawW, drawH);
     }
   }
 

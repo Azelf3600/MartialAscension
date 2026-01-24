@@ -8,17 +8,29 @@ function drawCharacterSelect() {
   
   drawText("Select Your Fighter", centerX, height * 0.15, width * 0.05);
 
-  let cols = 4;
+  // 1. Dynamic Grid Logic (Same as Multiplayer)
+  let totalFighters = FIGHTERS.length;
+  let cols = totalFighters > 4 ? Math.ceil(Math.sqrt(totalFighters)) : totalFighters;
+  let rows = Math.ceil(totalFighters / cols);
+
+  // 2. Adjust card sizing based on grid density
   let spacing = width * 0.02;
-  let boxW = width * 0.15;
-  let boxH = height * 0.4;
+  let boxW = width * (cols > 4 ? 0.12 : 0.15); // Shrink cards slightly if there are many
+  let boxH = height * (rows > 2 ? 0.3 : 0.4); 
   
   let totalGridW = (cols * boxW) + ((cols - 1) * spacing);
+  let totalGridH = (rows * boxH) + ((rows - 1) * spacing);
+  
   let startX = (width - totalGridW) / 2;
+  let startY = (height - totalGridH) / 2 + (height * 0.05); // Offset down for title
 
   FIGHTERS.forEach((fighter, index) => {
-    let x = startX + (index * (boxW + spacing));
-    let y = centerY - boxH / 2;
+    // 3. Calculate position based on dynamic columns
+    let col = index % cols;
+    let row = Math.floor(index / cols);
+    
+    let x = startX + col * (boxW + spacing);
+    let y = startY + row * (boxH + spacing);
 
     let isHovered = (mouseX > x && mouseX < x + boxW && mouseY > y && mouseY < y + boxH);
     
@@ -36,17 +48,31 @@ function drawCharacterSelect() {
     
     rect(x, y, boxW, boxH, 10); 
 
+    // Aspect Ratio Image Logic
     if (fighter.img) {
-      image(fighter.img, x + 10, y + 10, boxW - 20, boxH - 60);
-    } else {
-      fill(fighter.color || 100);
-      rect(x + 10, y + 10, boxW - 20, boxH - 60, 5);
+      let availW = boxW - 20;
+      let availH = boxH - 60;
+      let imgRatio = fighter.img.width / fighter.img.height;
+      let boxRatio = availW / availH;
+      let drawW, drawH;
+
+      if (imgRatio > boxRatio) {
+        drawW = availW;
+        drawH = availW / imgRatio;
+      } else {
+        drawH = availH;
+        drawW = availH * imgRatio;
+      }
+
+      let xOffset = (availW - drawW) / 2;
+      let yOffset = (availH - drawH) / 2;
+      image(fighter.img, x + 10 + xOffset, y + 10 + yOffset, drawW, drawH);
     }
 
     noStroke();
     fill(255);
     textAlign(CENTER, CENTER);
-    textSize(width * 0.015);
+    textSize(width * 0.012); // Slightly smaller text for dynamic grids
     text(fighter.name.toUpperCase(), x + boxW / 2, y + boxH - 25);
     pop();
   });
