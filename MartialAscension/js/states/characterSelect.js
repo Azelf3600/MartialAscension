@@ -20,7 +20,6 @@ function drawCharacterSelect() {
     let x = startX + (index * (boxW + spacing));
     let y = centerY - boxH / 2;
 
-    // Use a helper variable for hit-testing to keep the code clean
     let isHovered = (mouseX > x && mouseX < x + boxW && mouseY > y && mouseY < y + boxH);
     
     push();
@@ -28,7 +27,7 @@ function drawCharacterSelect() {
       stroke(255); 
       strokeWeight(4);
       fill(60);
-      cursor(HAND); // Provide visual feedback
+      cursor(HAND);
     } else {
       stroke(100);
       strokeWeight(2);
@@ -56,7 +55,7 @@ function drawCharacterSelect() {
 }
 
 function drawBackButton() {
-  // Define the button position and size
+  //button position and size
   let btnW = width * 0.1;
   let btnH = height * 0.05;
   let backBtn = { 
@@ -79,7 +78,6 @@ function drawBackButton() {
   }
 
   // Draw the text
-  // Note: drawText usually takes (content, x, y, size)
   drawText("< BACK", backBtn.x, backBtn.y, width * 0.015);
   pop();
 

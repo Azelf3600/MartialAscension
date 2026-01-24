@@ -1,5 +1,3 @@
-
-
 const GAME_STATE = {
   MENU: "menu",
   CHARACTER_SELECT: "character_select",
@@ -19,7 +17,7 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   textAlign(CENTER, CENTER);
-  setupMenuLayout(); // Initialize button positions
+  setupMenuLayout(); 
 }
 
 function draw() {
@@ -86,9 +84,8 @@ function keyPressed() {
       if (keyCode === ENTER) p2Ready = true;
     }
 
-    // THE TRANSITION: Move to Stage Select Multi
+    // Move to Stage Select Multi
     if (p1Ready && p2Ready && key === ' ') {
-      console.log("Switching to Multiplayer Stage Select");
       setTimeout(() => {
         currentState = GAME_STATE.STAGE_SELECT_MULTI; 
       }, 500);
@@ -135,7 +132,7 @@ function mouseReleased() {
     });
   }
 
-  // Add this inside your mouseReleased() function in sketch.js
+  // Stage Select Single Player Mode 
   if (currentState === GAME_STATE.STAGE_SELECT) {
     let thumbW = width * 0.2;
     let thumbH = height * 0.15;
@@ -158,7 +155,7 @@ function mouseReleased() {
     });
   }
 
-  // To Start Match in MULTIPLAYER MODE
+  // Stage Select Multiplayer Mode
   if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
     let thumbW = width * 0.2;
     let thumbH = height * 0.15;

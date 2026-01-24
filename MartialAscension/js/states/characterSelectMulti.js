@@ -8,15 +8,14 @@ function drawCharacterSelectMulti() {
   
   let centerX = width / 2;
   
-  // 1. Draw the "VERSUS" Background Text
+  //VS text in the middle
   push();
   textAlign(CENTER, CENTER);
   textSize(width * 0.15);
-  fill(255, 5); // Very faint
+  fill(255, 5);
   drawTitle("VS", centerX, height * 0.4, width * 0.2);
   pop();
 
-  // 1.5 Confirmation Prompts
   push();
   textFont(metalFont);
   textAlign(CENTER, CENTER);
@@ -35,15 +34,13 @@ function drawCharacterSelectMulti() {
   }
   pop();
 
-  // 2. Draw Side Previews
+  // Draw Side Previews
   // Player 1 (Left)
   drawMultiplayerPreview(0, p1Selected, p1Ready);
   // Player 2 (Right)
   drawMultiplayerPreview(width - width * 0.3, p2Selected, p2Ready);
 
-  // 3. Center Grid (Tekken Style)
-
-  // Dynamic columns: Square root makes it a balanced grid, or keep it 4 but dynamic rows
+  //For columns, this is relative to the array in data/characters.js
   let totalFighters = FIGHTERS.length;
   let cols = totalFighters > 4 ? Math.ceil(Math.sqrt(totalFighters)) : totalFighters;
   
@@ -60,7 +57,7 @@ function drawCharacterSelectMulti() {
     let y = startY + row * (iconSize + spacing);
 
     push();
-    // Border logic for two players
+    // Border logic when selecting for two players
     if (index === p1Selected && index === p2Selected) {
       strokeWeight(4);
       stroke(255); // White if both hovering same icon
@@ -85,7 +82,7 @@ function drawCharacterSelectMulti() {
     if (index === p2Selected) drawTag("P2", x + iconSize, y, [255, 0, 0]);
   });
 
-  // 4. Start Match Logic
+  // Move to stage select multiplayer mode 
   if (p1Ready && p2Ready) {
     drawText("PRESS SPACE TO CHOOSE STAGE OR PRESS Q TO CANCEL", centerX, height * 0.9, width * 0.02);
   }

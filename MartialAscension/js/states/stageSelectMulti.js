@@ -1,5 +1,5 @@
 function drawStageSelectMulti() {
-  // 1. Draw the Dynamic Background
+  // 1. Draw the Background
   let currentStage = STAGES[selectedStage];
   
   push();

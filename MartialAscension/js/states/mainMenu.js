@@ -1,21 +1,21 @@
 let metalFont;
 let singleBtn, multiBtn;
 
-// Called from sketch.js preload()
+//preload font and images to avoid lag
 function preloadMainMenu() {
   metalFont = loadFont("Assets/fonts/MetalMania-Regular.ttf");
 
+  // For fighter images
   FIGHTERS.forEach(fighter => {
     fighter.img = loadImage(fighter.imagePath);
   });
 
-  // Inside your preload() function in sketch.js
+  // for stage images 
   STAGES.forEach(stage => {
     stage.img = loadImage(stage.path);
   });
 }
 
-// NEW: This function handles the "Responsive" math
 function setupMenuLayout() {
   let centerX = width / 2;
   let centerY = height / 2;
@@ -36,7 +36,6 @@ function setupMenuLayout() {
 }
 
 function drawMenu() {
-  // We no longer define buttons here, we just draw them
   let centerX = width / 2;
   let centerY = height / 2;
 
@@ -49,10 +48,9 @@ function drawMenu() {
   drawText("Starloom 2025", centerX, height - height * 0.05, width * 0.015);
 }
 
-// Updated handleMenuClick in mainMenu.js
+//Delay when clicked 
 function handleMenuClick() {
   if (isHovering(singleBtn)) {
-    // Optional: add a 'clicked' sound or visual effect here
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT;
     }, 500); // 0.5 second delay
@@ -65,10 +63,7 @@ function handleMenuClick() {
   }
 }
 
-// ===================
-// UI HELPERS
-// ===================
-
+// UI Drawing
 function drawTitle(content, x, y, size) {
   push();
   textFont(metalFont);
