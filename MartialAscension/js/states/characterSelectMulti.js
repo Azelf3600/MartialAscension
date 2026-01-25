@@ -48,7 +48,7 @@ function drawCharacterSelectMulti() {
   let spacing = 10;
   let gridW = (cols * iconSize) + ((cols - 1) * spacing);
   let startX = (width - gridW) / 2;
-  let startY = height * 0.7;
+  let startY = height * 0.6;
 
   FIGHTERS.forEach((fighter, index) => {
     let col = index % cols;
@@ -72,21 +72,23 @@ function drawCharacterSelectMulti() {
       strokeWeight(1);
     }
     
+    // Inside the grid loop:
     fill(20);
     rect(x, y, iconSize, iconSize, 5);
-    if (fighter.img) {
-    let imgRatio = fighter.img.width / fighter.img.height;
+
+    if (fighter.thumbImg) { // Changed from fighter.img
+    let imgRatio = fighter.thumbImg.width / fighter.thumbImg.height;
     let iW, iH;
-    if (imgRatio > 1) { // Wider than tall
-        iW = iconSize - 10;
-        iH = iW / imgRatio;
-    } else { // Taller than wide
-        iH = iconSize - 10;
-        iW = iH * imgRatio;
+    if (imgRatio > 1) { 
+    iW = iconSize - 10;
+    iH = iW / imgRatio;
+    } else { 
+    iH = iconSize - 10;
+    iW = iH * imgRatio;
     }
     let ox = (iconSize - iW) / 2;
     let oy = (iconSize - iH) / 2;
-    image(fighter.img, x + ox, y + oy, iW, iH); 
+    image(fighter.thumbImg, x + ox, y + oy, iW, iH); // Use thumbImg
     }
     pop();
     
@@ -106,23 +108,19 @@ function drawCharacterSelectMulti() {
 function drawMultiplayerPreview(posX, index, isReady) {
   let fighter = FIGHTERS[index];
   let previewW = width * 0.3;
-  let previewH = height * 0.5; // The intended area height
+  let previewH = height * 0.9; 
   
   push();
   if (isReady) {
-    // Glow effect when confirmed
     drawingContext.shadowBlur = 20;
     drawingContext.shadowColor = posX === 0 ? 'blue' : 'red';
   }
 
-  if (fighter.img) {
-    // 1. Calculate Aspect Ratio
-    let imgRatio = fighter.img.width / fighter.img.height;
+  if (fighter.previewImg) { // Changed from fighter.img
+    let imgRatio = fighter.previewImg.width / fighter.previewImg.height;
     let areaRatio = previewW / previewH;
-
     let drawW, drawH;
 
-    // 2. Determine scaling to prevent stretching
     if (imgRatio > areaRatio) {
       drawW = previewW;
       drawH = previewW / imgRatio;
@@ -131,28 +129,43 @@ function drawMultiplayerPreview(posX, index, isReady) {
       drawW = drawH * imgRatio;
     }
 
-    // 3. Center and Draw
     let yOffset = (previewH - drawH) / 2;
     let xOffset = (previewW - drawW) / 2;
 
     if (posX > 0) {
-      // Mirror Player 2 (Right side)
       push();
       translate(posX + xOffset + drawW, height * 0.2 + yOffset);
       scale(-1, 1);
-      image(fighter.img, 0, 0, drawW, drawH);
+      // Change to previewImg
+      image(fighter.previewImg, 0, 0, drawW, drawH); 
       pop();
     } else {
-      // Player 1 (Left side)
-      image(fighter.img, posX + xOffset, height * 0.2 + yOffset, drawW, drawH);
+      // Change to previewImg
+      image(fighter.previewImg, posX + xOffset, height * 0.2 + yOffset, drawW, drawH);
     }
   }
 
-  // Name and Status
+// --- Name, Nickname and Status Section ---
   textAlign(CENTER);
-  let label = isReady ? "READY" : fighter.name.toUpperCase();
-  fill(isReady ? [0, 255, 0] : 255);
-  drawTitle(label, posX + previewW / 2, height * 0.75, width * 0.03);
+  
+  if (isReady) {
+    // 1. If Ready, ONLY show "READY"
+    fill(0, 255, 0);
+    drawTitle("READY", posX + previewW / 2, height * 0.75, width * 0.03);
+  } else {
+    
+    // 2. If NOT ready, show Name + Nickname
+    // Draw the Main Name
+    fill(255);
+    drawTitle(fighter.name.toUpperCase(), posX + previewW / 2, height * 0.75, width * 0.03);
+    
+    // Draw the Nickname below the name
+    if (fighter.nickname) {
+      fill(200); 
+      drawTitle(fighter.nickname.toUpperCase(), posX + previewW / 2, height * 0.81, width * 0.015);
+    }
+  }
+  
   pop();
 }
 

@@ -7,7 +7,14 @@ function preloadMainMenu() {
 
   // For fighter images
   FIGHTERS.forEach(fighter => {
-    fighter.img = loadImage(fighter.imagePath);
+    // Load the small headshot for the grid
+    if (fighter.thumbPath) {
+      fighter.thumbImg = loadImage(fighter.thumbPath);
+    }
+    // Load the half-body for the side preview
+    if (fighter.previewPath) {
+      fighter.previewImg = loadImage(fighter.previewPath);
+    }
   });
 
   // for stage images 

@@ -49,25 +49,26 @@ function drawCharacterSelect() {
     rect(x, y, boxW, boxH, 10); 
 
     // Aspect Ratio Image Logic
-    if (fighter.img) {
-      let availW = boxW - 20;
-      let availH = boxH - 60;
-      let imgRatio = fighter.img.width / fighter.img.height;
-      let boxRatio = availW / availH;
-      let drawW, drawH;
+    if (fighter.thumbImg) { // Was fighter.img
+    let availW = boxW - 20;
+    let availH = boxH - 60;
+    let imgRatio = fighter.thumbImg.width / fighter.thumbImg.height; // Was fighter.img
+    let boxRatio = availW / availH;
+    let drawW, drawH;
 
-      if (imgRatio > boxRatio) {
-        drawW = availW;
-        drawH = availW / imgRatio;
-      } else {
-        drawH = availH;
-        drawW = availH * imgRatio;
-      }
-
-      let xOffset = (availW - drawW) / 2;
-      let yOffset = (availH - drawH) / 2;
-      image(fighter.img, x + 10 + xOffset, y + 10 + yOffset, drawW, drawH);
+    if (imgRatio > boxRatio) {
+    drawW = availW;
+    drawH = availW / imgRatio;
+    } else {
+    drawH = availH;
+    drawW = drawH * imgRatio;
     }
+
+  let xOffset = (availW - drawW) / 2;
+  let yOffset = (availH - drawH) / 2;
+  // Change this line:
+  image(fighter.thumbImg, x + 10 + xOffset, y + 10 + yOffset, drawW, drawH); 
+}
 
     noStroke();
     fill(255);
