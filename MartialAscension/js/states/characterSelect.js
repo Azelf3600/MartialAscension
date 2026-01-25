@@ -86,7 +86,7 @@ function drawBackButton() {
   let btnH = height * 0.05;
   let backBtn = { 
     x: width * 0.1, 
-    y: height * 0.9, 
+    y: height * 0.1, 
     w: btnW, 
     h: btnH 
   };
