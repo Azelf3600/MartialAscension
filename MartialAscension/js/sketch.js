@@ -41,18 +41,28 @@ function draw() {
       break;
     
     case GAME_STATE.STAGE_SELECT_MULTI:
-    drawStageSelectMulti();
-    break;
+      drawStageSelectMulti();
+     break;
 
     case GAME_STATE.MATCH:
-    drawMatch();
-    break;
+      drawMatch();
+      break;
 
     case GAME_STATE.MATCH_MULTI:
-    drawMatchMulti();
-    break;
+     drawMatchMulti();
+      break;
 
   }
+
+  // ===== DEBUG STATE and FRAMES OVERLAY(for debugging purposes) - Lester =====
+  push();
+  fill(255);
+  noStroke();
+  textAlign(LEFT, TOP);
+  textSize(14);
+  text("STATE: " + currentState + "\nFRAME: " + frameCount, 10, 10);
+  pop();
+  // ===============================
 }
 
 function mousePressed() {
@@ -176,5 +186,7 @@ function mouseReleased() {
             currentState = GAME_STATE.MATCH_MULTI;
         }
     });
+
+    
   }
 }
