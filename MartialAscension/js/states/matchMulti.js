@@ -34,16 +34,53 @@ let groundY;
 // MAIN LOOP FOR MULTIPLAYER MATCH
 // ================================
 function drawMatchMulti() {
-  background(25);
+background(25);
 
-  // ----- GROUND -----
+  // 1. DYNAMICALLY UPDATE DIMENSIONS BASED ON SCREEN
+  // This ensures they scale every frame if you resize the window
+  let targetH = height * 0.6;  // Standing height is 60% of screen
+  let targetW = targetH * 0.4; // Width is 40% of their height (proportional)
+  let crouchH = targetH * 0.5; // Crouch is half of standing height
+
+  // Apply these to P1 and P2
+  p1.w = targetW;
+  p2.w = targetW;
+  p1.standH = targetH;
+  p2.standH = targetH;
+  p1.crouchH = crouchH;
+  p2.crouchH = crouchH;
+
+  // Add this under your targetH / targetW logic
+if (frameCount < 2) { // Only set this once when the match starts
+  p1.x = width * 0.2; // 20% from the left
+  p2.x = width * 0.8 - p2.w; // 80% from the left
+}
+
+  // 2. SCALE PHYSICS (Optional but recommended)
+  // If the screen is smaller, they should move shorter distances
+  speed = width * 0.01; 
+  gravity = height * 0.003;
+  jumpPower = height * 0.05;
+
+// ----- GROUND -----
   groundY = height - 100;
   fill(120);
   rect(0, groundY, width, 100);
 
-  // ----- INITIAL Y POSITION -----
-  if (p1.y === 0) p1.y = groundY - p1.h;
-  if (p2.y === 0) p2.y = groundY - p2.h;
+  // ----- DYNAMIC POSITIONING (Fixes the Sinking Glitch) -----
+  // If the player is on the ground, keep them pinned to the dynamic groundY
+  // even if the window is resized.
+  if (p1.y + p1.h >= groundY || p1.y === 0) {
+    if (p1.velY === 0) { // Only pin if not mid-jump
+       p1.y = groundY - p1.h;
+    }
+  }
+  
+  if (p2.y + p2.h >= groundY || p2.y === 0) {
+    if (p2.velY === 0) {
+       p2.y = groundY - p2.h;
+    }
+  }
 
   // ================================
   // HANDLE PLAYER 1 INPUTS

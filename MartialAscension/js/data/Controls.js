@@ -15,10 +15,10 @@ const PLAYER_CONTROLS = {
   },
 
   P2: {
-    left: LEFT_ARROW,
-    right: RIGHT_ARROW,
-    jump: UP_ARROW,
-    crouch: DOWN_ARROW,
+    left: 37, //left arrow
+    right: 39, //right arrow
+    jump: 38, //top arrow
+    crouch: 40, //bottom arrow
     lightPunch: 73,  // 'I'
     heavyPunch: 79,  // 'O'
     lightKick: 75,   // 'K'
