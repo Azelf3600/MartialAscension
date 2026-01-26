@@ -25,9 +25,9 @@ let p2 = {
   facing: -1
 };
 
-let speed = 8;
+let speed = 10;
 let gravity = 3;
-let jumpPower = 30;
+let jumpPower = 45;
 let groundY;
 
 // ================================
