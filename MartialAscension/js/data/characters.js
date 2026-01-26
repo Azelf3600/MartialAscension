@@ -8,7 +8,19 @@ const FIGHTERS = [
     sect: "Sword God Palace",
     archetype: "Swordsman"
   },
-  { name: "Lucas Tang", imagePath: "Assets/sprites/profiles/LucasTang.png" },
-  { name: "Aaron Shu", imagePath: "Assets/sprites/profiles/AaronShu.png" },
-  { name: "Damon Cheon", imagePath: "Assets/sprites/profiles/DamonCheon.png" }
+  { 
+    name: "Lucas Tang", 
+    nickname: "Ten Thousand Poison Lord",
+    imagePath: "Assets/sprites/profiles/LucasTang.png" 
+  },
+  { 
+    name: "Aaron Shu", 
+    nickname: "Azure Fist King",
+    imagePath: "Assets/sprites/profiles/AaronShu.png" 
+  },
+  { 
+    name: "Damon Cheon", 
+    nickname: "Dark Heaven Demon Lord",
+    imagePath: "Assets/sprites/profiles/DamonCheon.png" 
+  }
 ];
