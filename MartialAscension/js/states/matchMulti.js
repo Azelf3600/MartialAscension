@@ -22,7 +22,7 @@ let p2 = {
   crouchH: 270,
   velY: 0,
   lastInput: "",
-  facing: -1 // 1 = right, -1 = left
+  facing: -1
 };
 
 let speed = 8;
@@ -142,16 +142,17 @@ function drawMatchMulti() {
   p2.lastInput = p2Inputs.join(" + ");
 
   // ================================
-  // DRAW PLAYERS
+  // DRAW HITBOXES (OUTLINE ONLY)
   // ================================
-  noStroke();
+  strokeWeight(3);
 
-  // Player 1 (blue)
-  fill(80, 120, 255);
+  // Player 1 outline (blue)
+  noFill();
+  stroke(80, 120, 255);
   rect(p1.x, p1.y, p1.w, p1.h);
 
   // Front indicator for P1
-  fill(200, 200, 255);
+  fill(80, 120, 255);
   let frontH = p1.h * 0.2;
   let frontY = p1.y + p1.h / 2;
   if (p1.facing === 1) {
@@ -160,12 +161,13 @@ function drawMatchMulti() {
     triangle(p1.x, frontY - frontH / 2, p1.x, frontY + frontH / 2, p1.x - frontH, frontY);
   }
 
-  // Player 2 (red)
-  fill(255, 80, 80);
+  // Player 2 outline (red)
+  noFill();
+  stroke(255, 80, 80);
   rect(p2.x, p2.y, p2.w, p2.h);
 
   // Front indicator for P2
-  fill(255, 200, 200);
+  fill(255, 80, 80);
   let frontH2 = p2.h * 0.2;
   let frontY2 = p2.y + p2.h / 2;
   if (p2.facing === 1) {
@@ -173,6 +175,9 @@ function drawMatchMulti() {
   } else {
     triangle(p2.x, frontY2 - frontH2 / 2, p2.x, frontY2 + frontH2 / 2, p2.x - frontH2, frontY2);
   }
+
+  noFill();
+  noStroke();
 
   // ================================
   // DRAW NAMES ABOVE PLAYERS
@@ -191,11 +196,11 @@ function drawMatchMulti() {
   stroke(0);
   strokeWeight(3);
 
-  fill(255, 255, 0); // P1 bright yellow
+  fill(255, 255, 0); // P1 input
   text(p1.lastInput, p1.x + p1.w / 2, p1.y + p1.h + 10);
 
-  fill(0, 255, 255); // P2 bright cyan
+  fill(0, 255, 255); // P2 input
   text(p2.lastInput, p2.x + p2.w / 2, p2.y + p2.h + 10);
 
-  noStroke(); // reset
+  noStroke();
 }
