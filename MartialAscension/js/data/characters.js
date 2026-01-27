@@ -6,12 +6,16 @@ const FIGHTERS = [
     previewPath: "Assets/sprites/profiles/EthanLi/Preview/EthanLiPreview.png",
     hp: 1000,
     sect: "Sword God Palace",
-    archetype: "Swordsman"
+    archetype: "Offensive"
   },
-  { 
-    name: "Lucas Tang", 
-    nickname: "Ten Thousand Poison Lord",
-    imagePath: "Assets/sprites/profiles/LucasTang.png" 
+  {
+    name: "Lucas Tang",
+    nickname: "Ten Thousand Poison King",
+    thumbPath: "Assets/sprites/profiles/LucasTang/Thumbnail/LucasTangThumbnail.png",
+    previewPath: "Assets/sprites/profiles/LucasTang/Preview/LucasTangPreview.png",
+    hp: 1000,
+    sect: "Poison Tang Clan",
+    archetype: "Controller"
   },
   { 
     name: "Aaron Shu", 
