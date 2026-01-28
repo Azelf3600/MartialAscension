@@ -1,19 +1,17 @@
 function drawStageSelectMulti() {
-// 1. Draw the Dynamic Background (Cover Logic)
+//Responsive Background so the img is not stretched
   let currentStage = STAGES[selectedStage];
   
   if (currentStage && currentStage.img) {
     push();
-    tint(150); // Dim it slightly
+    tint(150); //To dim it slightly
     
-    // Calculate the scale needed to cover the screen
+    //BG cover - to avoid img to stretch
     let scale = Math.max(width / currentStage.img.width, height / currentStage.img.height);
     
-    // Calculate new dimensions
     let newW = currentStage.img.width * scale;
     let newH = currentStage.img.height * scale;
     
-    // Center the zoomed image
     let offX = (width - newW) / 2;
     let offY = (height - newH) / 2;
     
@@ -22,10 +20,10 @@ function drawStageSelectMulti() {
   } else {
     background(30);
   }
-  // 2. Title
+
   drawTitle("SELECT ARENA", width / 2, height * 0.15, width * 0.05);
 
-  // 3. Stage Selection Bar
+  //Selection Grid
   let barWidth = width * 0.8;
   let thumbW = width * 0.2;
   let thumbH = height * 0.15;
@@ -41,28 +39,28 @@ function drawStageSelectMulti() {
 
     let isHovered = (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH);
     
-    // Update selection on hover
+    // Update to hover
     if (isHovered) {
       selectedStage = index;
     }
 
     push();
-    // Highlight effect
+    // Highlight effect when hovering to gold
     if (index === selectedStage) {
-      stroke(255, 215, 0); // Gold border
+      stroke(255, 215, 0); 
       strokeWeight(5);
     } else {
       stroke(255, 50);
       strokeWeight(2);
     }
 
-    // Draw Thumbnail
+    //Display Thumbnail Image - needs to fix still stretched
     rect(x, y, thumbW, thumbH, 5);
     if (stage.img) {
       image(stage.img, x + 5, y + 5, thumbW - 10, thumbH - 10);
     }
     
-    // Stage Name Label
+    //Stage Name Label
     if (index === selectedStage) {
       noStroke();
       fill(255);
@@ -74,7 +72,7 @@ function drawStageSelectMulti() {
     pop();
   });
 
-  // 4. Confirmation Prompt
+  //Confirmation Prompt
   drawText("CLICK TO THE MATCH", width / 2, height * 0.92, width * 0.015);
   
   drawBackButton();

@@ -11,6 +11,7 @@ const GAME_STATE = {
 let currentState = GAME_STATE.MENU;
 
 function preload() {
+  //to preload fonts and images, function found in mainMenu.js
   preloadMainMenu();
 }
 
@@ -54,7 +55,7 @@ function draw() {
 
   }
 
-  // ===== DEBUG STATE and FRAMES OVERLAY(for debugging purposes) - Lester =====
+  //DEBUG STATE and FRAMES OVERLAY(for debugging purposes)
   push();
   fill(255);
   noStroke();
@@ -62,7 +63,6 @@ function draw() {
   textSize(14);
   text("STATE: " + currentState + "\nFRAME: " + frameCount, 10, 10);
   pop();
-  // ===============================
 }
 
 function mousePressed() {
@@ -73,35 +73,35 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  setupMenuLayout(); // Re-calculate button positions for the new size
+  setupMenuLayout();
 }
 
 //Keyboard function for multiplayer character selection
 function keyPressed() {
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
     
-    // PLAYER 1 Controls
+    //PLAYER 1 Controls
     if (!p1Ready) {
       if (key === 'd' || key === 'D') p1Selected = (p1Selected + 1) % FIGHTERS.length;
       if (key === 'a' || key === 'A') p1Selected = (p1Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
       if (key === 'f' || key === 'F') p1Ready = true;
     }
 
-    // PLAYER 2 Controls
+    //PLAYER 2 Controls
     if (!p2Ready) {
       if (keyCode === RIGHT_ARROW) p2Selected = (p2Selected + 1) % FIGHTERS.length;
       if (keyCode === LEFT_ARROW) p2Selected = (p2Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
       if (keyCode === ENTER) p2Ready = true;
     }
 
-    // Move to Stage Select Multi
+    //Move to Stage Select Multi
     if (p1Ready && p2Ready && key === ' ') {
       setTimeout(() => {
         currentState = GAME_STATE.STAGE_SELECT_MULTI; 
       }, 500);
     }
     
-    // RESET Logic
+    //Selection Reset
     if (key === 'q' || key === 'Q') {
       p1Ready = false;
       p2Ready = false;
@@ -111,7 +111,7 @@ function keyPressed() {
 
 //Stage Selection for Single Player
 function mouseReleased() {
-  // 1. Back Button Check
+  //Back Button Check
   if (currentState === GAME_STATE.CHARACTER_SELECT || currentState === GAME_STATE.STAGE_SELECT) {
     let backBtn = { x: width * 0.1, y: height * 0.9, w: width * 0.1, h: height * 0.05 };
     if (isHovering(backBtn)) {
@@ -121,7 +121,7 @@ function mouseReleased() {
     }
   }
 
-  // 2. Fighter Selection Check
+  //Fighter Selection Check
   if (currentState === GAME_STATE.CHARACTER_SELECT) {
     let cols = 4;
     let spacing = width * 0.02;
@@ -136,13 +136,13 @@ function mouseReleased() {
       let y = centerY - boxH / 2;
 
       if (mouseX > x && mouseX < x + boxW && mouseY > y && mouseY < y + boxH) {
-        selectedChar = index; // Store P1 choice
-        currentState = GAME_STATE.STAGE_SELECT; // GO TO STAGE SELECT
+        selectedChar = index; //Store P1 choice
+        currentState = GAME_STATE.STAGE_SELECT; //Go to Stage Select
       }
     });
   }
 
-  // Stage Select Single Player Mode 
+  //Stage Select Single Player Mode 
   if (currentState === GAME_STATE.STAGE_SELECT) {
     let thumbW = width * 0.2;
     let thumbH = height * 0.15;
@@ -156,16 +156,16 @@ function mouseReleased() {
         let y = startY;
 
         if (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH) {
-            selectedStage = i; // Lock in the choice
+            selectedStage = i; //Store selected stage
             console.log("Stage Selected:", s.name);
             
-            // Move to Match
+            //Move to Match
             currentState = GAME_STATE.MATCH;
         }
     });
   }
 
-  // Stage Select Multiplayer Mode
+  //Stage Select Multiplayer Mode
   if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
     let thumbW = width * 0.2;
     let thumbH = height * 0.15;
@@ -179,10 +179,10 @@ function mouseReleased() {
         let y = startY;
 
         if (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH) {
-            selectedStage = i; // Lock in the choice
+            selectedStage = i; //Store selected stage
             console.log("Stage Selected:", s.name);
             
-            // Move to Match
+            //Move to Match
             currentState = GAME_STATE.MATCH_MULTI;
         }
     });

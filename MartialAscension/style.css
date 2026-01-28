@@ -1,8 +1,8 @@
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* This hides the scrollbars */
-  background-color: black; /* Matches your game background */
+  overflow: hidden;
+  background-color: black;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -11,5 +11,5 @@ body {
 }
 
 canvas {
-  display: block; /* Removes the tiny gap at the bottom of the canvas */
+  display: block;
 }

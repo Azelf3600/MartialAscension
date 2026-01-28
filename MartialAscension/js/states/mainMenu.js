@@ -30,8 +30,8 @@ function setupMenuLayout() {
   singleBtn = {
     x: centerX,
     y: centerY + height * 0.05,
-    w: width * 0.4, // Increased width slightly for bigger hover text
-    h: height * 0.1  // Increased height for bigger hover text
+    w: width * 0.4, 
+    h: height * 0.1 
   };
 
   multiBtn = {
@@ -62,17 +62,17 @@ function handleMenuClick() {
   if (isHovering(singleBtn)) {
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT;
-    }, 500); // 0.5 second delay
+    }, 500);
   }
 
   if (isHovering(multiBtn)) {
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
-    }, 500); // 0.5 second delay
+    }, 500);
   }
 }
 
-// UI Drawing
+//Main Title - Martial Ascension
 function drawTitle(content, x, y, size) {
   push();
   textFont(metalFont);
@@ -88,17 +88,16 @@ function drawButton(label, btn) {
   push();
   textFont(metalFont);
   
-  // 1. Determine size and stroke based on hover
+  //Size and stroke based on hover
   if (isHovering(btn)) {
-    textSize(width * 0.045); // Larger font on hover (was 0.035)
-    stroke(180, 0, 0);       // Red outline (matching title)
-    strokeWeight(6);         // Thick outline
+    textSize(width * 0.045); 
+    stroke(180, 0, 0);       
+    strokeWeight(6);        
   } else {
-    textSize(width * 0.035); // Normal size
-    noStroke();              // No outline
+    textSize(width * 0.035); 
+    noStroke();              
   }
 
-  // 2. Draw the text
   fill(255);
   textAlign(CENTER, CENTER);
   text(label, btn.x, btn.y);

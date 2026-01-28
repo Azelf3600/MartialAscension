@@ -1,4 +1,3 @@
-// Controls.js
 // P1: WASD + YUHJ for attacks
 // P2: Arrow keys + placeholder attacks
 

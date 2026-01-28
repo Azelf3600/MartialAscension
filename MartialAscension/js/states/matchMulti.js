@@ -1,6 +1,3 @@
-// ================================
-// TEMP PLAYER DATA
-// ================================
 let p1 = {
   x: 200,
   y: 0,
@@ -10,7 +7,7 @@ let p1 = {
   crouchH: 270,
   velY: 0,
   lastInput: "",
-  facing: 1 // 1 = right, -1 = left
+  facing: 1 //1 = right, -1 = left/flipping it 
 };
 
 let p2 = {
@@ -30,19 +27,14 @@ let gravity = 3;
 let jumpPower = 45;
 let groundY;
 
-// ================================
-// MAIN LOOP FOR MULTIPLAYER MATCH
-// ================================
 function drawMatchMulti() {
 background(25);
 
-  // 1. DYNAMICALLY UPDATE DIMENSIONS BASED ON SCREEN
-  // This ensures they scale every frame if you resize the window
-  let targetH = height * 0.6;  // Standing height is 60% of screen
-  let targetW = targetH * 0.4; // Width is 40% of their height (proportional)
-  let crouchH = targetH * 0.5; // Crouch is half of standing height
+  //Responsive hitbox based on screensize
+  let targetH = height * 0.6;  
+  let targetW = targetH * 0.4; 
+  let crouchH = targetH * 0.5;
 
-  // Apply these to P1 and P2
   p1.w = targetW;
   p2.w = targetW;
   p1.standH = targetH;
@@ -50,28 +42,24 @@ background(25);
   p1.crouchH = crouchH;
   p2.crouchH = crouchH;
 
-  // Add this under your targetH / targetW logic
-if (frameCount < 2) { // Only set this once when the match starts
-  p1.x = width * 0.2; // 20% from the left
-  p2.x = width * 0.8 - p2.w; // 80% from the left
+if (frameCount < 2) { 
+  p1.x = width * 0.2; 
+  p2.x = width * 0.8 - p2.w;
 }
 
-  // 2. SCALE PHYSICS (Optional but recommended)
-  // If the screen is smaller, they should move shorter distances
+//Responsive Movement Scaling based on screensize
   speed = width * 0.01; 
   gravity = height * 0.003;
   jumpPower = height * 0.05;
 
-// ----- GROUND -----
+//Initial ground
   groundY = height - 100;
   fill(120);
   rect(0, groundY, width, 100);
 
-  // ----- DYNAMIC POSITIONING (Fixes the Sinking Glitch) -----
-  // If the player is on the ground, keep them pinned to the dynamic groundY
-  // even if the window is resized.
+//Retaining position even when window is resized 
   if (p1.y + p1.h >= groundY || p1.y === 0) {
-    if (p1.velY === 0) { // Only pin if not mid-jump
+    if (p1.velY === 0) {
        p1.y = groundY - p1.h;
     }
   }
@@ -82,22 +70,20 @@ if (frameCount < 2) { // Only set this once when the match starts
     }
   }
 
-  // ================================
-  // HANDLE PLAYER 1 INPUTS
-  // ================================
+  //Player 1 inputs
   let p1Inputs = [];
 
-  // Movement
+  //Movement
   if (keyIsDown(65)) { p1.x -= speed; p1Inputs.push("A"); } // A
   if (keyIsDown(68)) { p1.x += speed; p1Inputs.push("D"); } // D
 
-  // Jump
+  //Jump
   if (keyIsDown(87) && p1.y + p1.h >= groundY) {
     p1.velY = -jumpPower;
     p1Inputs.push("W");
   }
 
-  // Crouch
+  //Crouch
   if (keyIsDown(83)) {
     if (p1.h !== p1.crouchH) {
       p1.y += p1.h - p1.crouchH;
@@ -111,13 +97,13 @@ if (frameCount < 2) { // Only set this once when the match starts
     }
   }
 
-  // Attacks
+  //Attacks
   if (keyIsDown(89)) p1Inputs.push("LP"); // Y
   if (keyIsDown(85)) p1Inputs.push("HP"); // U
   if (keyIsDown(72)) p1Inputs.push("LK"); // H
   if (keyIsDown(74)) p1Inputs.push("HK"); // J
 
-  // Apply gravity
+  //Apply gravity
   p1.velY += gravity;
   p1.y += p1.velY;
   if (p1.y + p1.h > groundY) {
@@ -125,22 +111,20 @@ if (frameCount < 2) { // Only set this once when the match starts
     p1.velY = 0;
   }
 
-  // ================================
-  // HANDLE PLAYER 2 INPUTS
-  // ================================
+  //Player 2 inputs
   let p2Inputs = [];
 
-  // Movement
+  //Movement
   if (keyIsDown(LEFT_ARROW)) { p2.x -= speed; p2Inputs.push("←"); }
   if (keyIsDown(RIGHT_ARROW)) { p2.x += speed; p2Inputs.push("→"); }
 
-  // Jump
+  //Jump
   if (keyIsDown(UP_ARROW) && p2.y + p2.h >= groundY) {
     p2.velY = -jumpPower;
     p2Inputs.push("↑");
   }
 
-  // Crouch
+  //Crouch
   if (keyIsDown(DOWN_ARROW)) {
     if (p2.h !== p2.crouchH) {
       p2.y += p2.h - p2.crouchH;
@@ -154,13 +138,13 @@ if (frameCount < 2) { // Only set this once when the match starts
     }
   }
 
-  // Attacks
+  //Attacks
   if (keyIsDown(73)) p2Inputs.push("LP"); // I
   if (keyIsDown(79)) p2Inputs.push("HP"); // O
   if (keyIsDown(75)) p2Inputs.push("LK"); // K
   if (keyIsDown(76)) p2Inputs.push("HK"); // L
 
-  // Apply gravity
+  //Apply gravity
   p2.velY += gravity;
   p2.y += p2.velY;
   if (p2.y + p2.h > groundY) {
@@ -168,27 +152,23 @@ if (frameCount < 2) { // Only set this once when the match starts
     p2.velY = 0;
   }
 
-  // ================================
-  // UPDATE FACING (always face each other)
-  // ================================
+  //Responsive direction so characters will always face each other
   p1.facing = p1.x < p2.x ? 1 : -1;
   p2.facing = p2.x < p1.x ? 1 : -1;
 
-  // Save last input strings
+  //For Joint inputs 
   p1.lastInput = p1Inputs.join(" + ");
   p2.lastInput = p2Inputs.join(" + ");
 
-  // ================================
-  // DRAW HITBOXES (OUTLINE ONLY)
-  // ================================
+  //PROTOTYPE - Hitbox
   strokeWeight(3);
 
-  // Player 1 outline (blue)
+  //Player 1 Hitbox - Blue
   noFill();
   stroke(80, 120, 255);
   rect(p1.x, p1.y, p1.w, p1.h);
 
-  // Front indicator for P1
+  //Direction indicator
   fill(80, 120, 255);
   let frontH = p1.h * 0.2;
   let frontY = p1.y + p1.h / 2;
@@ -198,12 +178,12 @@ if (frameCount < 2) { // Only set this once when the match starts
     triangle(p1.x, frontY - frontH / 2, p1.x, frontY + frontH / 2, p1.x - frontH, frontY);
   }
 
-  // Player 2 outline (red)
+  //Player 2 Hitbox - Red
   noFill();
   stroke(255, 80, 80);
   rect(p2.x, p2.y, p2.w, p2.h);
 
-  // Front indicator for P2
+  //Direction Indicator
   fill(255, 80, 80);
   let frontH2 = p2.h * 0.2;
   let frontY2 = p2.y + p2.h / 2;
@@ -216,27 +196,23 @@ if (frameCount < 2) { // Only set this once when the match starts
   noFill();
   noStroke();
 
-  // ================================
-  // DRAW NAMES ABOVE PLAYERS
-  // ================================
+  //Display Name above hitbox
   textAlign(CENTER, BOTTOM);
   textSize(24);
   fill(255);
   if (FIGHTERS[p1Selected]) text(FIGHTERS[p1Selected].name, p1.x + p1.w / 2, p1.y - 10);
   if (FIGHTERS[p2Selected]) text(FIGHTERS[p2Selected].name, p2.x + p2.w / 2, p2.y - 10);
 
-  // ================================
-  // DRAW LAST INPUTS BELOW PLAYERS
-  // ================================
+  //For Debugging and Testing - Draw input under the characters 
   textSize(18);
   textAlign(CENTER, TOP);
   stroke(0);
   strokeWeight(3);
 
-  fill(255, 255, 0); // P1 input
+  fill(255, 255, 0); //P1 input
   text(p1.lastInput, p1.x + p1.w / 2, p1.y + p1.h + 10);
 
-  fill(0, 255, 255); // P2 input
+  fill(0, 255, 255); //P2 input
   text(p2.lastInput, p2.x + p2.w / 2, p2.y + p2.h + 10);
 
   noStroke();

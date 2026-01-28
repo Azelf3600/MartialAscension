@@ -20,7 +20,11 @@ const FIGHTERS = [
   { 
     name: "Aaron Shu", 
     nickname: "Azure Fist King",
-    imagePath: "Assets/sprites/profiles/AaronShu.png" 
+    thumbPath: "Assets/sprites/profiles/AaronShu/Thumbnail/AaronShuThumbnail.png",
+    previewPath: "Assets/sprites/profiles/AaronShu/Preview/AaronShuPreview.png",
+    hp: 1000,
+    sect: "Raging Tide Gate",
+    archetype: "Defensive"  
   },
   { 
     name: "Damon Cheon", 

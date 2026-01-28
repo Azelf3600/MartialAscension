@@ -10,11 +10,11 @@ class Character {
     this.speed = 5;
     this.isJumping = false;
     this.jumpHeight = 100;
-    this.groundY = y; // store original ground position
+    this.groundY = y; //store original ground position
 
-    this.controls = controls; // pass PLAYER_CONTROLS.P1 / P2
+    this.controls = controls; //pass PLAYER_CONTROLS.P1 / P2
 
-    this.attacking = null; // current attack
+    this.attacking = null; //current attack
   }
 
   draw() {
