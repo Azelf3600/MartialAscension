@@ -19,7 +19,7 @@ const FIGHTERS = [
   },
   { 
     name: "Aaron Shu", 
-    nickname: "Azure Fist King",
+    nickname: "Azure Dragon Fist King",
     thumbPath: "Assets/sprites/profiles/AaronShu/Thumbnail/AaronShuThumbnail.png",
     previewPath: "Assets/sprites/profiles/AaronShu/Preview/AaronShuPreview.png",
     hp: 1000,
@@ -28,7 +28,11 @@ const FIGHTERS = [
   },
   { 
     name: "Damon Cheon", 
-    nickname: "Dark Heaven Demon Lord",
-    imagePath: "Assets/sprites/profiles/DamonCheon.png" 
+    nickname: "Crimson Heaven Demon Lord",
+    thumbPath: "Assets/sprites/profiles/DamonCheon/Thumbnail/DamonCheonThumbnail.png",
+    previewPath: "Assets/sprites/profiles/DamonCheon/Preview/DamonCheonPreview.png",
+    hp: 1000,
+    sect: "Heavenly Demon Cult",
+    archetype: "Offensive"  
   }
 ];
