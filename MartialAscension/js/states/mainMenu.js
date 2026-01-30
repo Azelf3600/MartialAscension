@@ -77,7 +77,7 @@ function drawTitle(content, x, y, size) {
   push();
   textFont(metalFont);
   textSize(size);
-  stroke(180, 0, 0);
+  stroke(255, 0, 0);
   strokeWeight(8);
   fill(255);
   text(content, x, y);

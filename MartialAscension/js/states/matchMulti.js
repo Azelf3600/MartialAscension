@@ -1,219 +1,251 @@
-let p1 = {
-  x: 200,
-  y: 0,
-  w: 200,
-  h: 220,
-  standH: 500,
-  crouchH: 270,
-  velY: 0,
-  lastInput: "",
-  facing: 1 //1 = right, -1 = left/flipping it 
-};
-
-let p2 = {
-  x: 700,
-  y: 0,
-  w: 200,
-  h: 220,
-  standH: 500,
-  crouchH: 270,
-  velY: 0,
-  lastInput: "",
-  facing: -1
-};
-
-let speed = 10;
-let gravity = 3;
-let jumpPower = 45;
+// Global instances for the match
+let player1, player2;
 let groundY;
+let damageIndicators = []; // Holds active floating numbers
+let matchOver = false;
+let winnerName = "";
 
-function drawMatchMulti() {
-background(25);
+function initMatch() {
+  groundY = height - 100;
 
-  //Responsive hitbox based on screensize
-  let targetH = height * 0.6;  
-  let targetW = targetH * 0.4; 
-  let crouchH = targetH * 0.5;
+  let p1Data = FIGHTERS[p1Selected];
+  player1 = new Character(
+    width * 0.2, 
+    groundY - (height * 0.6), 
+    width * 0.08, 
+    height * 0.6, 
+    color(80, 120, 255), // Blue
+    PLAYER_CONTROLS.P1, 
+    p1Data.name, 
+    1,
+    p1Data.archetype // Ensure archetype is passed!
+  );
 
-  p1.w = targetW;
-  p2.w = targetW;
-  p1.standH = targetH;
-  p2.standH = targetH;
-  p1.crouchH = crouchH;
-  p2.crouchH = crouchH;
-
-if (frameCount < 2) { 
-  p1.x = width * 0.2; 
-  p2.x = width * 0.8 - p2.w;
+  let p2Data = FIGHTERS[p2Selected];
+  player2 = new Character(
+    width * 0.8 - (width * 0.08), 
+    groundY - (height * 0.6), 
+    width * 0.08, 
+    height * 0.6, 
+    color(255, 80, 80), // Red
+    PLAYER_CONTROLS.P2, 
+    p2Data.name, 
+    -1,
+    p2Data.archetype
+  );
 }
 
-//Responsive Movement Scaling based on screensize
-  speed = width * 0.01; 
-  gravity = height * 0.003;
-  jumpPower = height * 0.05;
-
-//Initial ground
-  groundY = height - 100;
-  fill(120);
-  rect(0, groundY, width, 100);
-
-//Retaining position even when window is resized 
-  if (p1.y + p1.h >= groundY || p1.y === 0) {
-    if (p1.velY === 0) {
-       p1.y = groundY - p1.h;
-    }
+function drawMatchMulti() {
+  if (!player1 || !player2) {
+    initMatch();
+    return;
   }
+
+  background(25);
+  drawStageBackground();
+
+  // ONLY update players if the match isn't over
+  if (!matchOver) {
+    player1.update(player2, groundY);
+    player2.update(player1, groundY);
+    handleBodyCollision(player1, player2);
+
+    if (typeof checkHit === "function") {
+      checkHit(player1, player2);
+      checkHit(player2, player1);
+    }
+    
+    checkWinCondition(); // Check for 0 HP
+  }
+
+  updateDamageIndicators();
+  drawDamageIndicators();
   
-  if (p2.y + p2.h >= groundY || p2.y === 0) {
-    if (p2.velY === 0) {
-       p2.y = groundY - p2.h;
-    }
-  }
+  player1.draw();
+  player2.draw();
 
-  //Player 1 inputs
-  let p1Inputs = [];
+  drawInterface();
+  drawInputDebug();
+  if (matchOver) drawWinScreen(); // New overlay function
+}
 
-  //Movement
-  if (keyIsDown(65)) { p1.x -= speed; p1Inputs.push("A"); } // A
-  if (keyIsDown(68)) { p1.x += speed; p1Inputs.push("D"); } // D
-
-  //Jump
-  if (keyIsDown(87) && p1.y + p1.h >= groundY) {
-    p1.velY = -jumpPower;
-    p1Inputs.push("W");
-  }
-
-  //Crouch
-  if (keyIsDown(83)) {
-    if (p1.h !== p1.crouchH) {
-      p1.y += p1.h - p1.crouchH;
-      p1.h = p1.crouchH;
-    }
-    p1Inputs.push("S");
-  } else {
-    if (p1.h !== p1.standH) {
-      p1.y += p1.h - p1.standH;
-      p1.h = p1.standH;
-    }
-  }
-
-  //Attacks
-  if (keyIsDown(89)) p1Inputs.push("LP"); // Y
-  if (keyIsDown(85)) p1Inputs.push("HP"); // U
-  if (keyIsDown(72)) p1Inputs.push("LK"); // H
-  if (keyIsDown(74)) p1Inputs.push("HK"); // J
-
-  //Apply gravity
-  p1.velY += gravity;
-  p1.y += p1.velY;
-  if (p1.y + p1.h > groundY) {
-    p1.y = groundY - p1.h;
-    p1.velY = 0;
-  }
-
-  //Player 2 inputs
-  let p2Inputs = [];
-
-  //Movement
-  if (keyIsDown(LEFT_ARROW)) { p2.x -= speed; p2Inputs.push("←"); }
-  if (keyIsDown(RIGHT_ARROW)) { p2.x += speed; p2Inputs.push("→"); }
-
-  //Jump
-  if (keyIsDown(UP_ARROW) && p2.y + p2.h >= groundY) {
-    p2.velY = -jumpPower;
-    p2Inputs.push("↑");
-  }
-
-  //Crouch
-  if (keyIsDown(DOWN_ARROW)) {
-    if (p2.h !== p2.crouchH) {
-      p2.y += p2.h - p2.crouchH;
-      p2.h = p2.crouchH;
-    }
-    p2Inputs.push("↓");
-  } else {
-    if (p2.h !== p2.standH) {
-      p2.y += p2.h - p2.standH;
-      p2.h = p2.standH;
-    }
-  }
-
-  //Attacks
-  if (keyIsDown(73)) p2Inputs.push("LP"); // I
-  if (keyIsDown(79)) p2Inputs.push("HP"); // O
-  if (keyIsDown(75)) p2Inputs.push("LK"); // K
-  if (keyIsDown(76)) p2Inputs.push("HK"); // L
-
-  //Apply gravity
-  p2.velY += gravity;
-  p2.y += p2.velY;
-  if (p2.y + p2.h > groundY) {
-    p2.y = groundY - p2.h;
-    p2.velY = 0;
-  }
-
-  //Responsive direction so characters will always face each other
-  p1.facing = p1.x < p2.x ? 1 : -1;
-  p2.facing = p2.x < p1.x ? 1 : -1;
-
-  //For Joint inputs 
-  p1.lastInput = p1Inputs.join(" + ");
-  p2.lastInput = p2Inputs.join(" + ");
-
-  //PROTOTYPE - Hitbox
-  strokeWeight(3);
-
-  //Player 1 Hitbox - Blue
-  noFill();
-  stroke(80, 120, 255);
-  rect(p1.x, p1.y, p1.w, p1.h);
-
-  //Direction indicator
-  fill(80, 120, 255);
-  let frontH = p1.h * 0.2;
-  let frontY = p1.y + p1.h / 2;
-  if (p1.facing === 1) {
-    triangle(p1.x + p1.w, frontY - frontH / 2, p1.x + p1.w, frontY + frontH / 2, p1.x + p1.w + frontH, frontY);
-  } else {
-    triangle(p1.x, frontY - frontH / 2, p1.x, frontY + frontH / 2, p1.x - frontH, frontY);
-  }
-
-  //Player 2 Hitbox - Red
-  noFill();
-  stroke(255, 80, 80);
-  rect(p2.x, p2.y, p2.w, p2.h);
-
-  //Direction Indicator
-  fill(255, 80, 80);
-  let frontH2 = p2.h * 0.2;
-  let frontY2 = p2.y + p2.h / 2;
-  if (p2.facing === 1) {
-    triangle(p2.x + p2.w, frontY2 - frontH2 / 2, p2.x + p2.w, frontY2 + frontH2 / 2, p2.x + p2.w + frontH2, frontY2);
-  } else {
-    triangle(p2.x, frontY2 - frontH2 / 2, p2.x, frontY2 + frontH2 / 2, p2.x - frontH2, frontY2);
-  }
-
-  noFill();
+function drawStageBackground() {
+  fill(120);
   noStroke();
+  // Drawing the ground based on current groundY
+  rect(0, groundY, width, height - groundY); 
+}
 
-  //Display Name above hitbox
-  textAlign(CENTER, BOTTOM);
-  textSize(24);
+//FOR ACTUAL PLAYING
+/*function drawInterface() {
+  let barW = width * 0.4;
+  let barH = 30;
+  let padding = 50;
+
+  // --- P1 UI ---
+  drawHealthBar(padding, padding, barW, barH, player1.hp, player1.maxHp);
+  fill(255, 255, 255);
+  textAlign(LEFT, BOTTOM);
+  text(player1.name.toUpperCase(), padding, padding - 5);
+
+  // --- P2 UI ---
+  drawHealthBar(width - padding - barW, padding, barW, barH, player2.hp, player2.maxHp, true);
+  fill(255, 255, 255);
+  textAlign(RIGHT, BOTTOM);
+  text(player2.name.toUpperCase(), width - padding, padding - 5);
+}*/ 
+
+function drawInterface() {
+  let barW = width * 0.4;
+  let barH = 30;
+  let padding = 50;
+
+  // --- P1 UI ---
+  drawHealthBar(padding, padding, barW, barH, player1.hp, player1.maxHp);
+  
+  // P1 Name
   fill(255);
-  if (FIGHTERS[p1Selected]) text(FIGHTERS[p1Selected].name, p1.x + p1.w / 2, p1.y - 10);
-  if (FIGHTERS[p2Selected]) text(FIGHTERS[p2Selected].name, p2.x + p2.w / 2, p2.y - 10);
-
-  //For Debugging and Testing - Draw input under the characters 
-  textSize(18);
-  textAlign(CENTER, TOP);
-  stroke(0);
-  strokeWeight(3);
-
-  fill(255, 255, 0); //P1 input
-  text(p1.lastInput, p1.x + p1.w / 2, p1.y + p1.h + 10);
-
-  fill(0, 255, 255); //P2 input
-  text(p2.lastInput, p2.x + p2.w / 2, p2.y + p2.h + 10);
-
   noStroke();
+  textAlign(LEFT, BOTTOM);
+  textSize(24);
+  text(player1.name.toUpperCase(), padding, padding - 5);
+
+  // P1 HP Debug Text (Numerical)
+  fill(255);
+  stroke(0); // Black outline for readability
+  strokeWeight(2);
+  textAlign(LEFT, TOP);
+  textSize(16);
+  text(`${Math.floor(player1.hp)} / ${player1.maxHp}`, padding, padding + barH + 5);
+
+  // --- P2 UI ---
+  drawHealthBar(width - padding - barW, padding, barW, barH, player2.hp, player2.maxHp, true);
+  
+  // P2 Name
+  noStroke();
+  fill(255);
+  textAlign(RIGHT, BOTTOM);
+  textSize(24);
+  text(player2.name.toUpperCase(), width - padding, padding - 5);
+
+  // P2 HP Debug Text (Numerical)
+  fill(255);
+  stroke(0);
+  strokeWeight(2);
+  textAlign(RIGHT, TOP);
+  textSize(16);
+  text(`${Math.floor(player2.hp)} / ${player2.maxHp}`, width - padding, padding + barH + 5);
+  
+  noStroke(); // Reset stroke for other drawing functions
+}
+
+// Helper function to avoid repeating health bar code twice
+function drawHealthBar(x, y, w, h, current, max, mirrored = false) {
+  fill(100, 0, 0);
+  rect(x, y, w, h);
+  fill(0, 255, 100);
+  let healthW = map(current, 0, max, 0, w);
+  if (mirrored) {
+    rect(x + w - healthW, y, healthW, h);
+  } else {
+    rect(x, y, healthW, h);
+  }
+}
+
+function drawInputDebug() {
+  textAlign(CENTER, TOP);
+  textSize(16);
+  
+  fill(80, 120, 255); // Blue for P1 Stun info
+  if (player1.hitStun > 0) text("STUNNED!", player1.x + player1.w/2, player1.y + player1.h + 10);
+  
+  fill(255, 80, 80); // Red for P2 Stun info
+  if (player2.hitStun > 0) text("STUNNED!", player2.x + player2.w/2, player2.y + player2.h + 10);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  groundY = height - 100;
+  
+  // Instead of manual lines, use a method (if you add it to your class) 
+  // or just accept that resizing resets the match for now.
+  if (player1 && player2) {
+    // Keep existing HP but update sizes
+    let p1Hp = player1.hp;
+    let p2Hp = player2.hp;
+    initMatch(); 
+    player1.hp = p1Hp;
+    player2.hp = p2Hp;
+  }
+}
+
+//DAMAGE INDICATOR
+function updateDamageIndicators() {
+  for (let i = damageIndicators.length - 1; i >= 0; i--) {
+    let ind = damageIndicators[i];
+    ind.y -= 2;      // Float upward
+    ind.life -= 5;   // Fade out over time
+    
+    if (ind.life <= 0) {
+      damageIndicators.splice(i, 1); // Remove when faded
+    }
+  }
+}
+
+function drawDamageIndicators() {
+  push();
+  textAlign(CENTER);
+  textSize(24);
+  textStyle(BOLD);
+  for (let ind of damageIndicators) {
+    fill(255, 0, 0, ind.life); 
+    stroke(0, ind.life);
+    strokeWeight(2);
+    // Combine label and amount here for display only
+    text(ind.label + ind.amount, ind.x, ind.y);
+  }
+  pop();
+}
+
+// Function to call from your collision system
+function spawnDamageIndicator(x, y, amount, wasBlocked = false) {
+  damageIndicators.push({
+    x: x,
+    y: y,
+    amount: amount, 
+    label: wasBlocked ? "BLOCK " : "", // Store label separately
+    life: 255
+  });
+}
+
+function checkWinCondition() {
+  if (player1.hp <= 0) {
+    matchOver = true;
+    winnerName = player2.name;
+  } else if (player2.hp <= 0) {
+    matchOver = true;
+    winnerName = player1.name;
+  }
+}
+
+function drawWinScreen() {
+  push();
+  fill(0, 150); // Darken the background
+  rect(0, 0, width, height);
+  
+  textAlign(CENTER, CENTER);
+  textSize(64);
+  fill(255, 215, 0); // Gold
+  stroke(0);
+  strokeWeight(5);
+  text("K.O.", width / 2, height / 2 - 50);
+  
+  textSize(32);
+  fill(255);
+  noStroke();
+  text(winnerName.toUpperCase() + " WINS!", width / 2, height / 2 + 30);
+  
+  textSize(16);
+  text("RELOAD TO PLAY AGAIN", width / 2, height / 2 + 80);
+  pop();
 }
