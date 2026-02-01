@@ -7,18 +7,16 @@ function checkHit(attacker, defender) {
         box.y < defender.y + defender.h &&
         box.y + box.h > defender.y) {
       
-      let baseDmg = (attacker.attacking === "LP") ? 30 : (attacker.attacking === "LK") ? 45 : (attacker.attacking === "HP") ? 60 : 90;
+      let baseDmg = (attacker.attacking === "LP") ? 10 : (attacker.attacking === "LK") ? 15 : (attacker.attacking === "HP") ? 25 : 30;
       let stunTime = (attacker.attacking === "LP" || attacker.attacking === "LK") ? 15 : 25;
 
-      // --- NEW KNOCKBACK LOGIC ---
-      let knockback = 5; // Default for LP
+      let knockback = 10; 
       if (attacker.attacking === "LK" || attacker.attacking === "HP") {
-        knockback = 12; // Medium
+        knockback = 20; 
       } else if (attacker.attacking === "HK") {
-        knockback = 25; // Heavy
+        knockback = 35;
       }
 
-      // Pass knockback as a new 5th argument
       applyDamage(defender, baseDmg * attacker.dmgMod, attacker, stunTime, knockback);
       
       attacker.hasHit = true; 
@@ -44,8 +42,6 @@ function applyDamage(target, amount, attacker, stunTime, knockback) {
     spawnDamageIndicator(target.x + target.w / 2, target.y, displayVal, target.isBlocking);
   }
   
-  // --- USE THE PASSED KNOCKBACK ---
-  // If they block, we'll cut the knockback in half so they don't slide across the screen
   let finalPush = target.isBlocking ? knockback * 0.5 : knockback;
   
   let pushDir = (target.x > attacker.x) ? finalPush : -finalPush;

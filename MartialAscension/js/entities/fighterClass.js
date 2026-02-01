@@ -14,19 +14,19 @@ class Character {
     //Archetype Stat Calculator  
   if (this.archetype === "Offensive") {
   this.maxHp = 1000;
-  this.dmgMod = 1.2;
-  this.blockMod = 0.5; // 50% reduction
-  this.blockStun = 12;
+  this.dmgMod = 1.2; //20% more damage
+  this.blockMod = 0.4; // 40% reduction
+  this.blockStun = 12; 
   } else if (this.archetype === "Defensive") {
-  this.maxHp = 1300;
-  this.dmgMod = 0.8;
-  this.blockMod = 0.6; // 70% reduction
-  this.blockStun = 6;
-  } else { // Controller / Standard
-  this.maxHp = 850;
-  this.dmgMod = 1.0;
-  this.blockMod = 0.5; // 50% reduction
+  this.maxHp = 1200;
+  this.dmgMod = 0.8; //20% less damage
+  this.blockMod = 0.6; // 60% reduction
   this.blockStun = 10;
+  } else { // Controller / Standard
+  this.maxHp = 800;
+  this.dmgMod = 1.0; //Standard damage
+  this.blockMod = 0.5; // 50% reduction
+  this.blockStun = 6;
 }
 
     // Inside the Character constructor
@@ -44,7 +44,7 @@ class Character {
     this.isGrounded = false;
 
     this.attacking = null;
-    this.hasHit = false; // Add this near this.attacking = null;
+    this.hasHit = false; 
     this.attackTimer = 0;
     this.isHit = false;
     this.hitStun = 0;
