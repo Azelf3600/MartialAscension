@@ -5,7 +5,11 @@ const GAME_STATE = {
   STAGE_SELECT:"stage_select",
   STAGE_SELECT_MULTI:"stage_select_multi",
   MATCH: "match",
-  MATCH_MULTI: "match_multi"
+  MATCH_MULTI: "match_multi",
+  PAUSE_MENU: "pause_menu",
+  PAUSE_MENU_MULTI: "pause_menu_multi",
+  LOADING_MATCH: "loading_match",
+  LOADING_MATCH_MULTI: "loading_match_multi"
 };
 
 let currentState = GAME_STATE.MENU;
@@ -43,14 +47,30 @@ function draw() {
     
     case GAME_STATE.STAGE_SELECT_MULTI:
       drawStageSelectMulti();
-     break;
+      break;
+
+    case GAME_STATE.LOADING_MATCH:
+      drawLoadingMatch();
+      break;
+
+    case GAME_STATE.LOADING_MATCH_MULTI:
+      drawLoadingMatchMulti();
+      break;
 
     case GAME_STATE.MATCH:
       drawMatch();
       break;
 
     case GAME_STATE.MATCH_MULTI:
-     drawMatchMulti();
+      drawMatchMulti();
+      break;
+    
+    case GAME_STATE.PAUSE_MENU:
+      drawPauseMenu();
+      break;
+
+    case GAME_STATE.PAUSE_MENU_MULTI:
+      drawPauseMenuMulti();
       break;
 
   }
@@ -183,7 +203,7 @@ function mouseReleased() {
             console.log("Stage Selected:", s.name);
             
             //Move to Match
-            currentState = GAME_STATE.MATCH_MULTI;
+            currentState = GAME_STATE.LOADING_MATCH_MULTI; // Move to loading first!
         }
     });
 

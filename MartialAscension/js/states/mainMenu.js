@@ -80,7 +80,7 @@ function drawTitle(content, x, y, size) {
   stroke(255, 0, 0);
   strokeWeight(8);
   fill(255);
-  text(content, x, y);
+  text(content, floor(x), floor(y));
   pop();
 }
 
