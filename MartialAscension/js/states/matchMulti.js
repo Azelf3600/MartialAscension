@@ -304,7 +304,7 @@ function drawWinScreen() {
   fill(255, 0, 0); 
   stroke(0);
   strokeWeight(5);
-  let header = (matchTimer <= 0) ? "TIME OVER" : "K.O.";
+  let header = (matchTimer <= 0) ? "TIME'S UP" : "K.O.";
   text(header, width / 2, height / 2 - 80);
   
   textSize(width * 0.04);
