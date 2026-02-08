@@ -29,9 +29,8 @@ class Character {
   this.blockStun = 6;
 }
 
-    // Inside the Character constructor
     this.isBlocking = false;
-    this.attackReleased = true; // Tracks if player let go of the attack button
+    this.attackReleased = true; 
     
     this.hp = this.maxHp; 
 
