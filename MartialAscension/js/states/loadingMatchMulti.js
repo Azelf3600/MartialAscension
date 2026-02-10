@@ -1,5 +1,4 @@
 let loadingTimer = 0;
-// 1 second black + 4 seconds animation/display = 5 seconds total (300 frames)
 const LOADING_DURATION = 300; 
 
 function drawLoadingMatchMulti() {
@@ -7,86 +6,66 @@ function drawLoadingMatchMulti() {
   loadingTimer++;
 
   if (loadingTimer >= LOADING_DURATION) {
-  loadingTimer = 0; 
-  currentState = GAME_STATE.MATCH_MULTI;
+    loadingTimer = 0; 
+    currentState = GAME_STATE.MATCH_MULTI;
+    return;
   }
 
-  // 1. One second of pure blackness
-  if (loadingTimer < 60) return;
+  if (loadingTimer < 40) return;
 
-  // 2. Calculate animation progress for the slide (over 1 second)
-  let animProgress = constrain((loadingTimer - 60) / 60, 0, 1);
-  let offset = floor(lerp(width, 0, animProgress));
+  let animProgress = constrain((loadingTimer - 40) / 60, 0, 1);
+  let slideOffset = lerp(width, 0, animProgress);
 
-  // Get selected fighter data
   let p1Data = FIGHTERS[p1Selected];
   let p2Data = FIGHTERS[p2Selected];
 
-  // --- DRAW FIGHTERS ---
+  // Draw Players
+  drawLoadingSide(-slideOffset, p1Data, 1);
+  drawLoadingSide(slideOffset, p2Data, 2);
+
+  // VS Title - Drawn last to stay on top
   push();
-  // Slides P1 from left to center-left, P2 from right to center-right
-  drawLoadingSide(0 - offset, p1Data, 1);
-  drawLoadingSide(0 + offset, p2Data, 2);
-  pop();
-
-  // --- DRAW VS TEXT ---
-  // Appears instantly after the black screen ends
+  textAlign(CENTER, CENTER);
   drawTitle("VS", width / 2, height / 2, width * 0.1);
-
-  // 3. Transition to the match after 5 seconds (300 frames)
-  if (loadingTimer >= LOADING_DURATION) {
-    loadingTimer = 0; 
-    currentState = GAME_STATE.MATCH_MULTI;
-  }
+  pop();
 }
 
 function drawLoadingSide(slideX, data, playerNum) {
   let isP1 = (playerNum === 1);
   
-  // Keep the text anchors where they are, or adjust if they feel too close to the edge
-  let textAnchorX = floor(isP1 ? (width * 0.25) + slideX : (width * 0.75) + slideX);
+  // 1. PUSH TEXT BACK: Change 0.32 back toward 0.20
+  // Try 0.22 for P1 and 0.78 for P2
+  let textAnchorX = isP1 ? (width * 0.22) + slideX : (width * 0.78) + slideX;
 
   if (data.previewImg) {
-    // 1. MAX SCALE: Set height to 100% of the window
-    let imgH = height; 
-    let imgW = (data.previewImg.width / data.previewImg.height) * imgH;
-    
-    let roundedX = floor(slideX);
-
     push();
-    if (!isP1) {
-      // 2. SNAP TO RIGHT EDGE: 
-      // Translate to exactly width + slideX (no 0.05 padding)
-      translate(floor(width + roundedX), 0); 
-      scale(-1, 1);
-      // Align image so the far edge is at 0
-      image(data.previewImg, 0, 0, floor(imgW), floor(imgH));
-    } else {
-      // 3. SNAP TO LEFT EDGE:
-      // Start at exactly slideX
-      image(data.previewImg, roundedX, 0, floor(imgW), floor(imgH));
-    }
+    imageMode(CENTER);
+    let imgH = floor(height * 1.0); 
+    let imgW = floor((data.previewImg.width / data.previewImg.height) * imgH);
+
+    // 2. PUSH IMAGE BACK: Change (width * 0.15) to (width * 0.05)
+    // This moves them closer to the screen edges.
+    let imgX = isP1 ? 
+        floor((imgW * 0.10) + (width * 0.1) + slideX) : 
+        floor(width - (imgW * 0.10) - (width * 0.1) + slideX);
+
+    translate(imgX, height / 2);
+    if (!isP1) scale(-1, 1);
+    image(data.previewImg, 0, 0, imgW, imgH);
     pop();
   }
 
-  // 4. TEXT POSITIONS
-  let nameY = floor(height * 0.77); 
-  let nickY = floor(height * 0.85); 
-  let sectY = floor(height * 0.90); 
-
-  drawTitle(data.name.toUpperCase(), textAnchorX, nameY, width * 0.045);
-  
-  push();
+  // 2. Text Stack - MATCHED SPACING from characterSelectMulti
+  let textBaseY = height * 0.75; 
   textAlign(CENTER, CENTER);
-  textFont(metalFont);
-  fill(255);
-  stroke(255, 0, 0);
-  strokeWeight(1);
+
+  // Name
+  drawTitle(data.name.toUpperCase(), textAnchorX, textBaseY, width * 0.040);
   
-  textSize(width * 0.022); 
-  text(data.nickname.toUpperCase(), textAnchorX, nickY);
+  // Nickname (Match: + height * 0.09)
+  drawTitle(data.nickname.toUpperCase(), textAnchorX, textBaseY + height * 0.09, width * 0.020);
   
-  textSize(width * 0.016);
-  text(data.sect.toUpperCase(), textAnchorX, sectY);
-  pop();
+  // Sect/Archetype (Match: + height * 0.15)
+  let infoText = (data.sect || data.archetype || "").toUpperCase();
+  drawTitle(infoText, textAnchorX, textBaseY + height * 0.15, width * 0.018);
 }

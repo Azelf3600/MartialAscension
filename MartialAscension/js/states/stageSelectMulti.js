@@ -1,79 +1,87 @@
 function drawStageSelectMulti() {
-//Responsive Background so the img is not stretched
   let currentStage = STAGES[selectedStage];
   
+  // 1. Dynamic Background
   if (currentStage && currentStage.img) {
     push();
-    tint(150); //To dim it slightly
-    
-    //BG cover - to avoid img to stretch
+    imageMode(CENTER);
+    tint(120); // Darken for UI legibility
     let scale = Math.max(width / currentStage.img.width, height / currentStage.img.height);
-    
-    let newW = currentStage.img.width * scale;
-    let newH = currentStage.img.height * scale;
-    
-    let offX = (width - newW) / 2;
-    let offY = (height - newH) / 2;
-    
-    image(currentStage.img, offX, offY, newW, newH);
+    image(currentStage.img, width/2, height/2, currentStage.img.width * scale, currentStage.img.height * scale);
     pop();
   } else {
     background(30);
   }
 
-  drawTitle("SELECT ARENA", width / 2, height * 0.15, width * 0.05);
+  // 2. Header (Centered)
+  push();
+  textAlign(CENTER, CENTER);
+  drawTitle("SELECT ARENA", width / 2, height * 0.1, width * 0.05);
+  pop();
 
-  //Selection Grid
-  let barWidth = width * 0.8;
-  let thumbW = width * 0.2;
-  let thumbH = height * 0.15;
-  let spacing = 20;
-  
+  // 3. Stage Thumbnails
+  let thumbW = width * 0.22;
+  let thumbH = height * 0.16;
+  let spacing = 30;
   let totalW = (STAGES.length * thumbW) + ((STAGES.length - 1) * spacing);
   let startX = (width - totalW) / 2;
-  let startY = height * 0.7;
 
-  STAGES.forEach((stage, index) => {
-    let x = startX + index * (thumbW + spacing);
-    let y = startY;
+  // 1. Draw all thumbnails first
+STAGES.forEach((stage, index) => {
+    let x = startX + index * (thumbW + spacing) + thumbW / 2;
+    let y = height * 0.78;
 
-    let isHovered = (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH);
-    
-    // Update to hover
-    if (isHovered) {
+    // Hover logic
+    if (mouseX > x - thumbW/2 && mouseX < x + thumbW/2 && 
+        mouseY > y - thumbH/2 && mouseY < y + thumbH/2) {
       selectedStage = index;
     }
 
+    // Draw Thumbnail Box
     push();
-    // Highlight effect when hovering to gold
-    if (index === selectedStage) {
-      stroke(255, 215, 0); 
-      strokeWeight(5);
-    } else {
-      stroke(255, 50);
-      strokeWeight(2);
-    }
-
-    //Display Thumbnail Image - needs to fix still stretched
-    rect(x, y, thumbW, thumbH, 5);
-    if (stage.img) {
-      image(stage.img, x + 5, y + 5, thumbW - 10, thumbH - 10);
-    }
+    rectMode(CENTER);
+    stroke(index === selectedStage ? [255, 215, 0] : [255, 50]);
+    strokeWeight(index === selectedStage ? 5 : 2);
+    fill(20, 200);
+    rect(x, y, thumbW, thumbH, 8);
     
-    //Stage Name Label
-    if (index === selectedStage) {
-      noStroke();
-      fill(255);
-      textAlign(CENTER);
-      textFont(metalFont);
-      textSize(width * 0.02);
-      text(stage.name.toUpperCase(), x + thumbW / 2, y - 40);
+    if (stage.img) {
+      imageMode(CENTER);
+      image(stage.img, x, y, thumbW - 12, thumbH - 12);
     }
     pop();
-  });
+});
 
-  //Confirmation Prompt
-  drawText("CLICK TO THE MATCH", width / 2, height * 0.92, width * 0.015);
-  
-  drawBackButton();
+// 2. DRAW ARENA NAME HERE (Outside the loop for perfect centering)
+if (STAGES[selectedStage]) {
+  push();
+  textAlign(CENTER, CENTER);
+  // ADJUST THESE TWO NUMBERS TO MOVE THE NAME:
+  //             X-Pos      Y-Pos         Size
+  drawTitle(STAGES[selectedStage].name.toUpperCase(), width/2, height * 0.63, width * 0.025);
+  pop();
+}
+
+  // 4. Start Prompt (Matched Font)
+  push();
+  textAlign(CENTER, CENTER);
+  textFont(metalFont); // Using your metal font for consistency
+  fill(255);
+  textSize(width * 0.015);
+  text("CLICK ANYWHERE TO START MATCH", width / 2, height * 0.93);
+  pop();
+
+  // 5. Shared Back Button
+  if (typeof drawBackButton === "function") {
+    drawBackButton();
+  } else {
+    // Fallback if drawBackButton isn't global
+    push();
+    textAlign(LEFT, TOP);
+    textFont(metalFont);
+    fill(255);
+    textSize(width * 0.015);
+    text("< BACK", width * 0.05, height * 0.05);
+    pop();
+  }
 }

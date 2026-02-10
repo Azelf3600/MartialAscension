@@ -2,8 +2,8 @@ const GAME_STATE = {
   MENU: "menu",
   CHARACTER_SELECT: "character_select",
   CHARACTER_SELECT_MULTI: "character_select_multi",
-  STAGE_SELECT:"stage_select",
-  STAGE_SELECT_MULTI:"stage_select_multi",
+  STAGE_SELECT: "stage_select",
+  STAGE_SELECT_MULTI: "stage_select_multi",
   MATCH: "match",
   MATCH_MULTI: "match_multi",
   PAUSE_MENU: "pause_menu",
@@ -13,20 +13,36 @@ const GAME_STATE = {
 };
 
 let currentState = GAME_STATE.MENU;
+let p1Buffer;
+let p2Buffer;
+let gameCamera; // Declare it here
 
 function preload() {
-  //to preload fonts and images, function found in mainMenu.js
+  // Preload fonts and images (found in mainMenu.js)
   preloadMainMenu();
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  textAlign(CENTER, CENTER);
-  setupMenuLayout(); 
+
+  // ADD THESE TWO LINES:
+  rectMode(CENTER); 
+  imageMode(CENTER);
+  
+  gameCamera = new CameraSystem(); // Initialize it here
+  gameCamera.pos = createVector(width/2, height/2);
+  
+  p1Buffer = new InputBuffer();
+  p2Buffer = new InputBuffer();
+  
+  setupMenuLayout();
 }
 
 function draw() {
-  background(0);
+  resetMatrix();      // Clears camera movement
+  background(0);      // Redraws the floor
+  push();      // Resets drawing styles (colors, stroke, etc.)
+
 
   switch (currentState) {
     case GAME_STATE.MENU:
@@ -36,7 +52,7 @@ function draw() {
     case GAME_STATE.CHARACTER_SELECT:
       drawCharacterSelect();
       break;
-    
+
     case GAME_STATE.CHARACTER_SELECT_MULTI:
       drawCharacterSelectMulti();
       break;
@@ -44,7 +60,7 @@ function draw() {
     case GAME_STATE.STAGE_SELECT:
       drawStageSelect();
       break;
-    
+
     case GAME_STATE.STAGE_SELECT_MULTI:
       drawStageSelectMulti();
       break;
@@ -58,13 +74,18 @@ function draw() {
       break;
 
     case GAME_STATE.MATCH:
+      // Single player input cleanup
+      p1Buffer.update();
       drawMatch();
       break;
 
     case GAME_STATE.MATCH_MULTI:
+      // Multi player input cleanup
+      p1Buffer.update();
+      p2Buffer.update();
       drawMatchMulti();
       break;
-    
+
     case GAME_STATE.PAUSE_MENU:
       drawPauseMenu();
       break;
@@ -72,16 +93,18 @@ function draw() {
     case GAME_STATE.PAUSE_MENU_MULTI:
       drawPauseMenuMulti();
       break;
-
   }
+  pop(); 
 
-  //DEBUG STATE and FRAMES OVERLAY(for debugging purposes)
+  // DEBUG STATE and FPS OVERLAY
   push();
-  fill(255);
+  fill(255); 
   noStroke();
   textAlign(LEFT, TOP);
+  textFont('sans-serif');
   textSize(14);
-  text("STATE: " + currentState + "\nFRAME: " + frameCount, 10, 10);
+  text("STATE: " + currentState, 10, 10);
+  text("FPS:   " + floor(frameRate()), 10, 28);
   pop();
 }
 
@@ -93,55 +116,102 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  setupMenuLayout();
+  
+  // Recalculate menu positions based on the new width/height
+  if (typeof setupMenuLayout === "function") {
+    setupMenuLayout();
+  }
+  
+  // Update camera center to match new screen size
+  if (gameCamera) {
+    gameCamera.pos.x = width / 2;
+    gameCamera.pos.y = height / 2;
+  }
 }
 
-//Keyboard function for multiplayer character selection
 function keyPressed() {
+  // --- MULTIPLAYER CHARACTER SELECTION CONTROLS ---
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
-    
-    //PLAYER 1 Controls
+    // PLAYER 1 Selection
     if (!p1Ready) {
       if (key === 'd' || key === 'D') p1Selected = (p1Selected + 1) % FIGHTERS.length;
       if (key === 'a' || key === 'A') p1Selected = (p1Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
       if (key === 'f' || key === 'F') p1Ready = true;
     }
 
-    //PLAYER 2 Controls
+    // PLAYER 2 Selection
     if (!p2Ready) {
       if (keyCode === RIGHT_ARROW) p2Selected = (p2Selected + 1) % FIGHTERS.length;
       if (keyCode === LEFT_ARROW) p2Selected = (p2Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
       if (keyCode === ENTER) p2Ready = true;
     }
 
-    //Move to Stage Select Multi
+    // Start Stage Selection
     if (p1Ready && p2Ready && key === ' ') {
       setTimeout(() => {
-        currentState = GAME_STATE.STAGE_SELECT_MULTI; 
+        currentState = GAME_STATE.STAGE_SELECT_MULTI;
       }, 500);
     }
-    
-    //Selection Reset
+
+    // Reset Selection
     if (key === 'q' || key === 'Q') {
       p1Ready = false;
       p2Ready = false;
     }
   }
+
+  // --- MATCH INPUT RECORDING (COMBO SYSTEM) ---
+  if (currentState === GAME_STATE.MATCH || currentState === GAME_STATE.MATCH_MULTI) {
+    if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
+    if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
+  }
 }
 
-//Stage Selection for Single Player
+function handleRecording(char, buffer, code) {
+  let move = InputBuffer.getDirectionalInput(code, char);
+
+  if (!move) {
+    if (code === char.controls.lightPunch) move = "LP";
+    else if (code === char.controls.heavyPunch) move = "HP";
+    else if (code === char.controls.lightKick) move = "LK";
+    else if (code === char.controls.heavyKick) move = "HK";
+  }
+
+  if (move) {
+    // 1. Check for combo FIRST
+    buffer.recordInput(move);
+    let result = checkCombo(buffer, STANDARD_COMBOS);
+
+    if (result) {
+      // COMBO PRIORITY: Force stop the previous attack to show the finisher
+      char.attackTimer = 0; 
+      char.executeCombo(result);
+      return; // Exit immediately
+    }
+
+    // 2. INPUT LOCK for standard moves only
+    // This prevents "LP" from overwriting another "LP" too early
+    if (char.attackTimer > 6) return; 
+
+    // 3. STANDARD ATTACK
+    if (move === "LP" || move === "HP" || move === "LK" || move === "HK") {
+      char.startAttack(move);
+    }
+  }
+}
+
 function mouseReleased() {
-  //Back Button Check
+  // Back Button Logic
   if (currentState === GAME_STATE.CHARACTER_SELECT || currentState === GAME_STATE.STAGE_SELECT) {
     let backBtn = { x: width * 0.1, y: height * 0.9, w: width * 0.1, h: height * 0.05 };
     if (isHovering(backBtn)) {
       if (currentState === GAME_STATE.STAGE_SELECT) currentState = GAME_STATE.CHARACTER_SELECT;
       else currentState = GAME_STATE.MENU;
-      return; 
+      return;
     }
   }
 
-  //Fighter Selection Check
+  // Fighter Selection (Single Player)
   if (currentState === GAME_STATE.CHARACTER_SELECT) {
     let cols = 4;
     let spacing = width * 0.02;
@@ -156,57 +226,41 @@ function mouseReleased() {
       let y = centerY - boxH / 2;
 
       if (mouseX > x && mouseX < x + boxW && mouseY > y && mouseY < y + boxH) {
-        selectedChar = index; //Store P1 choice
-        currentState = GAME_STATE.STAGE_SELECT; //Go to Stage Select
+        selectedChar = index;
+        currentState = GAME_STATE.STAGE_SELECT;
       }
     });
   }
 
-  //Stage Select Single Player Mode 
+  // Stage Selection (Single Player)
   if (currentState === GAME_STATE.STAGE_SELECT) {
-    let thumbW = width * 0.2;
-    let thumbH = height * 0.15;
-    let spacing = 20;
-    let totalW = (STAGES.length * thumbW) + ((STAGES.length - 1) * spacing);
-    let startX = (width - totalW) / 2;
-    let startY = height * 0.7;
-
-    STAGES.forEach((s, i) => {
-        let x = startX + i * (thumbW + spacing);
-        let y = startY;
-
-        if (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH) {
-            selectedStage = i; //Store selected stage
-            console.log("Stage Selected:", s.name);
-            
-            //Move to Match
-            currentState = GAME_STATE.MATCH;
-        }
-    });
+    handleStageSelection(GAME_STATE.MATCH);
   }
 
-  //Stage Select Multiplayer Mode
+  // Stage Selection (Multiplayer)
   if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
-    let thumbW = width * 0.2;
-    let thumbH = height * 0.15;
-    let spacing = 20;
-    let totalW = (STAGES.length * thumbW) + ((STAGES.length - 1) * spacing);
-    let startX = (width - totalW) / 2;
-    let startY = height * 0.7;
-
-    STAGES.forEach((s, i) => {
-        let x = startX + i * (thumbW + spacing);
-        let y = startY;
-
-        if (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH) {
-            selectedStage = i; //Store selected stage
-            console.log("Stage Selected:", s.name);
-            
-            //Move to Match
-            currentState = GAME_STATE.LOADING_MATCH_MULTI; // Move to loading first!
-        }
-    });
-
-    
+    handleStageSelection(GAME_STATE.LOADING_MATCH_MULTI);
   }
+}
+
+/**
+ * Helper to handle stage selection logic for both modes
+ */
+function handleStageSelection(nextState) {
+  let thumbW = width * 0.2;
+  let thumbH = height * 0.15;
+  let spacing = 20;
+  let totalW = (STAGES.length * thumbW) + ((STAGES.length - 1) * spacing);
+  let startX = (width - totalW) / 2;
+  let startY = height * 0.7;
+
+  STAGES.forEach((s, i) => {
+    let x = startX + i * (thumbW + spacing);
+    let y = startY;
+
+    if (mouseX > x && mouseX < x + thumbW && mouseY > y && mouseY < y + thumbH) {
+      selectedStage = i;
+      currentState = nextState;
+    }
+  });
 }

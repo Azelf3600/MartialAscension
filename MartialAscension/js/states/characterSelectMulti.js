@@ -5,173 +5,130 @@ let p2Ready = false;
 
 function drawCharacterSelectMulti() { 
   background(20);
-  
   let centerX = width / 2;
   
-  //VS text in the middle
+  // VS Title
   push();
   textAlign(CENTER, CENTER);
-  textSize(width * 0.15);
-  fill(255, 5);
-  drawTitle("VS", centerX, height * 0.4, width * 0.15);
+  drawTitle("VS", centerX, height * 0.4, width * 0.12);
   pop();
 
+  // Top Prompts
   push();
   textFont(metalFont);
   textAlign(CENTER, CENTER);
-  textSize(width * 0.015);
-  
-  //Player 1 Prompt
-  if (!p1Ready) {
-    fill(0, 150, 255, 200); //Blue tint
-    text("PRESS 'F' TO CONFIRM", width * 0.15, height * 0.15);
-  }
-
-  // Player 2 Prompt
-  if (!p2Ready) {
-    fill(255, 50, 50, 200); //Red Tint
-    text("PRESS 'ENTER' TO CONFIRM", width * 0.85, height * 0.15);
-  }
+  textSize(width * 0.012);
+  if (!p1Ready) { fill(0, 150, 255); text("PRESS 'F' TO CONFIRM", width * 0.13, height * 0.06); }
+  if (!p2Ready) { fill(255, 50, 50); text("PRESS 'ENTER' TO CONFIRM", width * 0.87, height * 0.06); }
   pop();
 
-  //Player 1 Preview(Left)
-  drawMultiplayerPreview(0, p1Selected, p1Ready);
-  //Player 2 Preview(Right)
-  drawMultiplayerPreview(width - width * 0.3, p2Selected, p2Ready);
+  // Draw Large Previews
+  drawMultiplayerPreview(0, p1Selected, p1Ready, 1);
+  drawMultiplayerPreview(width, p2Selected, p2Ready, 2);
 
-  //For columns, this is relative to the array in data/characters.js
+  // Character Grid - Restored Icon Size
   let totalFighters = FIGHTERS.length;
-  let cols = totalFighters > 4 ? Math.ceil(Math.sqrt(totalFighters)) : totalFighters;
-  
-  let iconSize = width * 0.075;
-  let spacing = 10;
+  let cols = 4; 
+  let iconSize = width * 0.075; // Increased back to original size
+  let spacing = 15;
   let gridW = (cols * iconSize) + ((cols - 1) * spacing);
   let startX = (width - gridW) / 2;
-  let startY = height * 0.6;
+  let startY = height * 0.60; // Positioned relative to the VS title
 
   FIGHTERS.forEach((fighter, index) => {
     let col = index % cols;
     let row = Math.floor(index / cols);
-    let x = startX + col * (iconSize + spacing);
-    let y = startY + row * (iconSize + spacing);
+    let x = startX + col * (iconSize + spacing) + iconSize / 2;
+    let y = startY + row * (iconSize + spacing) + iconSize / 2;
 
     push();
-    //Border colors when selecting for two players
-    if (index === p1Selected && index === p2Selected) {
-      strokeWeight(4);
-      stroke(255); //White if both hovering same icon
-    } else if (index === p1Selected) {
-      strokeWeight(4);
-      stroke(0, 100, 255); //Blue for P1
-    } else if (index === p2Selected) {
-      strokeWeight(4);
-      stroke(255, 0, 0); //Red for P2
-    } else {
-      stroke(50);
-      strokeWeight(1);
-    }
-    
-    //Character Selection Grid 
-    fill(20);
+    rectMode(CENTER);
+    if (index === p1Selected && index === p2Selected) { strokeWeight(4); stroke(255); }
+    else if (index === p1Selected) { strokeWeight(4); stroke(0, 100, 255); }
+    else if (index === p2Selected) { strokeWeight(4); stroke(255, 0, 0); }
+    else { stroke(255, 20); strokeWeight(1); }
+    fill(30);
     rect(x, y, iconSize, iconSize, 5);
 
     if (fighter.thumbImg) {
-    let imgRatio = fighter.thumbImg.width / fighter.thumbImg.height;
-    let iW, iH;
-    if (imgRatio > 1) { 
-    iW = iconSize - 10;
-    iH = iW / imgRatio;
-    } else { 
-    iH = iconSize - 10;
-    iW = iH * imgRatio;
-    }
-    let ox = (iconSize - iW) / 2;
-    let oy = (iconSize - iH) / 2;
-    image(fighter.thumbImg, x + ox, y + oy, iW, iH);
+      imageMode(CENTER);
+      image(fighter.thumbImg, x, y, iconSize - 10, iconSize - 10);
     }
     pop();
     
-    //Player indicators on the icons if they are P1 or P2
-    if (index === p1Selected) drawTag("P1", x, y, [0, 100, 255]);
-    if (index === p2Selected) drawTag("P2", x + iconSize, y, [255, 0, 0]);
+    // Tag drawing logic
+    if (index === p1Selected) drawTag("P1", x - iconSize/2, y - iconSize/2, [0, 100, 255]);
+    if (index === p2Selected) drawTag("P2", x + iconSize/2, y - iconSize/2, [255, 0, 0]);
   });
 
-  //Move to stage select multiplayer mode 
+  // Final Prompts
   if (p1Ready && p2Ready) {
-    drawText("PRESS SPACE TO CHOOSE STAGE OR PRESS Q TO CANCEL", centerX, height * 0.9, width * 0.02);
+    push();
+    textAlign(CENTER, CENTER);
+    drawTitle("PRESS SPACE TO CHOOSE STAGE", centerX, height * 0.85, width * 0.02);
+    // Fixed 'Q' prompt color and font to match Space prompt
+    drawTitle("OR PRESS 'Q' TO CANCEL", centerX, height * 0.92, width * 0.015);
+    pop();
   }
 
-  drawBackButton();
+  if (typeof drawBackButton === "function") drawBackButton();
 }
 
-//Drawing preview
-function drawMultiplayerPreview(posX, index, isReady) {
+function drawMultiplayerPreview(edgeX, index, isReady, playerNum) {
   let fighter = FIGHTERS[index];
-  let previewW = width * 0.3;
-  let previewH = height * 0.9; 
+  let isP1 = (playerNum === 1);
+  
+  // ADJUSTED: Moved P1 further right and P2 further left to center the text block 
+  // under the characters properly.
+  let drawCenterX = isP1 ? width * 0.17 : width * 0.83; 
   
   push();
   if (isReady) {
-    drawingContext.shadowBlur = 20;
-    drawingContext.shadowColor = posX === 0 ? 'blue' : 'red';
+    drawingContext.shadowBlur = 40;
+    drawingContext.shadowColor = isP1 ? 'rgba(67, 84, 243, 0.8)' : 'rgba(255, 28, 59, 0.8)';
   }
 
+  // Preview Image
   if (fighter.previewImg) {
-    let imgRatio = fighter.previewImg.width / fighter.previewImg.height;
-    let areaRatio = previewW / previewH;
-    let drawW, drawH;
-
-    if (imgRatio > areaRatio) {
-      drawW = previewW;
-      drawH = previewW / imgRatio;
-    } else {
-      drawH = previewH;
-      drawW = drawH * imgRatio;
-    }
-
-    let yOffset = (previewH - drawH) / 2;
-    let xOffset = (previewW - drawW) / 2;
-
-    if (posX > 0) {
-      push();
-      translate(posX + xOffset + drawW, height * 0.2 + yOffset);
-      scale(-1, 1);
-      image(fighter.previewImg, 0, 0, drawW, drawH); 
-      pop();
-    } else {
-      image(fighter.previewImg, posX + xOffset, height * 0.2 + yOffset, drawW, drawH);
-    }
+    push();
+    imageMode(CENTER);
+    let h = height * 0.9; 
+    let w = (fighter.previewImg.width / fighter.previewImg.height) * h;
+    translate(isP1 ? w/2 - (width*0.01) : width - w/2 + (width*0.01), height - (h/2)); 
+    if (!isP1) scale(-1, 1);
+    image(fighter.previewImg, 0, 0, w, h);
+    pop();
   }
 
-//Name and Nickname
-  textAlign(CENTER);
-  
+  // Text Stack - Anchored for centering
+  let textBaseY = height * 0.75; 
+  textAlign(CENTER, CENTER); // Force centering for the stack
+
   if (isReady) {
-    //If Ready, ONLY show "READY"
-    fill(0, 255, 0);
-    drawTitle("READY", posX + previewW / 2, height * 0.75, width * 0.03);
+    drawTitle("READY", drawCenterX, textBaseY, width * 0.03);
   } else {
+    // 1. Name
+    drawTitle(fighter.name.toUpperCase(), drawCenterX, textBaseY, width * 0.040);
     
-    //If NOT ready, show Name + Nickname
-    //Main Name
-    fill(255);
-    drawTitle(fighter.name.toUpperCase(), posX + previewW / 2, height * 0.75, width * 0.03);
+    // 2. Nickname (Centered under Name)
+    drawTitle(fighter.nickname.toUpperCase(), drawCenterX, textBaseY + height * 0.09, width * 0.020);
     
-    //Nickname under the name
-    if (fighter.nickname) {
-      fill(200); 
-      drawTitle(fighter.nickname.toUpperCase(), posX + previewW / 2, height * 0.81, width * 0.015);
-    }
+    // 3. Archetype (Centered under Nickname)
+    drawTitle(fighter.archetype.toUpperCase(), drawCenterX, textBaseY + height * 0.15, width * 0.018);
   }
-  
   pop();
 }
 
+// Fixed drawTag function
 function drawTag(txt, x, y, col) {
+  push();
+  rectMode(CENTER);
   fill(col);
   noStroke();
-  rect(x - 10, y - 10, 25, 15, 3);
+  rect(x, y, 30, 18, 4);
   fill(255);
-  textSize(10);
-  text(txt, x + 2, y - 2);
+  textAlign(CENTER, CENTER);
+  textSize(11);
+  text(txt, x, y);
+  pop();
 }

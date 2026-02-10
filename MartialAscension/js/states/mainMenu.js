@@ -44,6 +44,8 @@ function setupMenuLayout() {
 
 function drawMenu() {
   background(20); 
+  push();
+  textAlign(CENTER, CENTER); // Force alignment for the menu specifically
   
   let centerX = width / 2;
   let centerY = height / 2;
@@ -55,6 +57,7 @@ function drawMenu() {
   drawButton("Multiplayer", multiBtn);
 
   drawText("Starloom 2025", centerX, height - height * 0.05, width * 0.015);
+  pop();
 }
 
 //Delay when clicked 
