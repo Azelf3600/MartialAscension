@@ -15,21 +15,19 @@ const GAME_STATE = {
 let currentState = GAME_STATE.MENU;
 let p1Buffer;
 let p2Buffer;
-let gameCamera; // Declare it here
+let gameCamera; 
 
 function preload() {
-  // Preload fonts and images (found in mainMenu.js)
+  // Preload fonts and images
   preloadMainMenu();
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-
-  // ADD THESE TWO LINES:
   rectMode(CENTER); 
   imageMode(CENTER);
   
-  gameCamera = new CameraSystem(); // Initialize it here
+  gameCamera = new CameraSystem(); 
   gameCamera.pos = createVector(width/2, height/2);
   
   p1Buffer = new InputBuffer();
@@ -39,9 +37,9 @@ function setup() {
 }
 
 function draw() {
-  resetMatrix();      // Clears camera movement
-  background(0);      // Redraws the floor
-  push();      // Resets drawing styles (colors, stroke, etc.)
+  resetMatrix();  
+  background(0);   
+  push();     
 
 
   switch (currentState) {
@@ -74,13 +72,11 @@ function draw() {
       break;
 
     case GAME_STATE.MATCH:
-      // Single player input cleanup
       p1Buffer.update();
       drawMatch();
       break;
 
     case GAME_STATE.MATCH_MULTI:
-      // Multi player input cleanup
       p1Buffer.update();
       p2Buffer.update();
       drawMatchMulti();
@@ -130,7 +126,7 @@ function windowResized() {
 }
 
 function keyPressed() {
-  // --- MULTIPLAYER CHARACTER SELECTION CONTROLS ---
+  //MULTIPLAYER CHARACTER SELECTION CONTROLS
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
     // PLAYER 1 Selection
     if (!p1Ready) {
@@ -160,7 +156,7 @@ function keyPressed() {
     }
   }
 
-  // --- MATCH INPUT RECORDING (COMBO SYSTEM) ---
+  //MATCH INPUT RECORDING (COMBO SYSTEM)
   if (currentState === GAME_STATE.MATCH || currentState === GAME_STATE.MATCH_MULTI) {
     if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
     if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
@@ -178,7 +174,7 @@ function handleRecording(char, buffer, code) {
   }
 
   if (move) {
-    // 1. Check for combo FIRST
+    //Check for combo FIRST
     buffer.recordInput(move);
     let result = checkCombo(buffer, STANDARD_COMBOS);
 
@@ -186,33 +182,27 @@ function handleRecording(char, buffer, code) {
       char.attackTimer = 0; 
       char.executeCombo(result);
       
-      // ✅ ADD: Preserve dash momentum when canceling into combo
       if (char.isDashing) {
-        char.isDashing = false; // Stop dash animation
+        char.isDashing = false;
         char.dashTimer = 0;
-        // But keep the velocity! Don't reset velX
       }
       return;
     }
 
     if (char.attackTimer > 6) return; 
 
-    // 3. STANDARD ATTACK
     if (move === "LP" || move === "HP" || move === "LK" || move === "HK") {
       char.startAttack(move);
       
-      // ✅ ADD: Preserve dash momentum when canceling into attack
       if (char.isDashing) {
         char.isDashing = false;
         char.dashTimer = 0;
-        // Keep velX for sliding attacks
       }
     }
   }
 }
 
 function mouseReleased() {
-  // Back Button Logic
   if (currentState === GAME_STATE.CHARACTER_SELECT || currentState === GAME_STATE.STAGE_SELECT) {
     let backBtn = { x: width * 0.1, y: height * 0.9, w: width * 0.1, h: height * 0.05 };
     if (isHovering(backBtn)) {
@@ -254,9 +244,6 @@ function mouseReleased() {
   }
 }
 
-/**
- * Helper to handle stage selection logic for both modes
- */
 function handleStageSelection(nextState) {
   let thumbW = width * 0.2;
   let thumbH = height * 0.15;

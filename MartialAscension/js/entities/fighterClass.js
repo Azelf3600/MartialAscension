@@ -10,7 +10,7 @@ class Character {
     this.name = name;
     this.controls = controls;
     this.archetype = archetype;
-    this.consecutiveAirHits = 0; // Track hits while airborne
+    this.consecutiveAirHits = 0;
 
     // Archetype Stat Calculator
     if (this.archetype === "Offensive") {
@@ -46,7 +46,7 @@ class Character {
     this.dashDirection = 0;
     this.dashTimer = 0;
     this.dashMaxSpeed = 0;
-    this.dashTrail = []; // For visual afterimage effect
+    this.dashTrail = [];
 
     this.attacking = null;
     this.hasHit = false;
@@ -59,8 +59,7 @@ class Character {
     this.comboHits = [];
     this.currentComboHit = 0;
     this.comboHitTimer = 0;
-    this.lastHitIndex = -1; // ← NEW: Track which hit last connected
-
+    this.lastHitIndex = -1;
 
     this.isHit = false;
     this.hitStun = 0;
@@ -98,69 +97,58 @@ class Character {
   this.isBlocking = keyIsDown(this.controls.block) && this.isGrounded;
   if (this.isBlocking) this.speed *= 0.3;
 
-  // ✅ FIXED TEKKEN-STYLE DASH - BALANCED FOR BOTH PLAYERS
   if (!this.attacking && this.isGrounded) {
     let buffer = (this === player1) ? p1Buffer : p2Buffer;
     
     if (buffer.checkDoubleTap("FW")) {
-      // Forward Dash
       this.isDashing = true;
-      this.dashDirection = this.facing; // ✅ Store actual facing direction
+      this.dashDirection = this.facing; 
       this.dashTimer = 22;
-      this.dashMaxSpeed = 18; // ✅ ABSOLUTE speed (no facing multiplier)
+      this.dashMaxSpeed = 18; 
       this.velX = this.facing * 8;
     } else if (buffer.checkDoubleTap("BW")) {
-      // Backdash
       this.isDashing = true;
-      this.dashDirection = -this.facing; // ✅ Opposite of facing
+      this.dashDirection = -this.facing; 
       this.dashTimer = 20;
-      this.dashMaxSpeed = 14; // ✅ ABSOLUTE speed
+      this.dashMaxSpeed = 14;
       this.velX = -this.facing * 6;
     }
   }
 
-  // Active Dash Momentum
   if (this.isDashing && this.dashTimer > 0) {
     this.dashTimer--;
     
-    // Acceleration phase (first ~13 frames)
     if (this.dashTimer > 9) {
       let accel = (this.dashDirection === this.facing) ? 2.5 : 2.0;
-      this.velX += this.dashDirection * accel; // ✅ Use dashDirection only
+      this.velX += this.dashDirection * accel; 
       
-      // ✅ FIXED: Cap using absolute values
       let currentSpeed = abs(this.velX);
       let maxSpeed = (this.dashDirection === this.facing) ? this.dashMaxSpeed : this.dashMaxSpeed * 0.78;
       
       if (currentSpeed > maxSpeed) {
-        this.velX = this.dashDirection * maxSpeed; // ✅ Apply direction to max speed
+        this.velX = this.dashDirection * maxSpeed; 
       }
     }
     
-    // End of dash
     if (this.dashTimer <= 0) {
       this.isDashing = false;
       this.dashDirection = 0;
     }
   }
 
-  // Normal Walking
   if (!this.attacking) {
     if (keyIsDown(this.controls.left)) this.x -= this.speed;
     if (keyIsDown(this.controls.right)) this.x += this.speed;
   }
 
-  // Apply velocity
   this.x += this.velX;
   
-  // Friction
   if (this.isDashing) {
     this.velX *= 0.94;
   } else {
     this.velX *= 0.82;
   }
   
-  // Crouch
   if (keyIsDown(this.controls.crouch) && this.isGrounded) {
     if (this.h !== this.crouchH) {
       this.y += (this.h - this.crouchH);
@@ -173,7 +161,6 @@ class Character {
     }
   }
 
-  // Jump
   if (keyIsDown(this.controls.jump) && this.isGrounded && !this.attacking) {
     this.velY = -this.jumpPower;
     this.isGrounded = false;
@@ -191,10 +178,9 @@ applyPhysics(groundY) {
     this.velY = 0;
     this.isGrounded = true;
     
-    // --- RESET SCALING HERE ---
-    this.gravity = height * 0.003; // Reset to default gravity
-    this.consecutiveAirHits = 0;   // Reset hit counter
-    this.velX = 0;                 // Stop knockback momentum
+    this.gravity = height * 0.003; 
+    this.consecutiveAirHits = 0;   
+    this.velX = 0;                 
   }
 }
 
@@ -202,36 +188,29 @@ applyPhysics(groundY) {
   if (this.attackTimer > 0) {
     this.attackTimer--;
     
-    // Handle combo progression
     if (this.isPerformingCombo && this.comboHits.length > 0) {
       this.comboHitTimer--;
       
-      // Move to next hit when current hit finishes
       if (this.comboHitTimer <= 0) {
         if (this.currentComboHit < this.comboHits.length - 1) {
-          // Progress to next hit
           this.currentComboHit++;
           this.comboHitTimer = this.comboHits[this.currentComboHit].duration;
-          this.hasHit = false; // Reset so next hit can register
-          this.lastHitIndex = -1; // Reset hit tracker
+          this.hasHit = false; 
+          this.lastHitIndex = -1; 
         } else {
-          // ✅ FIX: On the FINAL hit, lock it after first connection
-          // This prevents the last hit from registering multiple times
           if (this.hasHit) {
-            this.lastHitIndex = this.currentComboHit; // Lock this hit
+            this.lastHitIndex = this.currentComboHit; 
           }
         }
       }
     }
     
-    // Combo/attack finished
     if (this.attackTimer <= 0) {
       this.recoveryTimer = !this.isPerformingCombo ? 12 : 4;
       this.attacking = null;
       this.isPerformingCombo = false;
       this.comboDamageMod = 1.0;
       
-      // Reset combo tracking
       this.comboHits = [];
       this.currentComboHit = 0;
       this.comboHitTimer = 0;
@@ -254,24 +233,18 @@ executeCombo(comboData) {
   this.isPerformingCombo = true;
   this.comboDamageMod = comboData.damageMult;
 
-  // ✅ FIX: Clear floating damage numbers from previous attacks
-  // This prevents visual confusion
   if (typeof damageIndicators !== 'undefined') {
     damageIndicators = damageIndicators.filter(ind => ind.life < 100);
-    // Only keeps very fresh indicators (< 100 life means they just spawned)
   }
 
-  // NEW: Set up multi-hit progression
   this.comboHits = comboData.hits || [];
   this.currentComboHit = 0;
 
   if (this.comboHits.length > 0) {
-    // Calculate total duration
     let totalDuration = this.comboHits.reduce((sum, hit) => sum + hit.duration, 0);
     this.attackTimer = totalDuration;
     this.comboHitTimer = this.comboHits[0].duration;
   } else {
-    // Fallback if no hits defined
     this.attackTimer = 25;
     this.comboHitTimer = 25;
   }
@@ -283,12 +256,10 @@ executeCombo(comboData) {
   draw() {
   push();
   
-  // ✅ DASH AFTERIMAGE EFFECT
   if (this.isDashing && this.dashTimer > 0) {
-    // Draw 3 fading afterimages behind the character
     for (let i = 1; i <= 3; i++) {
-      let trailX = this.x - (this.velX * i * 0.3); // Position behind based on velocity
-      let alpha = 100 - (i * 25); // Fade out
+      let trailX = this.x - (this.velX * i * 0.3); 
+      let alpha = 100 - (i * 25);
       
       push();
       fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], alpha);
@@ -297,17 +268,15 @@ executeCombo(comboData) {
       pop();
     }
     
-    // Glowing outline on main character
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
   }
   
-  // Main character rendering
   strokeWeight(2);
   if (this.isHit) stroke(255, 0, 0);
   else if (this.recoveryTimer > 0) stroke(100);
   else if (this.attackTimer > 0) stroke(255, 255, 0);
-  else if (this.isDashing) stroke(255, 255, 255, 200); // White stroke during dash
+  else if (this.isDashing) stroke(255, 255, 255, 200);
   else stroke(0);
 
   fill(this.color);
@@ -353,33 +322,27 @@ executeCombo(comboData) {
   let col = color(255, 150);
   let innerOverlap = 10;
   
-  // Determine actual attack type
   let actualAttack = this.attacking;
   
-  // If performing combo, use current hit's attack type
   if (this.isPerformingCombo && this.comboHits.length > 0) {
     actualAttack = this.comboHits[this.currentComboHit].attack;
   }
   
-  // Special handling for Launcher's HP finisher
   if (this.attacking === "Launcher" && actualAttack === "HP") {
     col = color(255, 165, 0, 150);
     
-    // Horizontal Base (The sweep)
     let baseW = 150;
     let baseH = 20;
     let baseY = this.y + this.h * 0.3;
     let baseX = (this.facing === 1) ? (this.x + this.w - innerOverlap) : (this.x - baseW + innerOverlap);
     shapes.push({ x: baseX, y: baseY, w: baseW, h: baseH });
 
-    // Vertical Pillar (The "Up" part)
     let pillW = 20;
     let pillH = 100;
     let pillX = (this.facing === 1) ? (baseX + baseW - pillW) : baseX;
     shapes.push({ x: pillX, y: baseY - (pillH - baseH), w: pillW, h: pillH });
   }
   else {
-    // Standard rectangular hitboxes based on attack type
     let atkW = 0, atkH = 0, offY = 0;
 
     if (actualAttack === "LP") {
@@ -395,15 +358,12 @@ executeCombo(comboData) {
       atkW = 200; atkH = 40; offY = 100; col = color(255, 0, 0, 150);
     }
     else if (actualAttack === "DW") {
-      // Crouch/down input - small startup hitbox
       atkW = 50; atkH = 15; offY = 80; col = color(150, 150, 255, 150);
     }
     else if (actualAttack === "FW") {
-      // Forward dash - small hitbox
       atkW = 80; atkH = 20; offY = 60; col = color(100, 200, 255, 150);
     }
     
-    // Fallback for undefined attacks
     if (atkW === 0) {
       atkW = 150; atkH = 20; offY = 30; col = color(255, 0, 255, 150);
     }

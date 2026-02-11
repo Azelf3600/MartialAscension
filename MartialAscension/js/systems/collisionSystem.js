@@ -1,22 +1,18 @@
 function checkHit(attacker, defender) {
   if (attacker.attacking && attacker.attackTimer > 0) {
     
-    // ✅ FIX: Enhanced hit-once-per-segment protection
     let currentHitIndex = attacker.isPerformingCombo ? attacker.currentComboHit : -1;
     
-    // If this specific combo segment already hit, skip entirely
     if (currentHitIndex === attacker.lastHitIndex && attacker.hasHit) {
-      return; // This hit already connected, skip
+      return; 
     }
     
-    // ✅ FIX: For non-combo attacks, prevent re-hitting during same attack
     if (!attacker.isPerformingCombo && attacker.hasHit) {
-      return; // Single attacks only hit once
+      return; 
     }
     
     let data = attacker.getHitboxData();
     
-    // Loop through all shapes in the hitbox (supports the L-shape)
     for (let box of data.shapes) {
       if (box.x < defender.x + defender.w &&
           box.x + box.w > defender.x &&
@@ -25,17 +21,15 @@ function checkHit(attacker, defender) {
         
         let baseDmg = 10; 
         
-        // Check if we're in a combo and use actual attack type
         if (attacker.isPerformingCombo && attacker.comboHits.length > 0) {
           let actualAttack = attacker.comboHits[attacker.currentComboHit].attack;
           if (actualAttack === "LP") baseDmg = 10;
           else if (actualAttack === "HP") baseDmg = 20;
           else if (actualAttack === "LK") baseDmg = 15;
           else if (actualAttack === "HK") baseDmg = 25;
-          else if (actualAttack === "DW") baseDmg = 5;  // Launcher startup
-          else if (actualAttack === "FW") baseDmg = 5;  // Launcher dash
+          else if (actualAttack === "DW") baseDmg = 5;  
+          else if (actualAttack === "FW") baseDmg = 5;  
         } else {
-          // Standard single attacks
           if (attacker.attacking === "LP") baseDmg = 10;
           else if (attacker.attacking === "LK") baseDmg = 15;
           else if (attacker.attacking === "HP") baseDmg = 20;
@@ -55,17 +49,15 @@ function checkHit(attacker, defender) {
         applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback);
         
         attacker.hasHit = true;
-        attacker.lastHitIndex = currentHitIndex; // ← NEW: Track which hit connected
+        attacker.lastHitIndex = currentHitIndex; 
 
         if (attacker.attacking === "Launcher" && !defender.isBlocking) {
           if (defender.isGrounded) {
-            // 1st Launch: Big power
             defender.consecutiveAirHits = 1; 
             defender.velY = -defender.jumpPower * 1.6; 
             defender.isGrounded = false;
             defender.hitStun = 40; 
           } else {
-            // Follow-up hits in the air
             defender.consecutiveAirHits++;
 
             if (defender.consecutiveAirHits === 2) {
@@ -80,7 +72,7 @@ function checkHit(attacker, defender) {
           }
         }
         
-        break; // Stop checking once a hit is confirmed
+        break; 
       }
     }
   }

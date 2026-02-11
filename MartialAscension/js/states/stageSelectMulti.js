@@ -5,7 +5,7 @@ function drawStageSelectMulti() {
   if (currentStage && currentStage.img) {
     push();
     imageMode(CENTER);
-    tint(120); // Darken for UI legibility
+    tint(120); 
     let scale = Math.max(width / currentStage.img.width, height / currentStage.img.height);
     image(currentStage.img, width/2, height/2, currentStage.img.width * scale, currentStage.img.height * scale);
     pop();
@@ -52,30 +52,24 @@ STAGES.forEach((stage, index) => {
     pop();
 });
 
-// 2. DRAW ARENA NAME HERE (Outside the loop for perfect centering)
+// 2. DRAW ARENA NAME HERE 
 if (STAGES[selectedStage]) {
   push();
   textAlign(CENTER, CENTER);
-  // ADJUST THESE TWO NUMBERS TO MOVE THE NAME:
-  //             X-Pos      Y-Pos         Size
   drawTitle(STAGES[selectedStage].name.toUpperCase(), width/2, height * 0.63, width * 0.025);
   pop();
 }
-
-  // 4. Start Prompt (Matched Font)
   push();
   textAlign(CENTER, CENTER);
-  textFont(metalFont); // Using your metal font for consistency
+  textFont(metalFont); 
   fill(255);
   textSize(width * 0.015);
   text("CLICK ANYWHERE TO START MATCH", width / 2, height * 0.93);
   pop();
 
-  // 5. Shared Back Button
   if (typeof drawBackButton === "function") {
     drawBackButton();
   } else {
-    // Fallback if drawBackButton isn't global
     push();
     textAlign(LEFT, TOP);
     textFont(metalFont);

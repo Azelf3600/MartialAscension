@@ -5,9 +5,9 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "LAUNCH",
     hits: [
-      { attack: "DW", duration: 8 },   // Crouch startup
-      { attack: "FW", duration: 8 },   // Forward dash
-      { attack: "HP", duration: 22 }   // Heavy punch finisher
+      { attack: "DW", duration: 8 }, 
+      { attack: "FW", duration: 8 },   
+      { attack: "HP", duration: 22 }   
     ]
   },
   { 

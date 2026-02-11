@@ -18,7 +18,6 @@ let matchTimer = ROUND_TIME;
 let matchTimerFrames = 60;
 
 function initMatch() {
-  // groundY is the line where feet touch
   groundY = height - 100;
   matchOver = false;
   winnerName = "";
@@ -33,11 +32,11 @@ function initMatch() {
   matchTimer = ROUND_TIME;
   matchTimerFrames = 60;
 
-  let charH = height * 0.5; // Standardize height for spawn math
+  let charH = height * 0.5; 
   let p1Data = FIGHTERS[p1Selected];
   player1 = new Character(
     width * 0.2, 
-    groundY - charH, // Pinning feet to groundY
+    groundY - charH, 
     width * 0.08, 
     charH, 
     color(80, 120, 255), 
@@ -73,14 +72,10 @@ function drawMatchMulti() {
 
   background(20); 
 
-  // 1. UPDATE CAMERA
   gameCamera.update(player1, player2);
 
-  // 2. DRAW THE "WORLD" (Camera Space)
   push();
     gameCamera.apply();
-    
-    // Fixed Floor: Drawing from groundY down so characters stand ON it
     rectMode(CORNER);
     fill(60);
     noStroke();
@@ -99,7 +94,7 @@ function drawMatchMulti() {
     drawDamageIndicators();
   pop(); 
 
-  // 3. DRAW THE "UI" (Screen Space)
+  //DRAW THE "UI" 
   drawInterface();
   drawCountdownOverlay();
   
@@ -129,7 +124,6 @@ function handleCountdown() {
 
 function drawCountdownOverlay() {
   push();
-  // Ensure we are in Screen Space (ignoring camera)
   textAlign(CENTER, CENTER);
   if (!fightStarted && countdown > 0) {
     drawTitle(countdown.toString(), width / 2, height / 2, width * 0.15);
@@ -206,7 +200,7 @@ function drawWinScreen() {
   push();
   rectMode(CORNER);
   fill(0, 200); 
-  rect(0, 0, width, height); // Darken the whole screen
+  rect(0, 0, width, height); 
   
   textAlign(CENTER, CENTER);
   let header = (matchTimer <= 0 && winnerName === "DRAW") ? "TIME'S UP" : "K.O.";

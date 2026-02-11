@@ -29,11 +29,11 @@ function drawCharacterSelectMulti() {
   // Character Grid - Restored Icon Size
   let totalFighters = FIGHTERS.length;
   let cols = 4; 
-  let iconSize = width * 0.075; // Increased back to original size
+  let iconSize = width * 0.075; 
   let spacing = 15;
   let gridW = (cols * iconSize) + ((cols - 1) * spacing);
   let startX = (width - gridW) / 2;
-  let startY = height * 0.60; // Positioned relative to the VS title
+  let startY = height * 0.60; 
 
   FIGHTERS.forEach((fighter, index) => {
     let col = index % cols;
@@ -66,7 +66,7 @@ function drawCharacterSelectMulti() {
     push();
     textAlign(CENTER, CENTER);
     drawTitle("PRESS SPACE TO CHOOSE STAGE", centerX, height * 0.85, width * 0.02);
-    // Fixed 'Q' prompt color and font to match Space prompt
+    //'Q' prompt color and font to match Space prompt
     drawTitle("OR PRESS 'Q' TO CANCEL", centerX, height * 0.92, width * 0.015);
     pop();
   }
@@ -77,9 +77,6 @@ function drawCharacterSelectMulti() {
 function drawMultiplayerPreview(edgeX, index, isReady, playerNum) {
   let fighter = FIGHTERS[index];
   let isP1 = (playerNum === 1);
-  
-  // ADJUSTED: Moved P1 further right and P2 further left to center the text block 
-  // under the characters properly.
   let drawCenterX = isP1 ? width * 0.17 : width * 0.83; 
   
   push();

@@ -45,7 +45,7 @@ function setupMenuLayout() {
 function drawMenu() {
   background(20); 
   push();
-  textAlign(CENTER, CENTER); // Force alignment for the menu specifically
+  textAlign(CENTER, CENTER); 
   
   let centerX = width / 2;
   let centerY = height / 2;

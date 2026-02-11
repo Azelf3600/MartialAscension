@@ -1,5 +1,5 @@
 // P1: WASD + YUHJ for attacks
-// P2: Arrow keys + placeholder attacks
+// P2: Arrow keys + numpad
 
 const PLAYER_CONTROLS = {
   P1: {
