@@ -1,5 +1,19 @@
 function checkHit(attacker, defender) {
-  if (attacker.attacking && attacker.attackTimer > 0 && !attacker.hasHit) {
+  if (attacker.attacking && attacker.attackTimer > 0) {
+    
+    // ✅ FIX: Enhanced hit-once-per-segment protection
+    let currentHitIndex = attacker.isPerformingCombo ? attacker.currentComboHit : -1;
+    
+    // If this specific combo segment already hit, skip entirely
+    if (currentHitIndex === attacker.lastHitIndex && attacker.hasHit) {
+      return; // This hit already connected, skip
+    }
+    
+    // ✅ FIX: For non-combo attacks, prevent re-hitting during same attack
+    if (!attacker.isPerformingCombo && attacker.hasHit) {
+      return; // Single attacks only hit once
+    }
+    
     let data = attacker.getHitboxData();
     
     // Loop through all shapes in the hitbox (supports the L-shape)
@@ -10,13 +24,25 @@ function checkHit(attacker, defender) {
           box.y + box.h > defender.y) {
         
         let baseDmg = 10; 
-        if (attacker.attacking === "LP" || attacker.attacking === "Punch Chain") baseDmg = 10;
-        else if (attacker.attacking === "LK" || attacker.attacking === "Kick Chain" || attacker.attacking === "PK Chain 2") baseDmg = 15;
-        else if (attacker.attacking === "HP" || attacker.attacking === "Launcher" || attacker.attacking === "PK Chain 1") baseDmg = 25;
-        else if (attacker.attacking === "HK") baseDmg = 30;
-        else if (attacker.attacking.includes("Chain") || attacker.attacking.includes("PK")) baseDmg = 20;
+        
+        // Check if we're in a combo and use actual attack type
+        if (attacker.isPerformingCombo && attacker.comboHits.length > 0) {
+          let actualAttack = attacker.comboHits[attacker.currentComboHit].attack;
+          if (actualAttack === "LP") baseDmg = 10;
+          else if (actualAttack === "HP") baseDmg = 20;
+          else if (actualAttack === "LK") baseDmg = 15;
+          else if (actualAttack === "HK") baseDmg = 25;
+          else if (actualAttack === "DW") baseDmg = 5;  // Launcher startup
+          else if (actualAttack === "FW") baseDmg = 5;  // Launcher dash
+        } else {
+          // Standard single attacks
+          if (attacker.attacking === "LP") baseDmg = 10;
+          else if (attacker.attacking === "LK") baseDmg = 15;
+          else if (attacker.attacking === "HP") baseDmg = 20;
+          else if (attacker.attacking === "HK") baseDmg = 25;
+        }
 
-        let stunTime = (attacker.attacking === "LP" || attacker.attacking === "LK") ? 15 : 25;
+        let stunTime = (baseDmg <= 15) ? 15 : 25;
         let knockback = 10; 
         
         if (attacker.attacking === "LK" || attacker.attacking === "HP" || attacker.attacking === "Launcher") {
@@ -28,34 +54,31 @@ function checkHit(attacker, defender) {
         let finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod;
         applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback);
         
-        attacker.hasHit = true; 
+        attacker.hasHit = true;
+        attacker.lastHitIndex = currentHitIndex; // ← NEW: Track which hit connected
 
         if (attacker.attacking === "Launcher" && !defender.isBlocking) {
-  if (defender.isGrounded) {
-    // 1st Launch: Big power
-    defender.consecutiveAirHits = 1; 
-    defender.velY = -defender.jumpPower * 1.6; 
-    defender.isGrounded = false;
-    defender.hitStun = 40; 
-  } else {
-    // Follow-up hits in the air
-    defender.consecutiveAirHits++;
+          if (defender.isGrounded) {
+            // 1st Launch: Big power
+            defender.consecutiveAirHits = 1; 
+            defender.velY = -defender.jumpPower * 1.6; 
+            defender.isGrounded = false;
+            defender.hitStun = 40; 
+          } else {
+            // Follow-up hits in the air
+            defender.consecutiveAirHits++;
 
-    if (defender.consecutiveAirHits === 2) {
-      // 2nd Hit: Half the power (0.8), default gravity
-      defender.velY = -defender.jumpPower * 0.8; 
-      // Gravity stays at default (no reassignment here)
-    } 
-    else if (defender.consecutiveAirHits >= 3) {
-      // 3rd Hit: Slam back to ground, default gravity
-      defender.velY = -defender.jumpPower * 0.8; 
-      let slamDir = (defender.x > attacker.x) ? 80 : -80;
-      defender.velX = slamDir; 
-      defender.velY = 15; // The slam velocity
-      // Gravity stays at default (no reassignment here)
-    }
-  }
-}
+            if (defender.consecutiveAirHits === 2) {
+              defender.velY = -defender.jumpPower * 0.8; 
+            } 
+            else if (defender.consecutiveAirHits >= 3) {
+              defender.velY = -defender.jumpPower * 0.8; 
+              let slamDir = (defender.x > attacker.x) ? 80 : -80;
+              defender.velX = slamDir; 
+              defender.velY = 15;
+            }
+          }
+        }
         
         break; // Stop checking once a hit is confirmed
       }

@@ -183,19 +183,30 @@ function handleRecording(char, buffer, code) {
     let result = checkCombo(buffer, STANDARD_COMBOS);
 
     if (result) {
-      // COMBO PRIORITY: Force stop the previous attack to show the finisher
       char.attackTimer = 0; 
       char.executeCombo(result);
-      return; // Exit immediately
+      
+      // ✅ ADD: Preserve dash momentum when canceling into combo
+      if (char.isDashing) {
+        char.isDashing = false; // Stop dash animation
+        char.dashTimer = 0;
+        // But keep the velocity! Don't reset velX
+      }
+      return;
     }
 
-    // 2. INPUT LOCK for standard moves only
-    // This prevents "LP" from overwriting another "LP" too early
     if (char.attackTimer > 6) return; 
 
     // 3. STANDARD ATTACK
     if (move === "LP" || move === "HP" || move === "LK" || move === "HK") {
       char.startAttack(move);
+      
+      // ✅ ADD: Preserve dash momentum when canceling into attack
+      if (char.isDashing) {
+        char.isDashing = false;
+        char.dashTimer = 0;
+        // Keep velX for sliding attacks
+      }
     }
   }
 }
