@@ -178,6 +178,49 @@ function drawInterface() {
   textSize(18);
   text(floor(player2.hp) + " / " + player2.maxHp, width - padding, padding + barH + 25);
   pop();
+
+  // Control Instructions (RESPONSIVE)
+  push();
+  textFont(metalFont);
+  noStroke();
+  
+  // Responsive sizing and positioning
+  let controlTextSize = width * 0.011;
+  let controlDetailSize = width * 0.009;
+  let bottomY = height * 0.85;  // Changed from fixed value to percentage
+  let lineSpacing = height * 0.035;  // Changed from fixed value to percentage
+  let sidePadding = width * 0.05;  // Responsive padding
+  
+  // P1 Controls (Left Side)
+  fill(0, 150, 255);
+  textAlign(LEFT, TOP);
+  textSize(controlTextSize);
+  text("P1 CONTROLS", sidePadding, bottomY);
+  
+  fill(255);
+  textSize(controlDetailSize);
+  text("  W            Y U", sidePadding, bottomY + lineSpacing);
+  text("A S D          H J      SPACE", sidePadding, bottomY + lineSpacing * 2);
+  text("MOVE       ATTACK    BLOCK", sidePadding, bottomY + lineSpacing * 3);
+  
+  // P2 Controls (Right Side)
+  fill(255, 50, 50);
+  textAlign(RIGHT, TOP);
+  textSize(controlTextSize);
+  text("P2 CONTROLS", width - sidePadding, bottomY);
+  
+  fill(255);
+  textSize(controlDetailSize);
+  
+  // Calculate P2 position responsively
+  let p2X = width - sidePadding - (width * 0.13);  // Responsive offset
+  textAlign(LEFT, TOP);
+  
+  text("  ^          NUM4  NUM5", p2X, bottomY + lineSpacing);
+  text("< v >        NUM1  NUM2         NUM0", p2X, bottomY + lineSpacing * 2);
+  text("MOVE           ATTACK           BLOCK", p2X, bottomY + lineSpacing * 3);
+  
+  pop();
 }
 
 function drawHealthBar(x, y, w, h, current, max, mirrored) {

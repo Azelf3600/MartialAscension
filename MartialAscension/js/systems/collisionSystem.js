@@ -1,7 +1,7 @@
 function checkHit(attacker, defender) {
   if (attacker.attacking && attacker.attackTimer > 0) {
     
-    // ✅ FIX: Enhanced hit-once-per-segment protection
+    // Enhanced hit-once-per-segment protection
     let currentHitIndex = attacker.isPerformingCombo ? attacker.currentComboHit : -1;
     
     // If this specific combo segment already hit, skip entirely
@@ -9,14 +9,14 @@ function checkHit(attacker, defender) {
       return; // This hit already connected, skip
     }
     
-    // ✅ FIX: For non-combo attacks, prevent re-hitting during same attack
+    // For non-combo attacks, prevent re-hitting during same attack
     if (!attacker.isPerformingCombo && attacker.hasHit) {
       return; // Single attacks only hit once
     }
     
     let data = attacker.getHitboxData();
     
-    // Loop through all shapes in the hitbox (supports the L-shape)
+    // Loop through all shapes in the hitbox (supports L-shape, diagonal, etc.)
     for (let box of data.shapes) {
       if (box.x < defender.x + defender.w &&
           box.x + box.w > defender.x &&
@@ -34,6 +34,7 @@ function checkHit(attacker, defender) {
           else if (actualAttack === "HK") baseDmg = 25;
           else if (actualAttack === "DW") baseDmg = 5;  // Launcher startup
           else if (actualAttack === "FW") baseDmg = 5;  // Launcher dash
+          else if (actualAttack === "UP") baseDmg = 5;  // ✅ NEW: Diving Kick jump
         } else {
           // Standard single attacks
           if (attacker.attacking === "LP") baseDmg = 10;
@@ -50,13 +51,30 @@ function checkHit(attacker, defender) {
         } else if (attacker.attacking === "HK" || attacker.attacking.includes("Chain")) {
           knockback = 35;
         }
+        // ✅ NEW: Diving Kick knockback
+        else if (attacker.attacking === "Diving Kick") {
+          knockback = 30; // Strong knockback
+          stunTime = 30; // Longer stun for dive
+        }
 
         let finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod;
         applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback);
         
         attacker.hasHit = true;
-        attacker.lastHitIndex = currentHitIndex; // ← NEW: Track which hit connected
+        attacker.lastHitIndex = currentHitIndex;
 
+        // ✅ NEW: Diving Kick special effect
+        if (attacker.attacking === "Diving Kick" && !defender.isBlocking) {
+          // Push defender down slightly (anti-crouch punish)
+          defender.velY = 8; // Downward push
+          defender.isGrounded = false; // Pop them up briefly
+          
+          // Strong horizontal knockback
+          let diveDir = (defender.x > attacker.x) ? 40 : -40;
+          defender.velX = diveDir;
+        }
+
+        // Launcher combo air juggle logic
         if (attacker.attacking === "Launcher" && !defender.isBlocking) {
           if (defender.isGrounded) {
             // 1st Launch: Big power
@@ -85,6 +103,7 @@ function checkHit(attacker, defender) {
     }
   }
 }
+
 
 function applyDamage(target, amount, attacker, stunTime, knockback) {
   let damageToApply = Number(amount);

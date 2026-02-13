@@ -53,5 +53,16 @@ const STANDARD_COMBOS = [
       { attack: "LK", duration: 12 },
       { attack: "HK", duration: 22 }
     ]
+  },
+  { 
+    name: "Diving Kick", 
+    sequence: ["UP", "FW", "HK"], 
+    damageMult: 1.0, 
+    type: "DIVE",
+    hits: [
+      { attack: "UP", duration: 8 },   // Jump startup
+      { attack: "FW", duration: 10 },  // Forward momentum
+      { attack: "HK", duration: 25 }   // Diving kick finisher
+    ]
   }
 ];

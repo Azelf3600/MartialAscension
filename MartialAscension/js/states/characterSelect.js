@@ -86,8 +86,8 @@ function drawBackButton() {
   let btnW = width * 0.1;
   let btnH = height * 0.05;
   let backBtn = { 
-    x: width * 0.1, 
-    y: height * 0.1, 
+    x: width * 0.05, 
+    y: height * 0.05, 
     w: btnW, 
     h: btnH 
   };
@@ -106,6 +106,21 @@ function drawBackButton() {
   pop();
 
   if (mouseIsPressed && isHovering(backBtn)) {
+    // NEW: Reset character selections based on current state
+    if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
+      p1Selected = 0;
+      p2Selected = 1;
+      p1Ready = false;
+      p2Ready = false;
+    }
+    
+    if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
+      p1Ready = false;
+      p2Ready = false;
+      currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
+      return; // Exit early so it doesn't go to MENU
+    }
+    
     currentState = GAME_STATE.MENU;
   }
 }

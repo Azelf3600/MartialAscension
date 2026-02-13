@@ -18,8 +18,8 @@ function drawCharacterSelectMulti() {
   textFont(metalFont);
   textAlign(CENTER, CENTER);
   textSize(width * 0.012);
-  if (!p1Ready) { fill(0, 150, 255); text("PRESS 'F' TO CONFIRM", width * 0.13, height * 0.06); }
-  if (!p2Ready) { fill(255, 50, 50); text("PRESS 'ENTER' TO CONFIRM", width * 0.87, height * 0.06); }
+  if (!p1Ready) { fill(0, 150, 255); text("PRESS 'F' TO CONFIRM", width * 0.15, height * 0.08); }
+  if (!p2Ready) { fill(255, 50, 50); text("PRESS 'ENTER' TO CONFIRM", width * 0.85, height * 0.08); }
   pop();
 
   // Draw Large Previews
@@ -60,6 +60,31 @@ function drawCharacterSelectMulti() {
     if (index === p1Selected) drawTag("P1", x - iconSize/2, y - iconSize/2, [0, 100, 255]);
     if (index === p2Selected) drawTag("P2", x + iconSize/2, y - iconSize/2, [255, 0, 0]);
   });
+
+    push();
+  textAlign(CENTER, CENTER);
+  textFont(metalFont);
+  textSize(width * 0.012);
+  noStroke();
+  
+  if (!p1Ready) {
+    let p1Col = p1Selected % cols;
+    let p1Row = Math.floor(p1Selected / cols);
+    let p1X = startX + p1Col * (iconSize + spacing) + iconSize / 2;
+    let p1Y = startY + p1Row * (iconSize + spacing) + iconSize / 2;
+    fill(0, 150, 255);
+    text("A D", p1X, p1Y + iconSize/2 + 20);
+  }
+  
+  if (!p2Ready) {
+    let p2Col = p2Selected % cols;
+    let p2Row = Math.floor(p2Selected / cols);
+    let p2X = startX + p2Col * (iconSize + spacing) + iconSize / 2;
+    let p2Y = startY + p2Row * (iconSize + spacing) + iconSize / 2;
+    fill(255, 50, 50);
+    text("<-- -->", p2X, p2Y + iconSize/2 + 20);
+  }
+  pop();
 
   // Final Prompts
   if (p1Ready && p2Ready) {

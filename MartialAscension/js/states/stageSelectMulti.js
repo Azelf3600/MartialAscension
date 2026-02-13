@@ -16,7 +16,7 @@ function drawStageSelectMulti() {
   // 2. Header (Centered)
   push();
   textAlign(CENTER, CENTER);
-  drawTitle("SELECT ARENA", width / 2, height * 0.1, width * 0.05);
+  drawTitle("SELECT YOUR STAGE", width / 2, height * 0.1, width * 0.05);
   pop();
 
   // 3. Stage Thumbnails
@@ -26,16 +26,10 @@ function drawStageSelectMulti() {
   let totalW = (STAGES.length * thumbW) + ((STAGES.length - 1) * spacing);
   let startX = (width - totalW) / 2;
 
-  // 1. Draw all thumbnails first
-STAGES.forEach((stage, index) => {
+  // Draw all thumbnails
+  STAGES.forEach((stage, index) => {
     let x = startX + index * (thumbW + spacing) + thumbW / 2;
     let y = height * 0.78;
-
-    // Hover logic
-    if (mouseX > x - thumbW/2 && mouseX < x + thumbW/2 && 
-        mouseY > y - thumbH/2 && mouseY < y + thumbH/2) {
-      selectedStage = index;
-    }
 
     // Draw Thumbnail Box
     push();
@@ -50,28 +44,37 @@ STAGES.forEach((stage, index) => {
       image(stage.img, x, y, thumbW - 12, thumbH - 12);
     }
     pop();
-});
+    
+    // Show navigation hints on selected stage
+    if (index === selectedStage) {
+      push();
+      textAlign(CENTER, CENTER);
+      textFont(metalFont);
+      textSize(width * 0.012);
+      fill(255, 215, 0);
+      text("A D", x, y + thumbH/2 + 25);
+      pop();
+    }
+  });
 
-// 2. DRAW ARENA NAME HERE (Outside the loop for perfect centering)
-if (STAGES[selectedStage]) {
-  push();
-  textAlign(CENTER, CENTER);
-  // ADJUST THESE TWO NUMBERS TO MOVE THE NAME:
-  //             X-Pos      Y-Pos         Size
-  drawTitle(STAGES[selectedStage].name.toUpperCase(), width/2, height * 0.63, width * 0.025);
-  pop();
-}
+  // Draw arena name
+  if (STAGES[selectedStage]) {
+    push();
+    textAlign(CENTER, CENTER);
+    drawTitle(STAGES[selectedStage].name.toUpperCase(), width/2, height * 0.63, width * 0.025);
+    pop();
+  }
 
-  // 4. Start Prompt (Matched Font)
+  // Instructions
   push();
   textAlign(CENTER, CENTER);
   textFont(metalFont); // Using your metal font for consistency
   fill(255);
   textSize(width * 0.015);
-  text("CLICK ANYWHERE TO START MATCH", width / 2, height * 0.93);
+  text("PRESS SPACE TO START MATCH", width / 2, height * 0.94);
   pop();
 
-  // 5. Shared Back Button
+  // Back button
   if (typeof drawBackButton === "function") {
     drawBackButton();
   } else {
@@ -81,7 +84,7 @@ if (STAGES[selectedStage]) {
     textFont(metalFont);
     fill(255);
     textSize(width * 0.015);
-    text("< BACK", width * 0.05, height * 0.05);
+    text("< BACK (Q)", width * 0.05, height * 0.05);
     pop();
   }
 }

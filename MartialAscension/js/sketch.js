@@ -9,7 +9,9 @@ const GAME_STATE = {
   PAUSE_MENU: "pause_menu",
   PAUSE_MENU_MULTI: "pause_menu_multi",
   LOADING_MATCH: "loading_match",
-  LOADING_MATCH_MULTI: "loading_match_multi"
+  LOADING_MATCH_MULTI: "loading_match_multi",
+  WIN_SCREEN_MULTI: "win_screen_multi",
+  WIN_SCREEN: "win_screen"
 };
 
 let currentState = GAME_STATE.MENU;
@@ -39,10 +41,9 @@ function setup() {
 }
 
 function draw() {
-  resetMatrix();      // Clears camera movement
-  background(0);      // Redraws the floor
-  push();      // Resets drawing styles (colors, stroke, etc.)
-
+  resetMatrix();  
+  background(0);   
+  push();     
 
   switch (currentState) {
     case GAME_STATE.MENU:
@@ -93,6 +94,14 @@ function draw() {
     case GAME_STATE.PAUSE_MENU_MULTI:
       drawPauseMenuMulti();
       break;
+
+    case GAME_STATE.WIN_SCREEN:
+      drawWinScreen();
+      break;
+
+    case GAME_STATE.WIN_SCREEN_MULTI:
+      drawWinScreenMulti();
+      break;
   }
   pop(); 
 
@@ -130,7 +139,7 @@ function windowResized() {
 }
 
 function keyPressed() {
-  // --- MULTIPLAYER CHARACTER SELECTION CONTROLS ---
+  // MULTIPLAYER CHARACTER SELECTION CONTROLS
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
     // PLAYER 1 Selection
     if (!p1Ready) {
@@ -160,7 +169,30 @@ function keyPressed() {
     }
   }
 
-  // --- MATCH INPUT RECORDING (COMBO SYSTEM) ---
+  // STAGE SELECTION CONTROLS (MULTIPLAYER)
+  if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
+    // Navigate with A/D or Arrow Keys
+    if (key === 'd' || key === 'D' || keyCode === RIGHT_ARROW) {
+      selectedStage = (selectedStage + 1) % STAGES.length;
+    }
+    if (key === 'a' || key === 'A' || keyCode === LEFT_ARROW) {
+      selectedStage = (selectedStage - 1 + STAGES.length) % STAGES.length;
+    }
+    
+    // Confirm with Space
+    if (key === ' ') {
+      setTimeout(() => {
+        currentState = GAME_STATE.LOADING_MATCH_MULTI;
+      }, 500);
+    }
+    
+    // Back to character select with Q
+    if (key === 'q' || key === 'Q') {
+      currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
+    }
+  }
+
+  // MATCH INPUT RECORDING (COMBO SYSTEM)
   if (currentState === GAME_STATE.MATCH || currentState === GAME_STATE.MATCH_MULTI) {
     if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
     if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
@@ -183,25 +215,38 @@ function handleRecording(char, buffer, code) {
     let result = checkCombo(buffer, STANDARD_COMBOS);
 
     if (result) {
+      // COMBO PRIORITY: Force stop the previous attack
       char.attackTimer = 0; 
       char.executeCombo(result);
       
-      // ✅ ADD: Preserve dash momentum when canceling into combo
+      // NEW: Jump to the finisher (skip inputs that already happened)
+      if (result.hits && result.hits.length > 1) {
+        // Start from the last hit (the finisher)
+        char.currentComboHit = result.hits.length - 1;
+        char.comboHitTimer = result.hits[char.currentComboHit].duration;
+        char.attackTimer = result.hits[char.currentComboHit].duration;
+        char.hasHit = false; // Allow finisher to hit
+        char.lastHitIndex = -1; // Reset tracker
+      }
+      
+      // Stop dashing when combo executes
       if (char.isDashing) {
         char.isDashing = false; // Stop dash animation
         char.dashTimer = 0;
         // But keep the velocity! Don't reset velX
       }
-      return;
+      
+      return; // Exit immediately
     }
 
+    // 2. INPUT LOCK for standard moves only
     if (char.attackTimer > 6) return; 
 
     // 3. STANDARD ATTACK
     if (move === "LP" || move === "HP" || move === "LK" || move === "HK") {
       char.startAttack(move);
       
-      // ✅ ADD: Preserve dash momentum when canceling into attack
+      // Stop dashing when attacking
       if (char.isDashing) {
         char.isDashing = false;
         char.dashTimer = 0;
@@ -248,14 +293,12 @@ function mouseReleased() {
     handleStageSelection(GAME_STATE.MATCH);
   }
 
-  // Stage Selection (Multiplayer)
-  if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
-    handleStageSelection(GAME_STATE.LOADING_MATCH_MULTI);
-  }
+  // NOTE: Stage Selection (Multiplayer) now uses keyboard controls
+  // Removed click handler for STAGE_SELECT_MULTI
 }
 
 /**
- * Helper to handle stage selection logic for both modes
+ * Helper to handle stage selection logic for single player mode
  */
 function handleStageSelection(nextState) {
   let thumbW = width * 0.2;

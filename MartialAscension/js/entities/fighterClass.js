@@ -46,7 +46,16 @@ class Character {
     this.dashDirection = 0;
     this.dashTimer = 0;
     this.dashMaxSpeed = 0;
-    this.dashTrail = []; // For visual afterimage effect
+    this.dashTrail = [];
+    this.isLauncherSliding = false;
+    this.launcherSlideTimer = 0;
+    this.launcherSlideSpeed = 0;
+
+    this.isDiving = false;
+    this.diveTimer = 0;
+    this.diveVelX = 0;
+    this.diveVelY = 0;
+
 
     this.attacking = null;
     this.hasHit = false;
@@ -105,17 +114,17 @@ class Character {
     if (buffer.checkDoubleTap("FW")) {
       // Forward Dash
       this.isDashing = true;
-      this.dashDirection = this.facing; // ✅ Store actual facing direction
-      this.dashTimer = 22;
-      this.dashMaxSpeed = 18; // ✅ ABSOLUTE speed (no facing multiplier)
-      this.velX = this.facing * 8;
+      this.dashDirection = this.facing; 
+      this.dashTimer = 18;           // Slightly longer for 900px
+      this.dashMaxSpeed = 60;        // Much faster (was 45)
+      this.velX = this.facing * 50;  // Massive initial burst (was 35)
     } else if (buffer.checkDoubleTap("BW")) {
       // Backdash
       this.isDashing = true;
-      this.dashDirection = -this.facing; // ✅ Opposite of facing
-      this.dashTimer = 20;
-      this.dashMaxSpeed = 14; // ✅ ABSOLUTE speed
-      this.velX = -this.facing * 6;
+      this.dashDirection = -this.facing; 
+      this.dashTimer = 16;           // Slightly longer for distance
+      this.dashMaxSpeed = 52;        // Much faster (was 38)
+      this.velX = -this.facing * 42; // Massive initial burst (was 28)
     }
   }
 
@@ -123,14 +132,14 @@ class Character {
   if (this.isDashing && this.dashTimer > 0) {
     this.dashTimer--;
     
-    // Acceleration phase (first ~13 frames)
-    if (this.dashTimer > 9) {
-      let accel = (this.dashDirection === this.facing) ? 2.5 : 2.0;
-      this.velX += this.dashDirection * accel; // ✅ Use dashDirection only
+    // Only accelerate in the first 25% of dash (was 30%)
+    if (this.dashTimer > this.dashTimer * 0.75) {
+      let accel = (this.dashDirection === this.facing) ? 6.0 : 5.5; // Even higher accel
+      this.velX += this.dashDirection * accel; 
       
       // ✅ FIXED: Cap using absolute values
       let currentSpeed = abs(this.velX);
-      let maxSpeed = (this.dashDirection === this.facing) ? this.dashMaxSpeed : this.dashMaxSpeed * 0.78;
+      let maxSpeed = (this.dashDirection === this.facing) ? this.dashMaxSpeed : this.dashMaxSpeed * 0.85;
       
       if (currentSpeed > maxSpeed) {
         this.velX = this.dashDirection * maxSpeed; // ✅ Apply direction to max speed
@@ -155,7 +164,7 @@ class Character {
   
   // Friction
   if (this.isDashing) {
-    this.velX *= 0.94;
+    this.velX *= 0.70; // Even faster decay (was 0.75) - very snappy stop
   } else {
     this.velX *= 0.82;
   }
@@ -182,9 +191,56 @@ class Character {
   }
 }
 
-applyPhysics(groundY) {
-  this.velY += this.gravity;
+  applyPhysics(groundY) {
+  // Handle diving kick movement
+  if (this.isDiving && this.diveTimer > 0) {
+    this.diveTimer--;
+    
+    // Phase 1: Jump up (first 8 frames)
+    if (this.diveTimer > 35) {
+      // Normal jump arc
+      this.velY += this.gravity;
+    }
+    // Phase 2: Forward momentum (frames 35-25)
+    else if (this.diveTimer > 25) {
+      // Start accelerating downward
+      this.diveVelY += this.gravity * 1.5; // Faster downward accel
+      this.velY = this.diveVelY;
+      this.x += this.diveVelX; // Forward movement
+    }
+    // Phase 3: Diving kick (last 25 frames)
+    else {
+      // Steep dive angle
+      this.diveVelY += this.gravity * 2.0; // Even faster dive
+      this.velY = this.diveVelY;
+      this.x += this.diveVelX * 1.2; // Faster forward during kick
+    }
+    
+    // End dive on landing or timer expiry
+    if (this.y + this.h >= groundY || this.diveTimer <= 0) {
+      this.isDiving = false;
+      this.diveTimer = 0;
+      this.diveVelX = 0;
+      this.diveVelY = 0;
+    }
+  } else {
+    // Normal gravity when not diving
+    this.velY += this.gravity;
+  }
+  
   this.y += this.velY;
+
+  // Handle launcher slide movement
+  if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
+    this.launcherSlideTimer--;
+    this.x += this.launcherSlideSpeed;
+    this.launcherSlideSpeed *= 0.85;
+    
+    if (this.launcherSlideTimer <= 0) {
+      this.isLauncherSliding = false;
+      this.launcherSlideSpeed = 0;
+    }
+  }
 
   if (this.y + this.h >= groundY) {
     this.y = groundY - this.h;
@@ -249,7 +305,7 @@ applyPhysics(groundY) {
     }
   }
 
-executeCombo(comboData) {
+  executeCombo(comboData) {
   this.attacking = comboData.name;
   this.isPerformingCombo = true;
   this.comboDamageMod = comboData.damageMult;
@@ -276,14 +332,32 @@ executeCombo(comboData) {
     this.comboHitTimer = 25;
   }
 
+  // Trigger launcher slide (300px)
+  if (comboData.name === "Launcher") {
+    this.isLauncherSliding = true;
+    this.launcherSlideTimer = 15; // Duration of slide
+    this.launcherSlideSpeed = this.facing * 10; // Reduced from 35 (300px range)
+  }
+
+    if (comboData.name === "Diving Kick") {
+    this.isDiving = true;
+    this.diveTimer = 43; // Total duration (8 + 10 + 25)
+    this.isGrounded = false; // Launch into air
+    
+    // Jump up and forward
+    this.velY = -this.jumpPower * 1.2; // Higher jump
+    this.diveVelX = this.facing * 12; // Forward momentum
+    this.diveVelY = 0; // Will accelerate downward
+  }
+
   this.hasHit = false;
   this.recoveryTimer = 0;
-} 
+}
 
   draw() {
   push();
   
-  // ✅ DASH AFTERIMAGE EFFECT
+  // Dash trail
   if (this.isDashing && this.dashTimer > 0) {
     // Draw 3 fading afterimages behind the character
     for (let i = 1; i <= 3; i++) {
@@ -302,12 +376,28 @@ executeCombo(comboData) {
     drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
   }
   
-  // Main character rendering
+  // NEW: Launcher slide trail
+  if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
+    for (let i = 1; i <= 4; i++) {
+      let trailX = this.x - (this.launcherSlideSpeed * i * 0.25); 
+      let alpha = 120 - (i * 30);
+      
+      push();
+      fill(255, 165, 0, alpha); // Orange trail for launcher
+      noStroke();
+      rect(trailX, this.y, this.w, this.h, 5);
+      pop();
+    }
+    
+    drawingContext.shadowBlur = 20;
+    drawingContext.shadowColor = 'rgba(255, 165, 0, 0.9)'; // Orange glow
+  }
+  
   strokeWeight(2);
   if (this.isHit) stroke(255, 0, 0);
   else if (this.recoveryTimer > 0) stroke(100);
   else if (this.attackTimer > 0) stroke(255, 255, 0);
-  else if (this.isDashing) stroke(255, 255, 255, 200); // White stroke during dash
+  else if (this.isDashing || this.isLauncherSliding) stroke(255, 255, 255, 200);
   else stroke(0);
 
   fill(this.color);
@@ -331,7 +421,7 @@ executeCombo(comboData) {
     }
   }
   pop();
-}
+}  
 
   drawHitbox() {
     let data = this.getHitboxData();
@@ -347,71 +437,7 @@ executeCombo(comboData) {
   }
 
   getHitboxData() {
-  if (!this.attacking) return { shapes: [], col: color(0,0) };
-  
-  let shapes = [];
-  let col = color(255, 150);
-  let innerOverlap = 10;
-  
-  // Determine actual attack type
-  let actualAttack = this.attacking;
-  
-  // If performing combo, use current hit's attack type
-  if (this.isPerformingCombo && this.comboHits.length > 0) {
-    actualAttack = this.comboHits[this.currentComboHit].attack;
-  }
-  
-  // Special handling for Launcher's HP finisher
-  if (this.attacking === "Launcher" && actualAttack === "HP") {
-    col = color(255, 165, 0, 150);
-    
-    // Horizontal Base (The sweep)
-    let baseW = 150;
-    let baseH = 20;
-    let baseY = this.y + this.h * 0.3;
-    let baseX = (this.facing === 1) ? (this.x + this.w - innerOverlap) : (this.x - baseW + innerOverlap);
-    shapes.push({ x: baseX, y: baseY, w: baseW, h: baseH });
-
-    // Vertical Pillar (The "Up" part)
-    let pillW = 20;
-    let pillH = 100;
-    let pillX = (this.facing === 1) ? (baseX + baseW - pillW) : baseX;
-    shapes.push({ x: pillX, y: baseY - (pillH - baseH), w: pillW, h: pillH });
-  }
-  else {
-    // Standard rectangular hitboxes based on attack type
-    let atkW = 0, atkH = 0, offY = 0;
-
-    if (actualAttack === "LP") {
-      atkW = 150; atkH = 20; offY = 50; col = color(255, 255, 0, 150);
-    } 
-    else if (actualAttack === "HP") {
-      atkW = 150; atkH = 20; offY = 30; col = color(255, 165, 0, 150);
-    } 
-    else if (actualAttack === "LK") {
-      atkW = 200; atkH = 40; offY = 100; col = color(0, 255, 0, 150);
-    } 
-    else if (actualAttack === "HK") {
-      atkW = 200; atkH = 40; offY = 100; col = color(255, 0, 0, 150);
-    }
-    else if (actualAttack === "DW") {
-      // Crouch/down input - small startup hitbox
-      atkW = 50; atkH = 15; offY = 80; col = color(150, 150, 255, 150);
-    }
-    else if (actualAttack === "FW") {
-      // Forward dash - small hitbox
-      atkW = 80; atkH = 20; offY = 60; col = color(100, 200, 255, 150);
-    }
-    
-    // Fallback for undefined attacks
-    if (atkW === 0) {
-      atkW = 150; atkH = 20; offY = 30; col = color(255, 0, 255, 150);
-    }
-
-    let atkX = (this.facing === 1) ? (this.x + this.w - innerOverlap) : (this.x - atkW + innerOverlap);
-    shapes.push({ x: atkX, y: this.y + offY, w: atkW, h: atkH });
-    }
-
-    return { shapes: shapes, col: col };
+    // Delegate to centralized hitbox system
+    return getHitboxData(this);
   }
 }
