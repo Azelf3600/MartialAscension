@@ -56,7 +56,6 @@ class Character {
     this.diveVelX = 0;
     this.diveVelY = 0;
 
-
     this.attacking = null;
     this.hasHit = false;
     this.attackTimer = 0;
@@ -68,8 +67,7 @@ class Character {
     this.comboHits = [];
     this.currentComboHit = 0;
     this.comboHitTimer = 0;
-    this.lastHitIndex = -1; // ← NEW: Track which hit last connected
-
+    this.lastHitIndex = -1;
 
     this.isHit = false;
     this.hitStun = 0;

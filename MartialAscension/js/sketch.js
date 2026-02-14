@@ -179,10 +179,11 @@ function keyPressed() {
       selectedStage = (selectedStage - 1 + STAGES.length) % STAGES.length;
     }
     
-    // Confirm with Space
+    // Confirm with Space 
     if (key === ' ') {
       setTimeout(() => {
-        currentState = GAME_STATE.LOADING_MATCH_MULTI;
+      currentRound = 1; // NEW: Reset to round 1
+      currentState = GAME_STATE.LOADING_MATCH_MULTI;
       }, 500);
     }
     
@@ -190,6 +191,11 @@ function keyPressed() {
     if (key === 'q' || key === 'Q') {
       currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
     }
+  }
+
+    // NEW: WIN SCREEN CONTROLS
+  if (currentState === GAME_STATE.WIN_SCREEN_MULTI) {
+    handleWinScreenInput(key, keyCode);
   }
 
   // MATCH INPUT RECORDING (COMBO SYSTEM)
