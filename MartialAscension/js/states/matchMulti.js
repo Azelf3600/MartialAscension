@@ -88,6 +88,10 @@ function initMatch() {
     p2Data.archetype
   );
 
+  // NEW: Reset judgment usage for new round
+  player1.hasUsedJudgment = false;
+  player2.hasUsedJudgment = false;
+
   if (gameCamera) {
     gameCamera.pos = createVector(width/2, height/2);
   }
@@ -112,7 +116,6 @@ function drawMatchMulti() {
     rect(-10000, groundY, 20000, 2000);
     
     drawWorldBorders();
-
     handleCountdown();
 
     if (showRoundResult) {
@@ -123,6 +126,9 @@ function drawMatchMulti() {
 
     player1.draw();
     player2.draw();
+
+    drawProjectiles();
+
     updateDamageIndicators();
     drawDamageIndicators();
   pop(); 
@@ -439,10 +445,16 @@ function drawDamageIndicators() {
       checkTimeOver(); 
     }
   }
+  
   player1.update(player2, groundY);
   player2.update(player1, groundY);
   
-  // Apply world borders
+  // NEW: Update projectiles
+  updateProjectiles();
+  
+  // NEW: Check projectile collisions
+  checkProjectileCollisions(player1, player2);
+  
   applyWorldBorders(player1);
   applyWorldBorders(player2);
   

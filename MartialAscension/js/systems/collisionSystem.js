@@ -1,17 +1,14 @@
 function checkHit(attacker, defender) {
   if (attacker.attacking && attacker.attackTimer > 0) {
     
-    // Enhanced hit-once-per-segment protection
     let currentHitIndex = attacker.isPerformingCombo ? attacker.currentComboHit : -1;
     
-    // If this specific combo segment already hit, skip entirely
     if (currentHitIndex === attacker.lastHitIndex && attacker.hasHit) {
-      return; // This hit already connected, skip
+      return; 
     }
     
-    // For non-combo attacks, prevent re-hitting during same attack
     if (!attacker.isPerformingCombo && attacker.hasHit) {
-      return; // Single attacks only hit once
+      return; 
     }
     
     let data = attacker.getHitboxData();
@@ -23,18 +20,26 @@ function checkHit(attacker, defender) {
           box.y < defender.y + defender.h &&
           box.y + box.h > defender.y) {
         
-        let baseDmg = 10; 
+                  let baseDmg = 10;
         
-        // Check if we're in a combo and use actual attack type
-        if (attacker.isPerformingCombo && attacker.comboHits.length > 0) {
+        // NEW: Sword Qi Lunge deals fixed 35 damage (ignores block reduction)
+        let isSwordQiLunge = (attacker.attacking === "Sword Qi Lunge");
+        let isSwordGodSlash = (attacker.attacking === "Sword God Slash"); // NEW
+        
+        if (isSwordQiLunge) {
+          baseDmg = 35; // Fixed damage
+        } else if (isSwordGodSlash) {
+          baseDmg = 100; // Fixed damage
+        } else if (attacker.isPerformingCombo && attacker.comboHits.length > 0) {
+          // Normal combo damage calculations
           let actualAttack = attacker.comboHits[attacker.currentComboHit].attack;
           if (actualAttack === "LP") baseDmg = 10;
           else if (actualAttack === "HP") baseDmg = 20;
           else if (actualAttack === "LK") baseDmg = 15;
           else if (actualAttack === "HK") baseDmg = 25;
-          else if (actualAttack === "DW") baseDmg = 5;  // Launcher startup
-          else if (actualAttack === "FW") baseDmg = 5;  // Launcher dash
-          else if (actualAttack === "UP") baseDmg = 5;  // ✅ NEW: Diving Kick jump
+          else if (actualAttack === "DW") baseDmg = 5;
+          else if (actualAttack === "FW") baseDmg = 5;
+          else if (actualAttack === "UP") baseDmg = 5;
         } else {
           // Standard single attacks
           if (attacker.attacking === "LP") baseDmg = 10;
@@ -44,21 +49,34 @@ function checkHit(attacker, defender) {
         }
 
         let stunTime = (baseDmg <= 15) ? 15 : 25;
-        let knockback = 10; 
+        let knockback = 10;
         
         if (attacker.attacking === "LK" || attacker.attacking === "HP" || attacker.attacking === "Launcher") {
-          knockback = 20; 
+          knockback = 20;
         } else if (attacker.attacking === "HK" || attacker.attacking.includes("Chain")) {
           knockback = 35;
-        }
-        // ✅ NEW: Diving Kick knockback
-        else if (attacker.attacking === "Diving Kick") {
-          knockback = 30; // Strong knockback
-          stunTime = 30; // Longer stun for dive
+        } else if (attacker.attacking === "Diving Kick") {
+          knockback = 30;
+          stunTime = 30;
+        } else if (isSwordQiLunge) {
+          // NEW: Sword Qi Lunge knockback
+          knockback = 40; // Heavy knockback
+          stunTime = 35;  // Long stun
+        } else if (isSwordGodSlash) {
+          // NEW: Sword God Slash knockback
+          knockback = 60; // Massive knockback
+          stunTime = 50;  // Very long stun
         }
 
-        let finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod;
-        applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback);
+        // NEW: Apply damage (Sword Qi Lunge ignores block modifier)
+        let finalCalculatedDmg;
+        if (isSwordQiLunge) {
+          finalCalculatedDmg = 35; // Always 35, even when blocked
+        } else {
+          finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod;
+        }
+        
+        applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback, isSwordQiLunge);
         
         attacker.hasHit = true;
         attacker.lastHitIndex = currentHitIndex;
@@ -98,7 +116,7 @@ function checkHit(attacker, defender) {
           }
         }
         
-        break; // Stop checking once a hit is confirmed
+        break;
       }
     }
   }

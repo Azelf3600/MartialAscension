@@ -39,4 +39,3 @@ class InputBuffer {
     return false;
   }
 }
-// DO NOT PUT "let p1Buffer" HERE ANYMORE!

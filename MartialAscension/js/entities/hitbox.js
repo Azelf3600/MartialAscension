@@ -1,8 +1,3 @@
-// ========================================
-// HITBOX SYSTEM
-// Centralized hitbox generation for all attacks
-// ========================================
-
 /**
  * Main hitbox dispatcher
  * @param {Character} character - The attacking character
@@ -11,6 +6,10 @@
 function getHitboxData(character) {
   if (!character.attacking) return { shapes: [], col: color(0, 0) };
   
+  if (character.attacking === "Sword Qi Fly") {
+    return { shapes: [], col: color(0, 0) };
+  }
+
   let actualAttack = character.attacking;
   
   // If performing combo, use current hit's attack type
@@ -23,12 +22,97 @@ function getHitboxData(character) {
     return getLauncherHitbox(character);
   } else if (character.attacking === "Diving Kick" && actualAttack === "HK") {
     return getDivingKickHitbox(character);
+  } else if (character.attacking === "Sword Qi Lunge" && actualAttack === "HP") {
+    return getSwordQiLungeHitbox(character);
+  } else if (character.attacking === "Sword God Slash" && actualAttack === "HK") {
+    // NEW: Sword God Slash hitbox
+    return getSwordGodSlashHitbox(character);
   } else {
     return getStandardHitbox(character, actualAttack);
   }
 }
 
-// ========================================
+// SWORD GOD SLASH HITBOX (Animated diagonal slash)
+function getSwordGodSlashHitbox(character) {
+  let shapes = [];
+  let col = color(255, 0, 0, 150);
+  
+  // Only show hitbox during slash phase (last 30 frames)
+  if (character.godSlashTimer > 30 || character.godSlashPhase !== "slash") {
+    return { shapes: [], col: col };
+  }
+  
+  // Calculate slash progress (0 = start, 1 = end)
+  let slashProgress = map(character.godSlashTimer, 30, 0, 0, 1);
+  
+  // Anchor point (center of character)
+  let anchorX = character.x + character.w / 2;
+  let anchorY = character.y + character.h / 2;
+  
+  // Slash dimensions
+  let slashLength = 200;
+  let slashThickness = 40;
+  
+  // Slash rotation over time - angles are mirrored for left/right
+  let currentAngle;
+  
+  if (character.facing === 1) {
+    // Facing right: 1 o'clock to 5 o'clock
+    // -30° to 60°
+    currentAngle = map(slashProgress, 0, 1, -20, 60);
+  } else {
+    // Facing left: 11 o'clock to 7 o'clock
+    // We need to mirror: 180° - angle
+    // Right -30° becomes Left -150° (180 - 30 = 150, then negative)
+    // Right 60° becomes Left 120° (180 - 60 = 120)
+    currentAngle = map(slashProgress, 0, 1, 210, 120);
+  }
+  
+  let angleRad = radians(currentAngle);
+  
+  // Create hitbox segments along the slash path
+  let numSegments = 5;
+  
+  for (let i = 0; i < numSegments; i++) {
+    // Distance from anchor along slash (from 0 to slashLength)
+    let distance = (i / numSegments) * slashLength;
+    
+    // Calculate position using angle
+    let segX = anchorX + cos(angleRad) * distance;
+    let segY = anchorY + sin(angleRad) * distance;
+    
+    // Create square segment
+    shapes.push({ 
+      x: segX - slashThickness/2, 
+      y: segY - slashThickness/2, 
+      w: slashThickness, 
+      h: slashThickness 
+    });
+  }
+
+  return { shapes: shapes, col: col };
+}
+
+// NEW: Sword Qi Lunge Hitbox (same as HK)
+function getSwordQiLungeHitbox(character) {
+  let shapes = [];
+  let col = color(255, 100, 100, 180); // Red/white for sword energy
+  let innerOverlap = 10;
+  
+  // Same dimensions and position as HK
+  let atkW = 200;
+  let atkH = 40;
+  let offY = 30; // Same as HK offset
+  
+  let atkX = (character.facing === 1) ? 
+    (character.x + character.w - innerOverlap) : 
+    (character.x - atkW + innerOverlap);
+    
+  shapes.push({ x: atkX, y: character.y + offY, w: atkW, h: atkH });
+
+  return { shapes: shapes, col: col };
+}
+
 // LAUNCHER COMBO HITBOX (L-SHAPE)
 // ========================================
 function getLauncherHitbox(character) {
@@ -54,9 +138,7 @@ function getLauncherHitbox(character) {
   return { shapes: shapes, col: col };
 }
 
-// ========================================
 // DIVING KICK HITBOX (DIAGONAL STAIRCASE)
-// ========================================
 function getDivingKickHitbox(character) {
   let shapes = [];
   let col = color(255, 100, 0, 180);
@@ -92,9 +174,7 @@ function getDivingKickHitbox(character) {
   return { shapes: shapes, col: col };
 }
 
-// ========================================
 // STANDARD HITBOXES (LP, HP, LK, HK, etc.)
-// ========================================
 function getStandardHitbox(character, actualAttack) {
   let shapes = [];
   let col = color(255, 150);
@@ -104,11 +184,11 @@ function getStandardHitbox(character, actualAttack) {
   // Define hitbox dimensions based on attack type
   switch(actualAttack) {
     case "LP":
-      atkW = 150; atkH = 20; offY = 50;
+      atkW = 200; atkH = 20; offY = 30;
       col = color(255, 255, 0, 150);
       break;
     case "HP":
-      atkW = 150; atkH = 20; offY = 30;
+      atkW = 200; atkH = 20; offY = 30;
       col = color(255, 165, 0, 150);
       break;
     case "LK":

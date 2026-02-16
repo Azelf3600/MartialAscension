@@ -216,47 +216,82 @@ function handleRecording(char, buffer, code) {
   }
 
   if (move) {
-    // 1. Check for combo FIRST
     buffer.recordInput(move);
+    
     let result = checkCombo(buffer, STANDARD_COMBOS);
 
     if (result) {
-      // COMBO PRIORITY: Force stop the previous attack
+      // Character-specific combo check
+      if (result.characterSpecific && result.characterSpecific !== char.name) {
+        return;
+      }
+      
+      // Standing requirement check
+      if (result.requireStanding) {
+        if (char.h !== char.standH) {
+          console.log(`${result.name} requires standing position!`);
+          return;
+        }
+      }
+      
+      // Flying requirement check
+      if (result.requireFlying) {
+        if (!char.isFlying) {
+          console.log(`${result.name} requires Sword Qi Fly state!`);
+          return;
+        }
+      }
+      
+      // NEW: Low health requirement check (50% or below)
+      if (result.requireLowHealth) {
+        let healthPercent = char.hp / char.maxHp;
+        if (healthPercent > 0.5) {
+          console.log(`${result.name} requires 50% HP or below! Current: ${Math.floor(healthPercent * 100)}%`);
+          return;
+        }
+      }
+      
+      // NEW: Judgment available check (once per round)
+      if (result.requireJudgmentAvailable) {
+        if (char.hasUsedJudgment) {
+          console.log(`${result.name} can only be used once per round!`);
+          return;
+        }
+      }
+      
+      // Handle movement combos differently
+      if (result.type === "MOVEMENT") {
+        char.executeCombo(result);
+        return;
+      }
+      
       char.attackTimer = 0; 
       char.executeCombo(result);
       
-      // NEW: Jump to the finisher (skip inputs that already happened)
       if (result.hits && result.hits.length > 1) {
-        // Start from the last hit (the finisher)
         char.currentComboHit = result.hits.length - 1;
         char.comboHitTimer = result.hits[char.currentComboHit].duration;
         char.attackTimer = result.hits[char.currentComboHit].duration;
-        char.hasHit = false; // Allow finisher to hit
-        char.lastHitIndex = -1; // Reset tracker
+        char.hasHit = false;
+        char.lastHitIndex = -1;
       }
       
-      // Stop dashing when combo executes
-      if (char.isDashing) {
-        char.isDashing = false; // Stop dash animation
-        char.dashTimer = 0;
-        // But keep the velocity! Don't reset velX
-      }
-      
-      return; // Exit immediately
-    }
-
-    // 2. INPUT LOCK for standard moves only
-    if (char.attackTimer > 6) return; 
-
-    // 3. STANDARD ATTACK
-    if (move === "LP" || move === "HP" || move === "LK" || move === "HK") {
-      char.startAttack(move);
-      
-      // Stop dashing when attacking
       if (char.isDashing) {
         char.isDashing = false;
         char.dashTimer = 0;
-        // Keep velX for sliding attacks
+      }
+      
+      return;
+    }
+
+    if (char.attackTimer > 6) return;
+
+    if (move === "LP" || move === "HP" || move === "LK" || move === "HK") {
+      char.startAttack(move);
+      
+      if (char.isDashing) {
+        char.isDashing = false;
+        char.dashTimer = 0;
       }
     }
   }

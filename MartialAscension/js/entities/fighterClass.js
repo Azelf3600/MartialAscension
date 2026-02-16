@@ -10,7 +10,7 @@ class Character {
     this.name = name;
     this.controls = controls;
     this.archetype = archetype;
-    this.consecutiveAirHits = 0; // Track hits while airborne
+    this.consecutiveAirHits = 0;
 
     // Archetype Stat Calculator
     if (this.archetype === "Offensive") {
@@ -71,6 +71,31 @@ class Character {
 
     this.isHit = false;
     this.hitStun = 0;
+    
+    this.comboCooldowns = {};
+    
+    this.isLunging = false;
+    this.lungeTimer = 0;
+    this.lungeTotalFrames = 0;
+    this.lungePhase = "none";
+    this.lungePullbackDistance = 0;
+    this.lungeBurstDistance = 0;
+    this.lungeDirection = 0;
+    this.lungeSpeed = 0;
+    
+    this.isFlying = false;           
+    this.canAirDash = false;       
+    this.isAirDashing = false;       
+    this.airDashTimer = 0;           
+    this.airDashSpeed = 0;           
+    this.slowFallActive = false;     
+    this.flightLaunchTimer = 0; 
+
+    this.isGodSlashing = false;
+    this.godSlashTimer = 0;
+    this.godSlashPhase = "none"; 
+
+    this.hasUsedJudgment = false; // Can only use once per round
   }
 
   update(opponent, groundY) {
@@ -88,6 +113,13 @@ class Character {
       return; 
     }
 
+    // Update cooldowns
+    for (let comboName in this.comboCooldowns) {
+      if (this.comboCooldowns[comboName] > 0) {
+        this.comboCooldowns[comboName]--;
+      }
+    }
+
     this.facing = (this.x < opponent.x) ? 1 : -1;
     
     if (this.hitStun <= 0) {
@@ -99,200 +131,286 @@ class Character {
   }
 
   handleMovement(groundY) {
-  if (this.hitStun > 0) return;
+    if (this.hitStun > 0) return;
 
-  this.speed = width * 0.002; 
-  this.isBlocking = keyIsDown(this.controls.block) && this.isGrounded;
-  if (this.isBlocking) this.speed *= 0.3;
+    this.speed = width * 0.002; 
+    this.isBlocking = keyIsDown(this.controls.block) && this.isGrounded;
+    if (this.isBlocking) this.speed *= 0.3;
 
-  // ✅ FIXED TEKKEN-STYLE DASH - BALANCED FOR BOTH PLAYERS
-  if (!this.attacking && this.isGrounded) {
-    let buffer = (this === player1) ? p1Buffer : p2Buffer;
+    // Flight controls (only when flying - Ethan Li only via combo check)
+    if (this.isFlying && !this.isGrounded) {
+      // Option 1: Hold UP to slow fall
+      if (keyIsDown(this.controls.jump) && this.flightLaunchTimer <= 0) {
+        this.slowFallActive = true;
+        this.velY = 2; // Very slow fall
+      } else {
+        this.slowFallActive = false;
+      }
+      
+      // Option 2: Dash forward to teleport behind enemy
+      let buffer = (this === player1) ? p1Buffer : p2Buffer;
+      if (buffer.checkDoubleTap("FW") && this.canAirDash && !this.isAirDashing) {
+        this.isAirDashing = true;
+        this.canAirDash = false; // Can only air dash once per flight
+        this.airDashTimer = 15; // Duration of teleport dash
+        
+        // Calculate target position behind enemy
+        let opponent = (this === player1) ? player2 : player1;
+        let targetX = opponent.x + (opponent.facing === 1 ? -150 : opponent.w + 150);
+        this.airDashSpeed = (targetX - this.x) / this.airDashTimer;
+      }
+    }
+
+    // Normal dash (only on ground)
+    if (!this.attacking && this.isGrounded) {
+      let buffer = (this === player1) ? p1Buffer : p2Buffer;
+      
+      if (buffer.checkDoubleTap("FW")) {
+        this.isDashing = true;
+        this.dashDirection = this.facing; 
+        this.dashTimer = 18;
+        this.dashMaxSpeed = 60;
+        this.velX = this.facing * 50;
+      } else if (buffer.checkDoubleTap("BW")) {
+        this.isDashing = true;
+        this.dashDirection = -this.facing; 
+        this.dashTimer = 16;
+        this.dashMaxSpeed = 52;
+        this.velX = -this.facing * 42;
+      }
+    }
+
+    // Active Dash Momentum
+    if (this.isDashing && this.dashTimer > 0) {
+      this.dashTimer--;
+      
+      if (this.dashTimer > this.dashTimer * 0.75) {
+        let accel = (this.dashDirection === this.facing) ? 6.0 : 5.5;
+        this.velX += this.dashDirection * accel; 
+        
+        let currentSpeed = abs(this.velX);
+        let maxSpeed = (this.dashDirection === this.facing) ? this.dashMaxSpeed : this.dashMaxSpeed * 0.85;
+        
+        if (currentSpeed > maxSpeed) {
+          this.velX = this.dashDirection * maxSpeed;
+        }
+      }
+      
+      if (this.dashTimer <= 0) {
+        this.isDashing = false;
+        this.dashDirection = 0;
+      }
+    }
+
+    // Normal Walking
+    if (!this.attacking) {
+      if (keyIsDown(this.controls.left)) this.x -= this.speed;
+      if (keyIsDown(this.controls.right)) this.x += this.speed;
+    }
+
+    // Apply velocity
+    this.x += this.velX;
     
-    if (buffer.checkDoubleTap("FW")) {
-      // Forward Dash
-      this.isDashing = true;
-      this.dashDirection = this.facing; 
-      this.dashTimer = 18;           // Slightly longer for 900px
-      this.dashMaxSpeed = 60;        // Much faster (was 45)
-      this.velX = this.facing * 50;  // Massive initial burst (was 35)
-    } else if (buffer.checkDoubleTap("BW")) {
-      // Backdash
-      this.isDashing = true;
-      this.dashDirection = -this.facing; 
-      this.dashTimer = 16;           // Slightly longer for distance
-      this.dashMaxSpeed = 52;        // Much faster (was 38)
-      this.velX = -this.facing * 42; // Massive initial burst (was 28)
+    // Friction
+    if (this.isDashing) {
+      this.velX *= 0.70;
+    } else {
+      this.velX *= 0.82;
+    }
+    
+    // Crouch
+  if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
+      if (this.h !== this.crouchH) {
+        this.y += (this.h - this.crouchH);
+        this.h = this.crouchH;
+      }
+    } else {
+      if (this.h !== this.standH) {
+        this.y -= (this.standH - this.h);
+        this.h = this.standH;
+      }
+    }
+
+    // Normal Jump (only when not flying)
+    if (keyIsDown(this.controls.jump) && this.isGrounded && !this.attacking && !this.isFlying) {
+      this.velY = -this.jumpPower;
+      this.isGrounded = false;
+      this.isDashing = false;
+      this.dashTimer = 0;
     }
   }
 
-  // Active Dash Momentum
-  if (this.isDashing && this.dashTimer > 0) {
-    this.dashTimer--;
-    
-    // Only accelerate in the first 25% of dash (was 30%)
-    if (this.dashTimer > this.dashTimer * 0.75) {
-      let accel = (this.dashDirection === this.facing) ? 6.0 : 5.5; // Even higher accel
-      this.velX += this.dashDirection * accel; 
+  applyPhysics(groundY) {
+    // Handle diving kick movement
+    if (this.isDiving && this.diveTimer > 0) {
+      this.diveTimer--;
       
-      // ✅ FIXED: Cap using absolute values
-      let currentSpeed = abs(this.velX);
-      let maxSpeed = (this.dashDirection === this.facing) ? this.dashMaxSpeed : this.dashMaxSpeed * 0.85;
+      if (this.diveTimer > 35) {
+        this.velY += this.gravity;
+      }
+      else if (this.diveTimer > 25) {
+        this.diveVelY += this.gravity * 1.5;
+        this.velY = this.diveVelY;
+        this.x += this.diveVelX;
+      }
+      else {
+        this.diveVelY += this.gravity * 2.0;
+        this.velY = this.diveVelY;
+        this.x += this.diveVelX * 1.2;
+      }
       
-      if (currentSpeed > maxSpeed) {
-        this.velX = this.dashDirection * maxSpeed; // ✅ Apply direction to max speed
+      if (this.y + this.h >= groundY || this.diveTimer <= 0) {
+        this.isDiving = false;
+        this.diveTimer = 0;
+        this.diveVelX = 0;
+        this.diveVelY = 0;
+      }
+    } 
+    // Handle air dash teleport
+    else if (this.isAirDashing && this.airDashTimer > 0) {
+      this.airDashTimer--;
+      
+      // Move towards target position
+      this.x += this.airDashSpeed;
+      
+      // Maintain height during teleport
+      this.velY = 0;
+      
+      // End air dash
+      if (this.airDashTimer <= 0) {
+        this.isAirDashing = false;
+        this.airDashSpeed = 0;
+      }
+    }
+
+    // Handle God Slash (no gravity during slash)
+    else if (this.isGodSlashing && this.godSlashTimer > 0) {
+      this.godSlashTimer--;
+  
+    // Phase 1: Teleport (first 10 frames)
+    if (this.godSlashTimer > 30) {
+      this.godSlashPhase = "teleport";
+      this.velY = 0; // Freeze in air
+    } 
+    // Phase 2: Slash (last 30 frames)
+    else {
+      this.godSlashPhase = "slash";
+      this.velY = 15; // Fast downward slash
+    }
+  
+    // End God Slash
+    if (this.godSlashTimer <= 0) {
+      this.isGodSlashing = false;
+      this.godSlashPhase = "none";
+    }
+  }
+
+
+    // Normal gravity
+    else {
+      // NEW: Check flight launch timer
+      if (this.flightLaunchTimer > 0) {
+        this.flightLaunchTimer--;
+        // Don't apply gravity during launch frames
+      } else if (!this.slowFallActive) {
+        // Only apply gravity after launch period
+        this.velY += this.gravity;
       }
     }
     
-    // End of dash
-    if (this.dashTimer <= 0) {
-      this.isDashing = false;
-      this.dashDirection = 0;
-    }
-  }
+    this.y += this.velY;
 
-  // Normal Walking
-  if (!this.attacking) {
-    if (keyIsDown(this.controls.left)) this.x -= this.speed;
-    if (keyIsDown(this.controls.right)) this.x += this.speed;
-  }
+    // Handle lunge movement
+    if (this.isLunging && this.lungeTimer > 0) {
+      this.lungeTimer--;
+      
+      let pullbackFrames = 10;
+      let burstFrames = 25;
+      
+      if (this.lungeTimer > burstFrames) {
+        // Phase 1: Pullback
+        this.lungePhase = "pullback";
+        let pullbackPerFrame = this.lungePullbackDistance / pullbackFrames;
+        this.x -= this.lungeDirection * pullbackPerFrame;
+      } else {
+        // Phase 2: Burst forward
+        this.lungePhase = "burst";
+        let burstPerFrame = this.lungeBurstDistance / burstFrames;
+        this.x += this.lungeDirection * burstPerFrame;
+      }
+      
+      if (this.lungeTimer <= 0) {
+        this.isLunging = false;
+        this.lungePhase = "none";
+        this.lungeDirection = 0;
+      }
+    }
 
-  // Apply velocity
-  this.x += this.velX;
-  
-  // Friction
-  if (this.isDashing) {
-    this.velX *= 0.70; // Even faster decay (was 0.75) - very snappy stop
-  } else {
-    this.velX *= 0.82;
-  }
-  
-  // Crouch
-  if (keyIsDown(this.controls.crouch) && this.isGrounded) {
-    if (this.h !== this.crouchH) {
-      this.y += (this.h - this.crouchH);
-      this.h = this.crouchH;
+    // Handle launcher slide movement
+    if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
+      this.launcherSlideTimer--;
+      this.x += this.launcherSlideSpeed;
+      this.launcherSlideSpeed *= 0.85;
+      
+      if (this.launcherSlideTimer <= 0) {
+        this.isLauncherSliding = false;
+        this.launcherSlideSpeed = 0;
+      }
     }
-  } else {
-    if (this.h !== this.standH) {
-      this.y -= (this.standH - this.h);
-      this.h = this.standH;
-    }
-  }
 
-  // Jump
-  if (keyIsDown(this.controls.jump) && this.isGrounded && !this.attacking) {
-    this.velY = -this.jumpPower;
-    this.isGrounded = false;
-    this.isDashing = false;
-    this.dashTimer = 0;
-  }
-}
-
-  applyPhysics(groundY) {
-  // Handle diving kick movement
-  if (this.isDiving && this.diveTimer > 0) {
-    this.diveTimer--;
-    
-    // Phase 1: Jump up (first 8 frames)
-    if (this.diveTimer > 35) {
-      // Normal jump arc
-      this.velY += this.gravity;
-    }
-    // Phase 2: Forward momentum (frames 35-25)
-    else if (this.diveTimer > 25) {
-      // Start accelerating downward
-      this.diveVelY += this.gravity * 1.5; // Faster downward accel
-      this.velY = this.diveVelY;
-      this.x += this.diveVelX; // Forward movement
-    }
-    // Phase 3: Diving kick (last 25 frames)
-    else {
-      // Steep dive angle
-      this.diveVelY += this.gravity * 2.0; // Even faster dive
-      this.velY = this.diveVelY;
-      this.x += this.diveVelX * 1.2; // Faster forward during kick
-    }
-    
-    // End dive on landing or timer expiry
-    if (this.y + this.h >= groundY || this.diveTimer <= 0) {
-      this.isDiving = false;
-      this.diveTimer = 0;
-      this.diveVelX = 0;
-      this.diveVelY = 0;
-    }
-  } else {
-    // Normal gravity when not diving
-    this.velY += this.gravity;
-  }
-  
-  this.y += this.velY;
-
-  // Handle launcher slide movement
-  if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
-    this.launcherSlideTimer--;
-    this.x += this.launcherSlideSpeed;
-    this.launcherSlideSpeed *= 0.85;
-    
-    if (this.launcherSlideTimer <= 0) {
-      this.isLauncherSliding = false;
-      this.launcherSlideSpeed = 0;
+    if (this.y + this.h >= groundY) {
+      this.y = groundY - this.h;
+      this.velY = 0;
+      this.isGrounded = true;
+      
+      // Reset flight state when landing
+      if (this.isFlying) {
+        this.isFlying = false;
+        this.canAirDash = false;
+        this.slowFallActive = false;
+        this.isAirDashing = false;
+      }
+      
+      this.gravity = height * 0.003;
+      this.consecutiveAirHits = 0;
+      this.velX = 0;
     }
   }
-
-  if (this.y + this.h >= groundY) {
-    this.y = groundY - this.h;
-    this.velY = 0;
-    this.isGrounded = true;
-    
-    // --- RESET SCALING HERE ---
-    this.gravity = height * 0.003; // Reset to default gravity
-    this.consecutiveAirHits = 0;   // Reset hit counter
-    this.velX = 0;                 // Stop knockback momentum
-  }
-}
 
   handleAttack() {
-  if (this.attackTimer > 0) {
-    this.attackTimer--;
-    
-    // Handle combo progression
-    if (this.isPerformingCombo && this.comboHits.length > 0) {
-      this.comboHitTimer--;
+    if (this.attackTimer > 0) {
+      this.attackTimer--;
       
-      // Move to next hit when current hit finishes
-      if (this.comboHitTimer <= 0) {
-        if (this.currentComboHit < this.comboHits.length - 1) {
-          // Progress to next hit
-          this.currentComboHit++;
-          this.comboHitTimer = this.comboHits[this.currentComboHit].duration;
-          this.hasHit = false; // Reset so next hit can register
-          this.lastHitIndex = -1; // Reset hit tracker
-        } else {
-          // ✅ FIX: On the FINAL hit, lock it after first connection
-          // This prevents the last hit from registering multiple times
-          if (this.hasHit) {
-            this.lastHitIndex = this.currentComboHit; // Lock this hit
+      if (this.isPerformingCombo && this.comboHits.length > 0) {
+        this.comboHitTimer--;
+        
+        if (this.comboHitTimer <= 0) {
+          if (this.currentComboHit < this.comboHits.length - 1) {
+            this.currentComboHit++;
+            this.comboHitTimer = this.comboHits[this.currentComboHit].duration;
+            this.hasHit = false;
+            this.lastHitIndex = -1;
+          } else {
+            if (this.hasHit) {
+              this.lastHitIndex = this.currentComboHit;
+            }
           }
         }
       }
-    }
-    
-    // Combo/attack finished
-    if (this.attackTimer <= 0) {
-      this.recoveryTimer = !this.isPerformingCombo ? 12 : 4;
-      this.attacking = null;
-      this.isPerformingCombo = false;
-      this.comboDamageMod = 1.0;
       
-      // Reset combo tracking
-      this.comboHits = [];
-      this.currentComboHit = 0;
-      this.comboHitTimer = 0;
-      this.lastHitIndex = -1;
+      if (this.attackTimer <= 0) {
+        this.recoveryTimer = !this.isPerformingCombo ? 12 : 4;
+        this.attacking = null;
+        this.isPerformingCombo = false;
+        this.comboDamageMod = 1.0;
+        
+        this.comboHits = [];
+        this.currentComboHit = 0;
+        this.comboHitTimer = 0;
+        this.lastHitIndex = -1;
+      }
     }
   }
-}
 
   startAttack(type) {
     if (this.attackTimer <= 2 && !this.isBlocking) { 
@@ -304,63 +422,155 @@ class Character {
   }
 
   executeCombo(comboData) {
+  // Check cooldown
+  if (comboData.cooldown) {
+    let cooldownKey = comboData.name;
+    if (this.comboCooldowns[cooldownKey] && this.comboCooldowns[cooldownKey] > 0) {
+      console.log(`${comboData.name} is on cooldown! Wait ${Math.ceil(this.comboCooldowns[cooldownKey] / 60)} seconds`);
+      return;
+    }
+  }
+  
+  // Check if this is a movement combo FIRST
+  if (comboData.type === "MOVEMENT") {
+    this.attacking = null;
+    this.attackTimer = 0;
+    this.isPerformingCombo = false;
+    
+    if (comboData.name === "Sword Qi Fly") {
+      this.isFlying = true;
+      this.canAirDash = true;
+      this.isGrounded = false;
+      this.velY = -this.jumpPower * 0.8;
+      this.flightLaunchTimer = 10;
+    }
+    
+    if (comboData.cooldown) {
+      let cooldownKey = comboData.name;
+      this.comboCooldowns[cooldownKey] = comboData.cooldown;
+    }
+    
+    this.hasHit = false;
+    this.recoveryTimer = 0;
+    return;
+  }
+  
   this.attacking = comboData.name;
   this.isPerformingCombo = true;
   this.comboDamageMod = comboData.damageMult;
 
-  // ✅ FIX: Clear floating damage numbers from previous attacks
-  // This prevents visual confusion
   if (typeof damageIndicators !== 'undefined') {
     damageIndicators = damageIndicators.filter(ind => ind.life < 100);
-    // Only keeps very fresh indicators (< 100 life means they just spawned)
   }
 
-  // NEW: Set up multi-hit progression
   this.comboHits = comboData.hits || [];
   this.currentComboHit = 0;
 
   if (this.comboHits.length > 0) {
-    // Calculate total duration
     let totalDuration = this.comboHits.reduce((sum, hit) => sum + hit.duration, 0);
     this.attackTimer = totalDuration;
     this.comboHitTimer = this.comboHits[0].duration;
   } else {
-    // Fallback if no hits defined
     this.attackTimer = 25;
     this.comboHitTimer = 25;
   }
 
-  // Trigger launcher slide (300px)
+  // Launcher slide
   if (comboData.name === "Launcher") {
     this.isLauncherSliding = true;
-    this.launcherSlideTimer = 15; // Duration of slide
-    this.launcherSlideSpeed = this.facing * 10; // Reduced from 35 (300px range)
+    this.launcherSlideTimer = 15;
+    this.launcherSlideSpeed = this.facing * 10;
   }
 
-    if (comboData.name === "Diving Kick") {
+  // Diving Kick
+  if (comboData.name === "Diving Kick") {
     this.isDiving = true;
-    this.diveTimer = 43; // Total duration (8 + 10 + 25)
-    this.isGrounded = false; // Launch into air
+    this.diveTimer = 43;
+    this.isGrounded = false;
+    this.velY = -this.jumpPower * 1.2;
+    this.diveVelX = this.facing * 12;
+    this.diveVelY = 0;
+  }
+
+  // Sword Qi Strike (Projectile)
+  if (comboData.name === "Sword Qi Strike") {
+    let spawnX = this.facing === 1 ? 
+      this.x + this.w : 
+      this.x;
+    let spawnY = this.y + 50;
     
-    // Jump up and forward
-    this.velY = -this.jumpPower * 1.2; // Higher jump
-    this.diveVelX = this.facing * 12; // Forward momentum
-    this.diveVelY = 0; // Will accelerate downward
+    spawnProjectile(spawnX, spawnY, this.facing, this, "sword_qi");
+  }
+
+  // Sword Qi Lunge
+  if (comboData.name === "Sword Qi Lunge") {
+    if (this.h !== this.standH) {
+      this.y -= (this.standH - this.h);
+      this.h = this.standH;
+    }
+    
+    this.isLunging = true;
+    this.lungeTimer = 35;
+    this.lungeTotalFrames = 35;
+    this.lungePullbackDistance = 200;
+    this.lungeBurstDistance = 400;
+    this.lungeDirection = this.facing;
+  }
+
+  // Sword God Slash
+  if (comboData.name === "Sword God Slash") {
+    this.isGodSlashing = true;
+    this.godSlashTimer = 40; // Total duration
+    this.godSlashPhase = "teleport"; // Start with teleport
+  
+    // Calculate teleport position (in front of enemy)
+    let opponent = (this === player1) ? player2 : player1;
+    let teleportX = opponent.x + (opponent.facing === 1 ? opponent.w + 100 : -100);
+    let teleportY = opponent.y - 150; // Above the enemy
+  
+    // Instant teleport
+    this.x = teleportX;
+    this.y = teleportY;
+  
+    // Stop all movement
+    this.velX = 0;
+    this.velY = 0;
+  
+    // Phase transition happens in applyPhysics based on timer
+  }
+
+  // Sword God Judgment (Signature)
+  if (comboData.name === "Sword God Judgment") {
+    // Mark as used for this round
+    this.hasUsedJudgment = true;
+  
+    // Calculate spawn position (top of screen, above enemy)
+    let opponent = (this === player1) ? player2 : player1;
+    let spawnX = opponent.x + opponent.w / 2; // Centered on enemy
+    let spawnY = -200; // Above screen
+  
+    // Spawn judgment beam
+    spawnProjectile(spawnX, spawnY, 1, this, "judgment");
+  }
+
+  // Set cooldown
+  if (comboData.cooldown) {
+    let cooldownKey = comboData.name;
+    this.comboCooldowns[cooldownKey] = comboData.cooldown;
   }
 
   this.hasHit = false;
   this.recoveryTimer = 0;
 }
 
-  draw() {
+draw() {
   push();
   
   // Dash trail
   if (this.isDashing && this.dashTimer > 0) {
-    // Draw 3 fading afterimages behind the character
     for (let i = 1; i <= 3; i++) {
-      let trailX = this.x - (this.velX * i * 0.3); // Position behind based on velocity
-      let alpha = 100 - (i * 25); // Fade out
+      let trailX = this.x - (this.velX * i * 0.3);
+      let alpha = 100 - (i * 25);
       
       push();
       fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], alpha);
@@ -369,35 +579,177 @@ class Character {
       pop();
     }
     
-    // Glowing outline on main character
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
   }
   
-  // NEW: Launcher slide trail
+  // Launcher slide trail
   if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
     for (let i = 1; i <= 4; i++) {
       let trailX = this.x - (this.launcherSlideSpeed * i * 0.25); 
       let alpha = 120 - (i * 30);
       
       push();
-      fill(255, 165, 0, alpha); // Orange trail for launcher
+      fill(255, 165, 0, alpha);
       noStroke();
       rect(trailX, this.y, this.w, this.h, 5);
       pop();
     }
     
     drawingContext.shadowBlur = 20;
-    drawingContext.shadowColor = 'rgba(255, 165, 0, 0.9)'; // Orange glow
+    drawingContext.shadowColor = 'rgba(255, 165, 0, 0.9)';
   }
   
+  // Lunge trail
+  if (this.isLunging && this.lungeTimer > 0) {
+    let trailCount = this.lungePhase === "burst" ? 5 : 2;
+    
+    for (let i = 1; i <= trailCount; i++) {
+      let trailX = this.lungePhase === "burst" ? 
+        this.x - (this.lungeDirection * i * 30) : 
+        this.x + (this.lungeDirection * i * 15);
+      
+      let alpha = this.lungePhase === "burst" ? 
+        150 - (i * 30) : 
+        100 - (i * 40);
+      
+      push();
+      fill(255, 200, 200, alpha);
+      noStroke();
+      rect(trailX, this.y, this.w, this.h, 5);
+      pop();
+    }
+    
+    if (this.lungePhase === "burst") {
+      drawingContext.shadowBlur = 25;
+      drawingContext.shadowColor = 'rgba(255, 100, 100, 0.9)';
+    }
+  }
+  
+  // Flight effects (Ethan Li only via combo check)
+  if (this.isFlying && !this.isGrounded) {
+    // Slow fall effect
+    if (this.slowFallActive) {
+      push();
+      noFill();
+      stroke(100, 150, 255, 150);
+      strokeWeight(3);
+      
+      let pulseSize = sin(frameCount * 0.2) * 10;
+      rect(this.x, this.y, this.w + pulseSize, this.h + pulseSize, 5);
+      
+      for (let i = 0; i < 3; i++) {
+        let particleX = this.x + this.w/2 + random(-20, 20);
+        let particleY = this.y + this.h + random(0, 20);
+        fill(150, 200, 255, 100);
+        noStroke();
+        ellipse(particleX, particleY, 5, 5);
+      }
+      pop();
+    }
+    
+    // Air dash teleport effect
+    if (this.isAirDashing) {
+      push();
+      for (let i = 1; i <= 3; i++) {
+        let trailX = this.x - (this.airDashSpeed * i * 2);
+        let alpha = 150 - (i * 50);
+        
+        fill(255, 255, 255, alpha);
+        noStroke();
+        rect(trailX, this.y, this.w, this.h, 5);
+      }
+      
+      drawingContext.shadowBlur = 30;
+      drawingContext.shadowColor = 'rgba(255, 255, 255, 1.0)';
+      pop();
+    }
+    
+    // General flight glow
+    if (!this.isAirDashing) {
+      drawingContext.shadowBlur = 15;
+      drawingContext.shadowColor = 'rgba(200, 220, 255, 0.6)';
+    }
+  }
+  
+// God Slash effect
+if (this.isGodSlashing && this.godSlashTimer > 0) {
+  if (this.godSlashPhase === "teleport") {
+    // Teleport flash (white pulsing rings)
+    push();
+    drawingContext.shadowBlur = 50;
+    drawingContext.shadowColor = 'rgba(255, 255, 255, 1.0)';
+    
+    for (let i = 0; i < 3; i++) {
+      let ringSize = 50 + (i * 30);
+      noFill();
+      stroke(255, 255, 255, 200 - (i * 60));
+      strokeWeight(5);
+      ellipse(this.x + this.w/2, this.y + this.h/2, ringSize, ringSize);
+    }
+    pop();
+  } else if (this.godSlashPhase === "slash") {
+    // Slash trail (diagonal red line)
+    push();
+    
+    // Calculate slash progress
+    let slashProgress = map(this.godSlashTimer, 30, 0, 0, 1);
+    
+    // NEW: Flip angles based on facing direction
+    let angle;
+    if (this.facing === 1) {
+      // Facing right: 1 o'clock to 5 o'clock
+      angle = map(slashProgress, 0, 1, -20, 60);
+    } else {
+      // Facing left: 11 o'clock to 7 o'clock
+      angle = map(slashProgress, 0, 1, 210, 120);
+    }
+    
+    let angleRad = radians(angle);
+    
+    // Anchor at character center
+    let anchorX = this.x + this.w/2;
+    let anchorY = this.y + this.h/2;
+    
+    // Draw glowing slash line
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = 'rgba(255, 0, 0, 1.0)';
+    
+    stroke(255, 50, 50, 250);
+    strokeWeight(40);
+    strokeCap(ROUND);
+    
+    let endX = anchorX + cos(angleRad) * 200;
+    let endY = anchorY + sin(angleRad) * 200;
+    
+    line(anchorX, anchorY, endX, endY);
+    
+    // Add energy particles along slash
+    for (let i = 0; i < 5; i++) {
+      let t = random(1);
+      let particleX = lerp(anchorX, endX, t);
+      let particleY = lerp(anchorY, endY, t);
+      
+      fill(255, 100, 100, 200);
+      noStroke();
+      ellipse(particleX, particleY, 10, 10);
+    }
+    
+    pop();
+  }
+}
+  
+  // Character outline stroke
   strokeWeight(2);
   if (this.isHit) stroke(255, 0, 0);
   else if (this.recoveryTimer > 0) stroke(100);
   else if (this.attackTimer > 0) stroke(255, 255, 0);
-  else if (this.isDashing || this.isLauncherSliding) stroke(255, 255, 255, 200);
+  else if (this.isDashing || this.isLauncherSliding || this.isLunging) stroke(255, 255, 255, 200);
+  else if (this.isFlying) stroke(150, 200, 255, 200);
+  else if (this.isGodSlashing) stroke(255, 0, 0, 255); // Red outline during God Slash
   else stroke(0);
 
+  // Character body
   fill(this.color);
   if (this.hp <= 0) {
     rect(this.x, this.y + this.h - 5, this.w, 5, 2);
@@ -408,8 +760,12 @@ class Character {
     rect(eyeX, this.y + 10, 10, 10);
   }
 
+  // Draw hitbox and block indicator
   if (this.hp > 0) {
-    if (this.attackTimer > 0) this.drawHitbox();
+    if (this.attackTimer > 0 && this.attacking !== "Sword Qi Fly") {
+      this.drawHitbox();
+    }
+    
     if (this.isBlocking) {
       noFill();
       stroke(0, 200, 255, 200);
@@ -418,8 +774,9 @@ class Character {
       line(shieldX, this.y, shieldX, this.y + this.h);
     }
   }
+  
   pop();
-}  
+}
 
   drawHitbox() {
     let data = this.getHitboxData();
@@ -435,7 +792,6 @@ class Character {
   }
 
   getHitboxData() {
-    // Delegate to centralized hitbox system
     return getHitboxData(this);
   }
 }
