@@ -14,7 +14,7 @@ const PLAYER_CONTROLS = {
     block: 32        // 'Space'
   },
 
-  P2: {
+/*  P2: {
     left: 37, //left arrow
     right: 39, //right arrow
     jump: 38, //top arrow
@@ -24,5 +24,18 @@ const PLAYER_CONTROLS = {
     lightKick: 97,   // 'numpad1'
     heavyKick: 98,    // 'numpad2'
     block: 96 // 'numpad0'
+  }*/
+
+    P2: {
+    left: 37,        // Left Arrow
+    right: 39,       // Right Arrow
+    jump: 38,        // Up Arrow
+    crouch: 40,      // Down Arrow
+    lightPunch: 79,  // 'O'
+    heavyPunch: 80,  // 'P'
+    lightKick: 75,   // 'K'
+    heavyKick: 76,   // 'L'
+    block: 77        // 'M'
   }
 };
+

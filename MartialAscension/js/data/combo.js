@@ -123,5 +123,61 @@ const STANDARD_COMBOS = [
     hits: [
       { attack: "PROJECTILE", duration: 60 }
     ]
+  },
+  //Lucas Tang Unique Combos
+  { 
+    name: "Poison Hands", 
+    sequence: ["DW", "FW", "BW", "HP"], 
+    damageMult: 0, 
+    type: "POWERUP",
+    characterSpecific: "Lucas Tang",
+    cooldown: 120, // 2 seconds
+    duration: 300, // 5 seconds
+    hits: []
+  },
+  { 
+    name: "Poison Qi Palm", 
+    sequence: ["LP", "HP", "LP"], 
+    damageMult: 1.0, 
+    type: "PROJECTILE",
+    characterSpecific: "Lucas Tang",
+    cooldown: 180, // 3 seconds
+    requirePoisonHands: true, // Must have Poison Hands active
+    hits: [
+      { attack: "PROJECTILE", duration: 30 }
+    ]
+  },
+  { 
+    name: "Flame Poison Needle", 
+    sequence: ["DW", "FW", "LP"], 
+    damageMult: 1.0, 
+    type: "PROJECTILE",
+    characterSpecific: "Lucas Tang",
+    cooldown: 120, // 3 seconds
+    hits: [
+      { attack: "PROJECTILE", duration: 30 }
+    ]
+  },
+  { 
+    name: "Poison Flower Field", 
+    sequence: ["HP", "HK", "DW", "DW"], 
+    damageMult: 0, 
+    type: "AOE",
+    characterSpecific: "Lucas Tang",
+    cooldown: 300, // 5 seconds
+    duration: 360, // 5 seconds
+    requirePoisonHands: true,
+    hits: []
+  },
+  { 
+    name: "Ten Thousand Poison Flower Rain", 
+    sequence: ["BW", "FW", "HP", "HK"], 
+    damageMult: 1.0, 
+    type: "PROJECTILE",
+    characterSpecific: "Lucas Tang",
+    requirePoisonField: true,    // Must have Poison Flower Field active
+    requireLowHealth: true,      // Must be 50% HP or below
+    requireRainAvailable: true,  // Once per round
+    hits: [{ attack: "PROJECTILE", duration: 300 }] // 5 second duration
   }
 ];

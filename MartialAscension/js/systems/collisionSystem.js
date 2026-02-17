@@ -68,12 +68,22 @@ function checkHit(attacker, defender) {
           stunTime = 50;  // Very long stun
         }
 
-        // NEW: Apply damage (Sword Qi Lunge ignores block modifier)
         let finalCalculatedDmg;
-        if (isSwordQiLunge) {
-          finalCalculatedDmg = 35; // Always 35, even when blocked
+          if (isSwordQiLunge) {
+          finalCalculatedDmg = 35;
         } else {
-          finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod;
+          let poisonBonus = 1.0;
+  
+        // Poison Hands bonus (+50%)
+        if (attacker.isPoisonHandsActive && !attacker.isPerformingCombo) {
+          poisonBonus = 1.5;
+        }
+        // NEW: Poison Flower Field bonus (+30%) - stacks check (field takes priority if both somehow active)
+        else if (attacker.isPoisonFieldActive && !attacker.isPerformingCombo) {
+          poisonBonus = 1.3;
+        }
+  
+          finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod * poisonBonus;
         }
         
         applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback, isSwordQiLunge);

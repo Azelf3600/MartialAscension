@@ -39,8 +39,6 @@ function initMatch() {
   winnerName = "";
   damageIndicators = [];
 
-  // Borders are now fixed to stage dimensions (no need to recalculate)
-
   countdown = 3;
   countdownTimer = 60;
   fightStarted = false;
@@ -61,6 +59,7 @@ function initMatch() {
   showRoundResult = false;
   roundResultTimer = 180;
 
+  // ── Create players FIRST ──────────────────────────────
   let charH = height * 0.5;
   let p1Data = FIGHTERS[p1Selected];
   player1 = new Character(
@@ -88,10 +87,28 @@ function initMatch() {
     p2Data.archetype
   );
 
-  // NEW: Reset judgment usage for new round
+  // ── Reset per-round state AFTER players exist ─────────
   player1.hasUsedJudgment = false;
   player2.hasUsedJudgment = false;
 
+  player1.isPoisonFieldActive = false;
+  player2.isPoisonFieldActive = false;
+  player1.isInPoisonField = false;
+  player2.isInPoisonField = false;
+  player1.poisonFieldTimer = 0;
+  player2.poisonFieldTimer = 0;
+
+  // Reset per-round signature flags
+  player1.hasUsedJudgment = false;
+  player2.hasUsedJudgment = false;
+  player1.hasUsedPoisonRain = false;
+  player2.hasUsedPoisonRain = false;
+  player1.isPoisonRainActive = false;
+  player2.isPoisonRainActive = false;
+  player1.poisonRainTimer = 0;
+  player2.poisonRainTimer = 0;
+
+  // ── Camera reset ──────────────────────────────────────
   if (gameCamera) {
     gameCamera.pos = createVector(width/2, height/2);
   }
@@ -109,6 +126,54 @@ function drawMatchMulti() {
 
   push();
     gameCamera.apply();
+
+    // NEW: Draw Poison Flower Field ground effect
+if (player1 && player2) {
+  let fieldCaster = null;
+  if (player1.isPoisonFieldActive) fieldCaster = player1;
+  else if (player2.isPoisonFieldActive) fieldCaster = player2;
+  
+  if (fieldCaster) {
+    push();
+    
+    // Pulsing green ground line across entire stage
+    let pulseAlpha = 150 + sin(frameCount * 0.1) * 100;
+    let pulseThick = 4 + sin(frameCount * 0.15) * 2;
+    
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = 'rgba(0, 255, 0, 0.9)';
+    
+    // Main ground line
+    stroke(0, 255, 80, pulseAlpha);
+    strokeWeight(pulseThick);
+    line(-10000, groundY, 10000, groundY);
+    
+    // Secondary glow line
+    stroke(100, 255, 150, pulseAlpha * 0.5);
+    strokeWeight(pulseThick * 2);
+    line(-10000, groundY, 10000, groundY);
+    
+    // Flower particles rising from ground
+    for (let i = 0; i < 20; i++) {
+      let flowerX = random(-10000, 10000);
+      let flowerY = groundY - random(5, 40);
+      
+      fill(0, 255, 100, random(100, 200));
+      noStroke();
+      ellipse(flowerX, flowerY, random(4, 12), random(4, 12));
+    }
+    
+    // Timer indicator on ground
+    let timeLeft = Math.ceil(fieldCaster.poisonFieldTimer / 60);
+    fill(0, 255, 80, 200);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(20);
+    text(`☠ POISON FIELD: ${timeLeft}s ☠`, 0, groundY - 10);
+    
+    pop();
+  }
+}
     
     rectMode(CORNER);
     fill(60);

@@ -219,6 +219,9 @@ function handleRecording(char, buffer, code) {
     buffer.recordInput(move);
     
     let result = checkCombo(buffer, STANDARD_COMBOS);
+      if (result) {
+    console.log(`Combo detected: ${result.name} for ${char.name}`);
+    }
 
     if (result) {
       // Character-specific combo check
@@ -254,6 +257,30 @@ function handleRecording(char, buffer, code) {
       // NEW: Judgment available check (once per round)
       if (result.requireJudgmentAvailable) {
         if (char.hasUsedJudgment) {
+          console.log(`${result.name} can only be used once per round!`);
+          return;
+        }
+      }
+
+      // NEW: Poison Hands requirement check
+      if (result.requirePoisonHands) {
+        if (!char.isPoisonHandsActive) {
+          console.log(`${result.name} requires Poison Hands to be active!`);
+          return;
+        }
+      }
+
+      // NEW: Poison Field requirement check
+      if (result.requirePoisonField) {
+        if (!char.isPoisonFieldActive) {
+          console.log(`${result.name} requires Poison Flower Field to be active!`);
+          return;
+        }
+      }
+
+      // NEW: Poison Rain available check (once per round)
+      if (result.requireRainAvailable) {
+        if (char.hasUsedPoisonRain) {
           console.log(`${result.name} can only be used once per round!`);
           return;
         }
