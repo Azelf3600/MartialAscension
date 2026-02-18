@@ -20,16 +20,25 @@ function checkHit(attacker, defender) {
           box.y < defender.y + defender.h &&
           box.y + box.h > defender.y) {
         
-                  let baseDmg = 10;
-        
-        // NEW: Sword Qi Lunge deals fixed 35 damage (ignores block reduction)
+        let baseDmg = 10;  
         let isSwordQiLunge = (attacker.attacking === "Sword Qi Lunge");
-        let isSwordGodSlash = (attacker.attacking === "Sword God Slash"); // NEW
+        let isSwordGodSlash = (attacker.attacking === "Sword God Slash"); 
+        let isUnstoppableSeaDragon = (attacker.attacking === "Unstoppable Sea Dragon");
+        let isAzureFlowingDragon = (attacker.attacking === "Azure Flowing Dragon");
         
         if (isSwordQiLunge) {
           baseDmg = 35; // Fixed damage
         } else if (isSwordGodSlash) {
           baseDmg = 100; // Fixed damage
+        } else if (isUnstoppableSeaDragon){
+          baseDmg = 50;
+            // Grab enemy on first hit
+            if (!attacker.hasHit && !attacker.seaDragonTarget) {
+              attacker.seaDragonTarget = defender;
+              console.log("Sea Dragon grabbed enemy!");
+            }
+        } else if(isAzureFlowingDragon) {
+          baseDmg = 250
         } else if (attacker.isPerformingCombo && attacker.comboHits.length > 0) {
           // Normal combo damage calculations
           let actualAttack = attacker.comboHits[attacker.currentComboHit].attack;
@@ -66,6 +75,12 @@ function checkHit(attacker, defender) {
           // NEW: Sword God Slash knockback
           knockback = 60; // Massive knockback
           stunTime = 50;  // Very long stun
+        } else if (attacker.attacking === "Unstoppable Sea Dragon") {
+          knockback = 0; // Enemy is dragged, not knocked back
+          stunTime = 999; // Locked during drag (released in applyPhysics)
+        } else if (attacker.attacking === "Azure Flowing Dragon") {
+          knockback = 50;
+          stunTime = 40;
         }
 
         let finalCalculatedDmg;
@@ -82,11 +97,30 @@ function checkHit(attacker, defender) {
         else if (attacker.isPoisonFieldActive && !attacker.isPerformingCombo) {
           poisonBonus = 1.3;
         }
+
+        // NEW: Apply archetype modifier first, THEN apply Tortoise Body override
+        let effectiveDmgMod = attacker.dmgMod;
   
-          finalCalculatedDmg = baseDmg * attacker.dmgMod * attacker.comboDamageMod * poisonBonus;
+        // Undying Tortoise Body: Override dmgMod to 1.2 for Defensive archetype
+        let wasTortoiseActive = false;
+        if (attacker.attacking === "Unstoppable Sea Dragon") {
+        if (attacker.archetype === "Defensive") {
+          wasTortoiseActive = true;
+          effectiveDmgMod = 1.2; // Boost from 0.8 to 1.2 (60 damage)
+        } else {
+          effectiveDmgMod = 0.8; // Keep base (40 damage with Azure Scales consumption)
+        }
+      }  
+          // Normal Tortoise Body check
+          else if (attacker.isTortoiseBodyActive && attacker.archetype === "Defensive") {
+            effectiveDmgMod = 1.2; // Boost from 0.8 to 1.2
+          }
+  
+          finalCalculatedDmg = baseDmg * effectiveDmgMod * attacker.comboDamageMod * poisonBonus;
         }
         
-        applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback, isSwordQiLunge);
+        let ignoreBlock = isSwordQiLunge || isSwordGodSlash || isUnstoppableSeaDragon || isAzureFlowingDragon;
+        applyDamage(defender, finalCalculatedDmg, attacker, stunTime, knockback, ignoreBlock);
         
         attacker.hasHit = true;
         attacker.lastHitIndex = currentHitIndex;
@@ -104,28 +138,60 @@ function checkHit(attacker, defender) {
 
         // Launcher combo air juggle logic
         if (attacker.attacking === "Launcher" && !defender.isBlocking) {
-          if (defender.isGrounded) {
-            // 1st Launch: Big power
-            defender.consecutiveAirHits = 1; 
-            defender.velY = -defender.jumpPower * 1.6; 
-            defender.isGrounded = false;
-            defender.hitStun = 40; 
-          } else {
-            // Follow-up hits in the air
-            defender.consecutiveAirHits++;
-
-            if (defender.consecutiveAirHits === 2) {
-              defender.velY = -defender.jumpPower * 0.8; 
-            } 
-            else if (defender.consecutiveAirHits >= 3) {
-              defender.velY = -defender.jumpPower * 0.8; 
-              let slamDir = (defender.x > attacker.x) ? 80 : -80;
-              defender.velX = slamDir; 
-              defender.velY = 15;
-            }
-          }
+        // NEW: Skip launcher if Ocean Mending is active
+        if (defender.isOceanMendingActive) {
+          console.log("Launcher blocked by Ocean Mending Water!");
+        } else {
+        if (defender.isGrounded) {
+          defender.consecutiveAirHits = 1; 
+          defender.velY = -defender.jumpPower * 1.6; 
+          defender.isGrounded = false;
+          defender.hitStun = 40; 
+        } else {
+          defender.consecutiveAirHits++;
+        if (defender.consecutiveAirHits === 2) {
+          defender.velY = -defender.jumpPower * 0.8; 
+        } 
+        else if (defender.consecutiveAirHits >= 3) {
+          defender.velY = -defender.jumpPower * 0.8; 
+          let slamDir = (defender.x > attacker.x) ? 80 : -80;
+          defender.velX = slamDir; 
+          defender.velY = 15;
         }
-        
+      }
+    }
+  }
+
+  // ✅ NEW: Azure Flowing Dragon - launcher juggle effect
+if (attacker.attacking === "Azure Flowing Dragon") {
+  // Skip if Ocean Mending is active
+  if (defender.isOceanMendingActive) {
+    console.log("Azure Dragon launch blocked by Ocean Mending Water!");
+  } else {
+    // First hit - big launch
+    if (defender.isGrounded) {
+      defender.consecutiveAirHits = 1;
+      defender.velY = -defender.jumpPower * 2.0; // Even bigger than normal launcher
+      defender.isGrounded = false;
+      defender.hitStun = 45; // Longer stun
+      console.log("Azure Flowing Dragon launched enemy!");
+    } 
+    // Already airborne - juggle
+    else {
+      defender.consecutiveAirHits++;
+      
+      if (defender.consecutiveAirHits === 2) {
+        defender.velY = -defender.jumpPower * 1.0;
+      } 
+      else if (defender.consecutiveAirHits >= 3) {
+        defender.velY = -defender.jumpPower * 0.8;
+        let slamDir = (defender.x > attacker.x) ? 80 : -80;
+        defender.velX = slamDir;
+        defender.velY = 15;
+      }
+    }
+  }
+}
         break;
       }
     }
@@ -133,17 +199,58 @@ function checkHit(attacker, defender) {
 }
 
 
-function applyDamage(target, amount, attacker, stunTime, knockback) {
+function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock = false) {
   let damageToApply = Number(amount);
   target.hitStun = target.isBlocking ? target.blockStun : stunTime;
 
-  if (target.isBlocking) {
+    // NEW: Block hitstun if Ocean Mending is active
+  if (target.isOceanMendingActive) {
+    target.hitStun = 0; // Ignore stun completely
+  } else {
+    target.hitStun = target.isBlocking ? target.blockStun : stunTime;
+  }
+
+    // NEW: Undying Tortoise Body - 20% damage reduction (applied BEFORE block)
+  if (target.isTortoiseBodyActive) {
+    damageToApply = damageToApply * 0.8; // Reduce by 20%
+  }
+
+  // Apply block reduction unless ignored
+  if (target.isBlocking && !ignoreBlock) {
     damageToApply = damageToApply * (1 - target.blockMod);
+  }
+
+  // NEW: Azure Dragon Scales - Reflect 50% damage back to attacker
+  if (target.isAzureScalesActive) {
+    let reflectedDmg = damageToApply * 0.5;
+    
+    // Apply reflected damage to attacker
+    attacker.hp -= reflectedDmg;
+    if (attacker.hp < 0) attacker.hp = 0;
+    
+    // Show reflection indicator on attacker
+    if (typeof spawnDamageIndicator === "function") {
+      spawnDamageIndicator(
+        attacker.x + attacker.w / 2,
+        attacker.y - 30,
+        Math.floor(reflectedDmg),
+        false
+      );
+    }
+    
+    console.log(`Azure Scales reflected ${Math.floor(reflectedDmg)} damage!`);
   }
 
   target.hp -= damageToApply;
   if (target.hp < 0) target.hp = 0;
   target.isHit = !target.isBlocking;
+
+  // NEW: Block isHit flag if Ocean Mending is active
+  if (target.isOceanMendingActive) {
+    target.isHit = false; // No hit reaction
+  } else {
+    target.isHit = !target.isBlocking;
+  }
 
   if (typeof spawnDamageIndicator === "function") {
     let displayVal = Math.floor(damageToApply);

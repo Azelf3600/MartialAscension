@@ -463,32 +463,40 @@ function applyProjectileDamage(target, projectile, attacker) {
   let stunTime = 20;
   let knockback = 15;
   let ignoreModifiers = false;
+  let ignoreBlock = false; 
+
   
   if (projectile.type === "judgment") {
     baseDmg = 350;
     stunTime = 60;
     knockback = 80;
     ignoreModifiers = true;
+    ignoreBlock = true;
   } else if (projectile.type === "poison_qi") {
     baseDmg = 20;
     stunTime = 120;
     knockback = 20;
     ignoreModifiers = false;
+    ignoreBlock = false;
   } else if (projectile.type === "flame_needle") {
-    baseDmg = 20;        // Initial hit damage
+    baseDmg = 20;
     stunTime = 20;
     knockback = 15;
     ignoreModifiers = false;
-    
-    // Apply poison DOT (damage over time) to target
-    target.isPoisoned = true;
-    target.poisonDamage = 10;       // 10 damage per tick
-    target.poisonTimer = 180;       // Damage Duration (180 frames = 3 seconds)
-    target.poisonTickInterval = 60; // Tick every 1 second
-    target.poisonTickTimer = 60;    // First tick after 1 second
-    target.poisonAttacker = attacker; // Track who applied poison
-    
-    console.log("Flame Poison Needle hit! Poison applied for 3 seconds.");
+    ignoreBlock = false;
+  
+  // NEW: Only apply poison if Ocean Mending isn't active
+  if (!target.isOceanMendingActive) {
+      target.isPoisoned = true;
+      target.poisonDamage = 10;
+      target.poisonTimer = 180;
+      target.poisonTickInterval = 60;
+      target.poisonTickTimer = 60;
+      target.poisonAttacker = attacker;
+      console.log("Flame Poison Needle hit! Poison applied for 3 seconds.");
+      } else {
+      console.log("Flame Poison Needle poison blocked by Ocean Mending Water!");
+    }
   }
   else if (projectile.type === "poison_rain") {
     // NEW: Ten Thousand Poison Flower Rain - each drop
@@ -496,6 +504,7 @@ function applyProjectileDamage(target, projectile, attacker) {
     stunTime = 30;
     knockback = 20;
     ignoreModifiers = false; // Uses archetype modifiers
+    ignoreBlock = true;
   }
   
   let finalDmg;
@@ -505,7 +514,7 @@ function applyProjectileDamage(target, projectile, attacker) {
     finalDmg = baseDmg * attacker.dmgMod;
   }
   
-  applyDamage(target, finalDmg, attacker, stunTime, knockback);
+  applyDamage(target, finalDmg, attacker, stunTime, knockback, ignoreBlock);
   
   if (typeof spawnDamageIndicator === 'function') {
     spawnDamageIndicator(target.x + target.w/2, target.y, Math.floor(finalDmg), target.isBlocking);

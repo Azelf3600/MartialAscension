@@ -218,17 +218,21 @@ function handleRecording(char, buffer, code) {
   if (move) {
     buffer.recordInput(move);
     
-    let result = checkCombo(buffer, STANDARD_COMBOS);
-      if (result) {
-    console.log(`Combo detected: ${result.name} for ${char.name}`);
-    }
+    // Pass character into checkCombo
+    let result = checkCombo(buffer, STANDARD_COMBOS, char);
 
     if (result) {
-      // Character-specific combo check
-      if (result.characterSpecific && result.characterSpecific !== char.name) {
-        return;
+      console.log(`Combo detected: ${result.name} for ${char.name}`);
+
+      // ✅ NEW: Check cooldown BEFORE clearing buffer
+      if (result.cooldown) {
+        let cooldownKey = result.name;
+        if (char.comboCooldowns[cooldownKey] && char.comboCooldowns[cooldownKey] > 0) {
+          console.log(`${result.name} is on cooldown! Wait ${Math.ceil(char.comboCooldowns[cooldownKey] / 60)} seconds`);
+          return; // Exit early - buffer stays intact
+        }
       }
-      
+
       // Standing requirement check
       if (result.requireStanding) {
         if (char.h !== char.standH) {
@@ -245,7 +249,7 @@ function handleRecording(char, buffer, code) {
         }
       }
       
-      // NEW: Low health requirement check (50% or below)
+      // Low health requirement check (50% or below)
       if (result.requireLowHealth) {
         let healthPercent = char.hp / char.maxHp;
         if (healthPercent > 0.5) {
@@ -254,7 +258,7 @@ function handleRecording(char, buffer, code) {
         }
       }
       
-      // NEW: Judgment available check (once per round)
+      // Judgment available check (once per round)
       if (result.requireJudgmentAvailable) {
         if (char.hasUsedJudgment) {
           console.log(`${result.name} can only be used once per round!`);
@@ -262,7 +266,7 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // NEW: Poison Hands requirement check
+      // Poison Hands requirement check
       if (result.requirePoisonHands) {
         if (!char.isPoisonHandsActive) {
           console.log(`${result.name} requires Poison Hands to be active!`);
@@ -270,7 +274,7 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // NEW: Poison Field requirement check
+      // Poison Field requirement check
       if (result.requirePoisonField) {
         if (!char.isPoisonFieldActive) {
           console.log(`${result.name} requires Poison Flower Field to be active!`);
@@ -278,9 +282,25 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // NEW: Poison Rain available check (once per round)
+      // Poison Rain available check (once per round)
       if (result.requireRainAvailable) {
         if (char.hasUsedPoisonRain) {
+          console.log(`${result.name} can only be used once per round!`);
+          return;
+        }
+      }
+
+      // NEW: Azure Scales or Tortoise requirement check
+      if (result.requireAzureScalesOrTortoise) {
+        if (!char.isAzureScalesActive && !char.isTortoiseBodyActive) {
+          console.log(`${result.name} requires Azure Dragon Scales or Undying Tortoise Body to be active!`);
+          return;
+        }
+      }
+
+      // ✅ NEW: Azure Dragon available check (once per round)
+      if (result.requireAzureDragonAvailable) {
+        if (char.hasUsedAzureDragon) {
           console.log(`${result.name} can only be used once per round!`);
           return;
         }
@@ -360,14 +380,8 @@ function mouseReleased() {
   if (currentState === GAME_STATE.STAGE_SELECT) {
     handleStageSelection(GAME_STATE.MATCH);
   }
-
-  // NOTE: Stage Selection (Multiplayer) now uses keyboard controls
-  // Removed click handler for STAGE_SELECT_MULTI
 }
 
-/**
- * Helper to handle stage selection logic for single player mode
- */
 function handleStageSelection(nextState) {
   let thumbW = width * 0.2;
   let thumbH = height * 0.15;

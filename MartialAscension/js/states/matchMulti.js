@@ -18,7 +18,7 @@ let showFightText = false;
 let fightTextTimer = 60;
 
 // Match Timer Variables
-const ROUND_TIME = 60; 
+const ROUND_TIME = 99; 
 let matchTimer = ROUND_TIME;
 let matchTimerFrames = 60;
 
@@ -90,7 +90,6 @@ function initMatch() {
   // ── Reset per-round state AFTER players exist ─────────
   player1.hasUsedJudgment = false;
   player2.hasUsedJudgment = false;
-
   player1.isPoisonFieldActive = false;
   player2.isPoisonFieldActive = false;
   player1.isInPoisonField = false;
@@ -106,7 +105,27 @@ function initMatch() {
   player1.isPoisonRainActive = false;
   player2.isPoisonRainActive = false;
   player1.poisonRainTimer = 0;
-  player2.poisonRainTimer = 0;
+  player2.poisonRainTimer = 0;  
+  player1.hasUsedAzureDragon = false;
+  player2.hasUsedAzureDragon = false;
+
+  // NEW: Reset Azure Dragon Scales
+  player1.isAzureScalesActive = false;
+  player2.isAzureScalesActive = false;
+  player1.azureScalesTimer = 0;
+  player2.azureScalesTimer = 0;
+
+  // NEW: Reset Undying Tortoise Body
+  player1.isTortoiseBodyActive = false;
+  player2.isTortoiseBodyActive = false;
+  player1.tortoiseBodyTimer = 0;
+  player2.tortoiseBodyTimer = 0;
+
+  // NEW: Reset Ocean Mending Water
+  player1.isOceanMendingActive = false;
+  player2.isOceanMendingActive = false;
+  player1.oceanMendingTimer = 0;
+  player2.oceanMendingTimer = 0;
 
   // ── Camera reset ──────────────────────────────────────
   if (gameCamera) {
@@ -193,7 +212,7 @@ if (player1 && player2) {
     player2.draw();
 
     drawProjectiles();
-
+    drawAzureDragonIndicators(player1, player2);
     updateDamageIndicators();
     drawDamageIndicators();
   pop(); 
@@ -608,6 +627,61 @@ function checkWinCondition() {
     showRoundResult = true;
     roundResultTimer = 180;
   }
+}
+
+// Draw Azure Flowing Dragon ground indicators
+function drawAzureDragonIndicators(p1, p2) {
+  // Check P1's indicator
+  if (p1.isAzureDragonActive && p1.azureDragonPhase === "indicator") {
+    drawIndicator(p1.azureDragonIndicatorX, p1.azureDragonIndicatorY);
+  }
+  
+  // Check P2's indicator
+  if (p2.isAzureDragonActive && p2.azureDragonPhase === "indicator") {
+    drawIndicator(p2.azureDragonIndicatorX, p2.azureDragonIndicatorY);
+  }
+}
+
+function drawIndicator(x, y) {
+  push();
+  
+  let groundY = height - 100;
+  
+  // Pulsing warning circle
+  let pulseSize = 80 + sin(frameCount * 0.3) * 20;
+  let pulseAlpha = 150 + sin(frameCount * 0.3) * 100;
+  
+  drawingContext.shadowBlur = 40;
+  drawingContext.shadowColor = 'rgba(255, 100, 0, 1.0)';
+  
+  // Outer warning ring
+  noFill();
+  stroke(255, 100, 0, pulseAlpha);
+  strokeWeight(6);
+  ellipse(x, groundY, pulseSize, pulseSize * 0.3);
+  
+  // Inner ring
+  stroke(255, 200, 0, pulseAlpha * 1.2);
+  strokeWeight(4);
+  ellipse(x, groundY, pulseSize * 0.6, pulseSize * 0.3 * 0.6);
+  
+  // Center danger marker
+  fill(255, 0, 0, pulseAlpha);
+  noStroke();
+  ellipse(x, groundY, 20, 6);
+  
+  // Warning particles
+  for (let i = 0; i < 4; i++) {
+    let angle = (frameCount * 0.05) + (i * TWO_PI / 4);
+    let particleX = x + cos(angle) * (pulseSize * 0.5);
+    let particleY = groundY + sin(angle) * (pulseSize * 0.15);
+    
+    fill(255, 150, 0, random(150, 255));
+    noStroke();
+    ellipse(particleX, particleY, random(5, 10), random(5, 10));
+  }
+  
+  pop();
 }
 
 function windowResized() {

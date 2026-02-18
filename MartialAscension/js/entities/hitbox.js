@@ -10,6 +10,14 @@ function getHitboxData(character) {
     return { shapes: [], col: color(0, 0) };
   }
 
+  if (character.attacking === "Unstoppable Sea Dragon") {
+    return getSeaDragonHitbox(character);
+  }
+
+  if (character.attacking === "Azure Flowing Dragon") {
+    return getAzureDragonHitbox(character);
+  }
+
   let actualAttack = character.attacking;
   
   // If performing combo, use current hit's attack type
@@ -110,6 +118,53 @@ function getSwordQiLungeHitbox(character) {
     
   shapes.push({ x: atkX, y: character.y + offY, w: atkW, h: atkH });
 
+  return { shapes: shapes, col: col };
+}
+
+// UNSTOPPABLE SEA DRAGON HITBOX (Vertical wall in front)
+function getSeaDragonHitbox(character) {
+  let shapes = [];
+  let col = color(0, 180, 255, 180); // Cyan glow
+  
+  // Only show hitbox during charge
+  if (!character.isSeaDragonCharging) {
+    return { shapes: [], col: col };
+  }
+  
+  // Vertical wall hitbox (like block indicator)
+  let wallW = 10; // Thin vertical line
+  let wallH = character.h; // Full character height
+  
+  let wallX = (character.facing === 1) ? 
+    (character.x + character.w) : // Right side if facing right
+    (character.x - wallW); // Left side if facing left
+  
+  let wallY = character.y;
+  
+  shapes.push({ x: wallX, y: wallY, w: wallW, h: wallH });
+  
+  return { shapes: shapes, col: col };
+}
+
+// AZURE FLOWING DRAGON HITBOX (Rising pillar from underground)
+function getAzureDragonHitbox(character) {
+  let shapes = [];
+  let col = color(0, 220, 255, 180); // Bright cyan
+  
+  // Only show hitbox during emerge phase
+  if (character.azureDragonPhase !== "emerge") {
+    return { shapes: [], col: col };
+  }
+  
+  // Rising pillar hitbox (covers character + upward area)
+  let pillW = character.w * 1.2; // Slightly wider than character
+  let pillH = character.h * 1.5; // Extends above character
+  
+  let pillX = character.x - (pillW - character.w) / 2; // Center on character
+  let pillY = character.y - (pillH - character.h); // Extends upward
+  
+  shapes.push({ x: pillX, y: pillY, w: pillW, h: pillH });
+  
   return { shapes: shapes, col: col };
 }
 

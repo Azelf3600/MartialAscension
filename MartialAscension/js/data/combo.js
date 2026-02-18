@@ -91,7 +91,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Sword Qi Fly", 
-    sequence: ["FW", "BW", "UP", "UP"], 
+    sequence: ["BW", "FW", "UP", "UP"], 
     damageMult: 0, 
     type: "MOVEMENT", // NEW: Movement type
     characterSpecific: "Ethan Li",
@@ -113,7 +113,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Sword God Judgment", 
-    sequence: ["FW", "BW", "LK", "HP", "HK"], 
+    sequence: ["BW", "FW", "LK", "HP", "HK"], 
     damageMult: 1.0, 
     type: "JUDGMENT",
     characterSpecific: "Ethan Li",
@@ -171,7 +171,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Ten Thousand Poison Flower Rain", 
-    sequence: ["BW", "FW", "HP", "HK"], 
+    sequence: ["BW", "FW", "LP", "HP", "HK"], 
     damageMult: 1.0, 
     type: "PROJECTILE",
     characterSpecific: "Lucas Tang",
@@ -179,5 +179,61 @@ const STANDARD_COMBOS = [
     requireLowHealth: true,      // Must be 50% HP or below
     requireRainAvailable: true,  // Once per round
     hits: [{ attack: "PROJECTILE", duration: 300 }] // 5 second duration
+  },
+  //Aaron Shu Unique Combo
+  { 
+    name: "Azure Dragon Scales", 
+    sequence: ["HK", "DW", "DW"], 
+    damageMult: 0, 
+    type: "POWERUP",
+    characterSpecific: "Aaron Shu",
+    cooldown: 300, // 5 seconds
+    duration: 300, // 5 seconds
+    hits: []
+  },
+  { 
+    name: "Undying Tortoise Body", 
+    sequence: ["HP", "DW", "DW"], 
+    damageMult: 0, 
+    type: "POWERUP",
+    characterSpecific: "Aaron Shu",
+    cooldown: 300, // 5 seconds
+    duration: 300, // 5 seconds
+    hits: []
+  },
+  { 
+    name: "Ocean Mending Water", 
+    sequence: ["BW", "FW", "HP"], 
+    damageMult: 0, 
+    type: "POWERUP",
+    characterSpecific: "Aaron Shu",
+    cooldown: 300, // 3 seconds
+    requireAzureScalesOrTortoise: true, // Must have either buff active
+    hits: []
+  },
+  { 
+    name: "Unstoppable Sea Dragon", 
+    sequence: ["DW", "FW", "HK", "HK"], 
+    damageMult: 1.0, 
+    type: "SEA_DRAGON_CHARGE",
+    characterSpecific: "Aaron Shu",
+    cooldown: 300, // 5 seconds
+    requireAzureScalesOrTortoise: true, // Must have either buff active
+    hits: [
+      { attack: "CHARGE", duration: 60 } // ~1 second charge duration
+    ]
+  },
+  { 
+    name: "Azure Flowing Dragon", 
+    sequence: ["DW", "FW", "LK", "HK", "DW"], 
+    damageMult: 1.0, 
+    type: "AZURE_DRAGON_LAUNCHER",
+    characterSpecific: "Aaron Shu",
+    requireAzureScalesOrTortoise: true, // Must have either buff active
+    requireLowHealth: true, // Must be 50% HP or below
+    requireAzureDragonAvailable: true, // Once per round
+    hits: [
+      { attack: "DRAGON_LAUNCH", duration: 90 } // 2 seconds total (1s indicator + 1s emerge)
+    ]
   }
 ];

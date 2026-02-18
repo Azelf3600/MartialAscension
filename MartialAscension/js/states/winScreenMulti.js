@@ -3,7 +3,6 @@ let winScreenSelection = 0; // 0 = Rematch, 1 = Character Select, 2 = Main Menu
 const WIN_SCREEN_OPTIONS = ["REMATCH", "CHARACTER SELECT", "MAIN MENU"];
 
 function drawWinScreenMulti() {
-  // Full black background (responsive)
   push();
   rectMode(CORNER);
   fill(0);

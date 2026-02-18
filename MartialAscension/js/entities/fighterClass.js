@@ -16,7 +16,7 @@ class Character {
     if (this.archetype === "Offensive") {
       this.maxHp = 1000;
       this.dmgMod = 1.2;
-      this.blockMod = 0.4;
+      this.blockMod = 0.3;
       this.blockStun = 12;
     } else if (this.archetype === "Defensive") {
       this.maxHp = 1200;
@@ -109,7 +109,6 @@ class Character {
     this.poisonTickTimer = 0;
     this.poisonAttacker = null;
 
-    // NEW: Poison Flower Field (Lucas Tang)
     this.isPoisonFieldActive = false;   
     this.poisonFieldTimer = 0;          
     this.poisonFieldCooldownPending = false;
@@ -117,11 +116,44 @@ class Character {
     this.poisonFieldDmgTickTimer = 0;   
     this.poisonFieldHealTickTimer = 0;  
 
-    // NEW: Ten Thousand Poison Flower Rain (Lucas Tang signature)
-    this.hasUsedPoisonRain = false;     // Once per round
-    this.isPoisonRainActive = false;    // Is rain currently raining
-    this.poisonRainTimer = 0;           // 5 second duration
-    this.poisonRainSpawnTimer = 0;      // Timer between raindrop spawns
+    this.hasUsedPoisonRain = false;     
+    this.isPoisonRainActive = false;    
+    this.poisonRainTimer = 0;           
+    this.poisonRainSpawnTimer = 0;      
+
+    this.isAzureScalesActive = false;
+    this.azureScalesTimer = 0;
+    this.azureScalesDuration = 300; 
+    this.azureScalesCooldownPending = false;
+
+    this.isTortoiseBodyActive = false;
+    this.tortoiseBodyTimer = 0;
+    this.tortoiseBodyDuration = 300; 
+    this.tortoiseBodyCooldownPending = false;
+
+    this.isOceanMendingActive = false;
+    this.oceanMendingTimer = 0;
+    this.oceanMendingDuration = 180; 
+
+    // NEW: Unstoppable Sea Dragon (Aaron Shu charge attack)
+    this.isSeaDragonCharging = false;
+    this.seaDragonTimer = 0;
+    this.seaDragonPhase = "none"; // "charge", "burst", "drag"
+    this.seaDragonDistanceTraveled = 0;
+    this.seaDragonMaxDistance = 800;
+    this.seaDragonSpeed = 0;
+    this.seaDragonDirection = 0;
+    this.seaDragonTarget = null; // Dragged enemy
+    this.seaDragonDragStunTimer = 0; // Post-drag stun
+
+    this.hasUsedAzureDragon = false; // Once per round flag
+    this.isAzureDragonActive = false;
+    this.azureDragonTimer = 0;
+    this.azureDragonPhase = "none"; // "submerge", "indicator", "emerge"
+    this.azureDragonIndicatorX = 0;
+    this.azureDragonIndicatorY = 0;
+    this.azureDragonTargetX = 0;
+    this.azureDragonTargetY = 0;
   }
 
   update(opponent, groundY) {
@@ -162,6 +194,57 @@ class Character {
       }
     }
   }
+
+    // NEW: Azure Dragon Scales duration and cooldown
+if (this.isAzureScalesActive && this.azureScalesTimer > 0) {
+  this.azureScalesTimer--;
+  
+  // Duration ended
+  if (this.azureScalesTimer <= 0) {
+    this.isAzureScalesActive = false;
+    
+    // Start cooldown
+    if (this.azureScalesCooldownPending) {
+      this.comboCooldowns["Azure Dragon Scales"] = 300; // 5 seconds
+      this.azureScalesCooldownPending = false;
+      console.log("Azure Dragon Scales ended. Cooldown started.");
+    }
+  }
+}
+
+// NEW: Undying Tortoise Body duration and cooldown
+if (this.isTortoiseBodyActive && this.tortoiseBodyTimer > 0) {
+  this.tortoiseBodyTimer--;
+  
+  // Duration ended
+  if (this.tortoiseBodyTimer <= 0) {
+    this.isTortoiseBodyActive = false;
+    
+    // Start cooldown
+    if (this.tortoiseBodyCooldownPending) {
+      this.comboCooldowns["Undying Tortoise Body"] = 300; // 5 seconds
+      this.tortoiseBodyCooldownPending = false;
+      console.log("Undying Tortoise Body ended. Cooldown started.");
+    }
+  }
+}
+
+// NEW: Ocean Mending Water duration
+if (this.isOceanMendingActive && this.oceanMendingTimer > 0) {
+  this.oceanMendingTimer--;
+  
+  // Clear debuffs every frame while active
+  this.isPoisoned = false;
+  this.poisonDamage = 0;
+  this.poisonTimer = 0;
+  this.isInPoisonField = false;
+  
+  // Duration ended
+  if (this.oceanMendingTimer <= 0) {
+    this.isOceanMendingActive = false;
+    console.log("Ocean Mending Water debuff immunity ended.");
+  }
+}
 
     // NEW: Poison DOT tick (Flame Poison Needle)
 if (this.isPoisoned && this.poisonTimer > 0) {
@@ -234,11 +317,14 @@ if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
   if (this.poisonFieldDmgTickTimer <= 0) {
     this.poisonFieldDmgTickTimer = 60; // Reset every second
     
+  // NEW: Skip damage if Ocean Mending is active
+  if (fieldOpponent.isOceanMendingActive) {
+    console.log("Poison Field damage blocked by Ocean Mending Water!");
+  } else {
     let fieldDmg = 5;
     fieldOpponent.hp -= fieldDmg;
     if (fieldOpponent.hp < 0) fieldOpponent.hp = 0;
     
-    // Show damage indicator on opponent
     if (typeof spawnDamageIndicator === 'function') {
       spawnDamageIndicator(
         fieldOpponent.x + fieldOpponent.w / 2,
@@ -249,6 +335,7 @@ if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
     }
     console.log(`Poison Field damage: -${fieldDmg} HP to opponent`);
   }
+}
   
   // Field expired
   if (this.poisonFieldTimer <= 0) {
@@ -546,6 +633,109 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
       }
     }
 
+    //Handle Sea Dragon Charge movement
+    if (this.isSeaDragonCharging && this.seaDragonTimer > 0) {
+      this.seaDragonTimer--;
+      this.seaDragonDistanceTraveled += Math.abs(this.seaDragonSpeed);
+  
+    // Phase 1: Slow charge (first 100px)
+    if (this.seaDragonDistanceTraveled < 100) {
+      this.seaDragonPhase = "charge";
+      this.seaDragonSpeed = this.seaDragonDirection * 5; // Slow speed
+    } 
+    // Phase 2: Burst acceleration (100px to 800px)
+    else {
+      this.seaDragonPhase = "burst";
+      this.seaDragonSpeed = this.seaDragonDirection * 15; // Fast speed (not as fast as projectiles)
+    }
+  
+    // Move forward
+    this.x += this.seaDragonSpeed;
+  
+    // Drag enemy if grabbed
+    if (this.seaDragonTarget) {
+      this.seaDragonTarget.x += this.seaDragonSpeed;
+      this.seaDragonTarget.isHit = true;
+      this.seaDragonTarget.hitStun = 999; // Locked during drag
+     }
+  
+    // End charge at max distance OR timer expires
+    if (this.seaDragonDistanceTraveled >= this.seaDragonMaxDistance || this.seaDragonTimer <= 0) {
+      this.isSeaDragonCharging = false;
+      this.seaDragonPhase = "none";
+      this.seaDragonSpeed = 0;
+    
+    // Release enemy and apply post-drag stun
+    if (this.seaDragonTarget) {
+      this.seaDragonTarget.hitStun = 60; // 1 second stun
+      this.seaDragonTarget = null;
+    }
+    
+      console.log("Sea Dragon Charge ended!");
+     }
+    }
+
+    //Handle Azure Flowing Dragon phases
+if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
+  this.azureDragonTimer--;
+  
+  // Phase 1: Submerge (0-10 frames) - Character sinks into ground
+  if (this.azureDragonTimer > 80) {
+    this.azureDragonPhase = "submerge";
+    
+    // Sink into ground (move down)
+    this.y += 5; // Sink speed
+    
+    // Disable gravity during submerge
+    this.velY = 0;
+  }
+  
+  // Phase 2: Indicator (10-70 frames = 1 second) - Show indicator at target location
+  else if (this.azureDragonTimer > 50) {
+    this.azureDragonPhase = "indicator";
+    
+    // Character is underground (invisible)
+    // Indicator is drawn in draw() method
+  }
+  
+  // Phase 3: Emerge (70-120 frames = ~0.8 seconds) - Rise from indicator position
+  else if (this.azureDragonTimer > 0) {
+    // Transition to emerge on first frame
+    if (this.azureDragonPhase === "indicator") {
+      this.azureDragonPhase = "emerge";
+      
+      // Teleport character to indicator position (underground)
+      this.x = this.azureDragonTargetX - this.w / 2; // Center on indicator
+      this.y = this.azureDragonTargetY + 50; // Start below ground
+      
+      console.log("Azure Dragon emerging from ground!");
+    }
+    
+    // Rise upward quickly (launcher speed)
+    this.velY = -6; // Fast upward speed
+    this.y += this.velY;
+    
+    // Stop at ground level
+    let groundY = height - 100;
+    if (this.y + this.h <= groundY) {
+      // Continue rising
+    } else {
+      // Reached surface - end move
+      this.y = groundY - this.h;
+      this.velY = 0;
+      this.isGrounded = true;
+    }
+  }
+  
+    // Phase 4: End
+    if (this.azureDragonTimer <= 0) {
+      this.isAzureDragonActive = false;
+      this.azureDragonPhase = "none";
+      this.velY = 0;
+      console.log("Azure Flowing Dragon ended!");
+      }
+    }
+
     // Handle launcher slide movement
     if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
       this.launcherSlideTimer--;
@@ -630,14 +820,6 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
     }
 
   executeCombo(comboData) {
-  // Check cooldown
-  if (comboData.cooldown) {
-    let cooldownKey = comboData.name;
-    if (this.comboCooldowns[cooldownKey] && this.comboCooldowns[cooldownKey] > 0) {
-      console.log(`${comboData.name} is on cooldown! Wait ${Math.ceil(this.comboCooldowns[cooldownKey] / 60)} seconds`);
-      return;
-    }
-  }
   
   // Check if this is a movement combo FIRST
   if (comboData.type === "MOVEMENT") {
@@ -670,10 +852,9 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
     this.isPerformingCombo = false;
   
   if (comboData.name === "Poison Hands") {
-    // NEW: Prevent resetting timer if already active
     if (this.isPoisonHandsActive) {
       console.log("Poison Hands is already active!");
-      return; // Don't reset the timer
+      return; 
     }
     
     this.isPoisonHandsActive = true;
@@ -681,6 +862,107 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
     this.poisonHandsCooldownPending = true;
     
     console.log("Poison Hands activated! Damage +50% for 5 seconds");
+  }
+
+  if (comboData.name === "Azure Dragon Scales") {
+    if (this.isAzureScalesActive) {
+      console.log("Azure Dragon Scales is already active!");
+      return;
+    }
+    // NEW: Can't stack with Tortoise Body
+    if (this.isTortoiseBodyActive) {
+      console.log("Cannot use Azure Dragon Scales while Undying Tortoise Body is active!");
+      return;
+    }
+    this.isAzureScalesActive = true;
+    this.azureScalesTimer = comboData.duration;
+    this.azureScalesCooldownPending = true;
+    console.log("Azure Dragon Scales activated! 50% damage reflection for 5 seconds");
+  }
+
+  if (comboData.name === "Undying Tortoise Body") {
+    if (this.isTortoiseBodyActive) {
+      console.log("Undying Tortoise Body is already active!");
+      return;
+    }
+    // NEW: Can't stack with Dragon Scales
+    if (this.isAzureScalesActive) {
+      console.log("Cannot use Undying Tortoise Body while Azure Dragon Scales is active!");
+      return;
+    }
+    this.isTortoiseBodyActive = true;
+    this.tortoiseBodyTimer = comboData.duration;
+    this.tortoiseBodyCooldownPending = true;
+    console.log("Undying Tortoise Body activated! +20% defense, damage boost for 5 seconds");
+  }
+
+  // Ocean Mending Water
+  if (comboData.name === "Ocean Mending Water") {
+
+  if (this.isOceanMendingActive) {
+    console.log("Ocean Mending Water is already active!");
+    return;
+  }
+
+    // Calculate heal amount based on remaining duration
+    let healAmount = 0;
+    let consumedBuff = "";
+  
+  if (this.isAzureScalesActive) {
+    // 10 HP per second remaining
+    let secondsLeft = Math.ceil(this.azureScalesTimer / 60);
+    healAmount = secondsLeft * 10;
+    healAmount = Math.min(healAmount, 50); // Cap at 50 HP
+    
+    // Consume Azure Scales
+    this.isAzureScalesActive = false;
+    this.azureScalesTimer = 0;
+    if (this.azureScalesCooldownPending) {
+      this.comboCooldowns["Azure Dragon Scales"] = 300;
+      this.azureScalesCooldownPending = false;
+    }
+    consumedBuff = "Azure Dragon Scales";
+  } 
+  else if (this.isTortoiseBodyActive) {
+    // 10 HP per second remaining
+    let secondsLeft = Math.ceil(this.tortoiseBodyTimer / 60);
+    healAmount = secondsLeft * 10;
+    healAmount = Math.min(healAmount, 50); // Cap at 50 HP
+    
+    // Consume Tortoise Body
+    this.isTortoiseBodyActive = false;
+    this.tortoiseBodyTimer = 0;
+    if (this.tortoiseBodyCooldownPending) {
+      this.comboCooldowns["Undying Tortoise Body"] = 300;
+      this.tortoiseBodyCooldownPending = false;
+    }
+    consumedBuff = "Undying Tortoise Body";
+  }
+  
+  // Apply heal (cap at maxHp)
+  this.hp = Math.min(this.hp + healAmount, this.maxHp);
+  
+  // Show heal indicator
+  if (typeof spawnDamageIndicator === 'function') {
+    spawnDamageIndicator(
+      this.x + this.w / 2,
+      this.y - 40,
+      healAmount,
+      false
+    );
+  }
+  
+    // Clear existing debuffs
+    this.isPoisoned = false;
+    this.poisonDamage = 0;
+    this.poisonTimer = 0;
+    this.isInPoisonField = false;
+  
+    // Activate debuff immunity
+    this.isOceanMendingActive = true;
+    this.oceanMendingTimer = 180; // 3 seconds
+  
+    console.log(`Ocean Mending Water healed ${healAmount} HP! ${consumedBuff} consumed. Debuff immunity for 3 seconds.`);
   }
   
   this.hasHit = false;
@@ -863,31 +1145,117 @@ if (comboData.type === "AOE") {
     spawnProjectile(spawnX, spawnY, this.facing, this, "flame_needle");
   }
 
-  // Ten Thousand Poison Flower Rain (Lucas Tang Signature)
-  if (comboData.name === "Ten Thousand Poison Flower Rain") {
-    // Mark as used
-      this.hasUsedPoisonRain = true;
+// Ten Thousand Poison Flower Rain (Lucas Tang Signature)
+if (comboData.name === "Ten Thousand Poison Flower Rain") {
+  // ✅ FIX: Clear attack state immediately so caster can move
+  this.attacking = null;
+  this.attackTimer = 0;
+  this.isPerformingCombo = false;
   
-    // End Poison Flower Field early
-      this.isPoisonFieldActive = false;
-      this.poisonFieldTimer = 0;
-  
+  // Mark as used
+  this.hasUsedPoisonRain = true;
+
+  // End Poison Flower Field early
+  this.isPoisonFieldActive = false;
+  this.poisonFieldTimer = 0;
+
   // Remove field debuff from opponent
-    let rainOpponent = (this === player1) ? player2 : player1;
-    rainOpponent.isInPoisonField = false;
-  
+  let rainOpponent = (this === player1) ? player2 : player1;
+  rainOpponent.isInPoisonField = false;
+
   // Start cooldown for field if pending
   if (this.poisonFieldCooldownPending) {
     this.comboCooldowns["Poison Flower Field"] = 300;
     this.poisonFieldCooldownPending = false;
   }
   
-    // Activate rain
-    this.isPoisonRainActive = true;
-    this.poisonRainTimer = 300;     // 5 seconds
-    this.poisonRainSpawnTimer = 0;  // Spawn first drop immediately
+  // Activate rain
+  this.isPoisonRainActive = true;
+  this.poisonRainTimer = 300;     // 5 seconds
+  this.poisonRainSpawnTimer = 0;  // Spawn first drop immediately
+
+  console.log("Ten Thousand Poison Flower Rain activated!");
   
-    console.log("Ten Thousand Poison Flower Rain activated!");
+  // ✅ FIX: Exit early - don't continue to normal combo execution
+  this.hasHit = false;
+  this.recoveryTimer = 0;
+  return;
+  }
+
+  //Execute Aaron Shu Combo
+if (comboData.name === "Unstoppable Sea Dragon") {
+  // Consume either Azure Dragon Scales OR Undying Tortoise Body
+  if (this.isAzureScalesActive) {
+    this.isAzureScalesActive = false;
+    this.azureScalesTimer = 0;
+    if (this.azureScalesCooldownPending) {
+      this.comboCooldowns["Azure Dragon Scales"] = 300;
+      this.azureScalesCooldownPending = false;
+    }
+    console.log("Azure Dragon Scales consumed by Sea Dragon Charge!");
+  } 
+  else if (this.isTortoiseBodyActive) {
+    this.isTortoiseBodyActive = false;
+    this.tortoiseBodyTimer = 0;
+    if (this.tortoiseBodyCooldownPending) {
+      this.comboCooldowns["Undying Tortoise Body"] = 300;
+      this.tortoiseBodyCooldownPending = false;
+    }
+    console.log("Undying Tortoise Body consumed by Sea Dragon Charge!");
+  }
+  
+  // Initialize charge
+  this.isSeaDragonCharging = true;
+  this.seaDragonTimer = 60; // Total duration (1 second)
+  this.seaDragonPhase = "charge";
+  this.seaDragonDistanceTraveled = 0;
+  this.seaDragonDirection = this.facing;
+  this.seaDragonSpeed = 0;
+  this.seaDragonTarget = null;
+  
+  console.log("Unstoppable Sea Dragon activated!");
+  }
+
+  //Execute Aaron Shu Signature - Azure Flowing Dragon
+if (comboData.name === "Azure Flowing Dragon") {
+  // Mark as used for this round
+  this.hasUsedAzureDragon = true;
+  
+  // Consume either Azure Dragon Scales OR Undying Tortoise Body
+  if (this.isAzureScalesActive) {
+    this.isAzureScalesActive = false;
+    this.azureScalesTimer = 0;
+    if (this.azureScalesCooldownPending) {
+      this.comboCooldowns["Azure Dragon Scales"] = 300;
+      this.azureScalesCooldownPending = false;
+    }
+    console.log("Azure Dragon Scales consumed by Azure Flowing Dragon!");
+  } 
+  else if (this.isTortoiseBodyActive) {
+    this.isTortoiseBodyActive = false;
+    this.tortoiseBodyTimer = 0;
+    if (this.tortoiseBodyCooldownPending) {
+      this.comboCooldowns["Undying Tortoise Body"] = 300;
+      this.tortoiseBodyCooldownPending = false;
+    }
+    console.log("Undying Tortoise Body consumed by Azure Flowing Dragon!");
+  }
+  
+    // Get opponent position for indicator
+    let opponent = (this === player1) ? player2 : player1;
+    this.azureDragonIndicatorX = opponent.x + opponent.w / 2; // Center on enemy
+    this.azureDragonIndicatorY = opponent.y + opponent.h; // At enemy's feet
+  
+    // Store target position (will emerge here after 1 second)
+    this.azureDragonTargetX = this.azureDragonIndicatorX;
+    this.azureDragonTargetY = this.azureDragonIndicatorY;
+  
+    // Initialize Azure Dragon sequence
+    this.isAzureDragonActive = true;
+    this.azureDragonTimer = 90; // 2 seconds total
+    this.azureDragonPhase = "submerge"; // Start by going underground
+  
+    console.log("Azure Flowing Dragon activated!");
   }
 } 
 
@@ -1067,6 +1435,123 @@ if (this.isGodSlashing && this.godSlashTimer > 0) {
   }
 }
 
+// ✅ NEW: Sea Dragon Charge effect
+if (this.isSeaDragonCharging && this.seaDragonTimer > 0) {
+  push();
+  
+  // Charge phase glow (building power)
+  if (this.seaDragonPhase === "charge") {
+    drawingContext.shadowBlur = 25;
+    drawingContext.shadowColor = 'rgba(0, 150, 255, 0.9)';
+    
+    // Pulsing blue aura
+    let chargePulse = 150 + sin(frameCount * 0.5) * 100;
+    noFill();
+    stroke(0, 180, 255, chargePulse);
+    strokeWeight(6);
+    rect(this.x, this.y, this.w, this.h, 5);
+    
+    // Charge particles gathering
+    for (let i = 0; i < 5; i++) {
+      let particleX = this.x + this.w/2 + random(-40, 40);
+      let particleY = this.y + this.h/2 + random(-40, 40);
+      fill(0, 180, 255, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(8, 15), random(8, 15));
+    }
+  }
+  
+  // Burst phase (accelerating forward)
+  else if (this.seaDragonPhase === "burst") {
+    drawingContext.shadowBlur = 40;
+    drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
+    
+    // Speed trail
+    for (let i = 1; i <= 5; i++) {
+      let trailX = this.x - (this.seaDragonSpeed * i * 2);
+      let alpha = 200 - (i * 40);
+      
+      fill(0, 200, 255, alpha);
+      noStroke();
+      rect(trailX, this.y, this.w, this.h, 5);
+    }
+    
+    // Dragon-like energy wave
+    stroke(100, 230, 255, 200);
+    strokeWeight(8);
+    noFill();
+    rect(this.x - 5, this.y - 5, this.w + 10, this.h + 10, 5);
+  }
+  
+  pop();
+}
+
+// Azure Flowing Dragon effect
+if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
+  push();
+  
+  // Submerge phase - character fading into ground
+  if (this.azureDragonPhase === "submerge") {
+    // Water/earth ripple effect
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = 'rgba(0, 150, 255, 0.8)';
+    
+    // Ground ripples
+    for (let i = 1; i <= 3; i++) {
+      let rippleSize = 50 + (i * 30);
+      noFill();
+      stroke(0, 180, 255, 200 - (i * 60));
+      strokeWeight(4);
+      ellipse(this.x + this.w/2, this.y + this.h, rippleSize, rippleSize * 0.3);
+    }
+    
+    // Fading blue particles
+    for (let i = 0; i < 8; i++) {
+      let particleX = this.x + random(0, this.w);
+      let particleY = this.y + this.h + random(-20, 10);
+      fill(0, 180, 255, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(5, 12), random(5, 12));
+    }
+  }
+  
+  // Indicator phase - show where character will emerge (DRAWN ON GROUND)
+  // This is drawn separately below, not in character's draw
+  
+  // Emerge phase - character rising from ground
+  else if (this.azureDragonPhase === "emerge") {
+    drawingContext.shadowBlur = 50;
+    drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
+    
+    // Explosive upward energy
+    for (let i = 1; i <= 5; i++) {
+      let trailY = this.y + (i * 20);
+      let alpha = 200 - (i * 40);
+      
+      fill(0, 200, 255, alpha);
+      noStroke();
+      rect(this.x, trailY, this.w, this.h, 5);
+    }
+    
+    // Dragon aura
+    noFill();
+    stroke(100, 230, 255, 255);
+    strokeWeight(8);
+    rect(this.x - 10, this.y - 10, this.w + 20, this.h + 20, 5);
+    
+    // Rising water/energy particles
+    for (let i = 0; i < 10; i++) {
+      let particleX = this.x + random(0, this.w);
+      let particleY = this.y + this.h + random(0, 40);
+      fill(0, 220, 255, random(180, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(6, 14), random(6, 14));
+    }
+  }
+  
+  pop();
+}
+
   // Character outline stroke
   strokeWeight(2);
   if (this.isHit) stroke(255, 0, 0);
@@ -1076,6 +1561,9 @@ if (this.isGodSlashing && this.godSlashTimer > 0) {
   else if (this.isFlying) stroke(150, 200, 255, 200);
   else if (this.isGodSlashing) stroke(255, 0, 0, 255);
   else if (this.isPoisonFieldActive) stroke(0, 255, 80, 255); // NEW: Deep green outline
+  else if (this.isAzureScalesActive) stroke(0, 150, 255, 255); // NEW: Deep blue outline
+  else if (this.isTortoiseBodyActive) stroke(255, 215, 0, 255); // NEW: Golden outline
+  else if (this.isOceanMendingActive) stroke(0, 220, 255, 255); // NEW: Cyan outline
   else if (this.isPoisonHandsActive) stroke(0, 255, 0, 200);  // Keep existing
   else stroke(0);
 
@@ -1084,10 +1572,17 @@ if (this.isGodSlashing && this.godSlashTimer > 0) {
   if (this.hp <= 0) {
     rect(this.x, this.y + this.h - 5, this.w, 5, 2);
   } else {
-    rect(this.x, this.y, this.w, this.h, 5);
-    fill(0);
-    let eyeX = (this.facing === 1) ? (this.x + this.w - 15) : (this.x + 5);
-    rect(eyeX, this.y + 10, 10, 10);
+    // ✅ NEW: Hide character during underground phases
+    if (this.isAzureDragonActive && 
+        (this.azureDragonPhase === "submerge" || this.azureDragonPhase === "indicator")) {
+      // Don't draw character - they're underground
+    } else {
+      // Normal character rendering
+      rect(this.x, this.y, this.w, this.h, 5);
+      fill(0);
+      let eyeX = (this.facing === 1) ? (this.x + this.w - 15) : (this.x + 5);
+      rect(eyeX, this.y + 10, 10, 10);
+    }
   }
 
   // Draw hitbox and block indicator
@@ -1140,7 +1635,7 @@ if (this.isPoisonHandsActive && this.poisonHandsTimer > 0) {
   noStroke();
   textAlign(CENTER, BOTTOM);
   textSize(14);
-  text(`POISON: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
+  text(`POISON HANDS: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
   
   pop();
   }
@@ -1175,7 +1670,7 @@ if (this.isPoisonHandsActive && this.poisonHandsTimer > 0) {
   noStroke();
   textAlign(CENTER, BOTTOM);
   textSize(14);
-  text(`POISON: ${timeLeft}s`, this.x + this.w/2, this.y - 25);
+  text(`POISONED: ${timeLeft}s`, this.x + this.w/2, this.y - 25);
   
     pop();
   }
@@ -1246,6 +1741,146 @@ if (this.isInPoisonField) {
   
     pop();
   }
+
+  // Azure Dragon Scales effect (Aaron Shu)
+  if (this.isAzureScalesActive && this.azureScalesTimer > 0) {
+  push();
+  
+  // Deep ocean blue aura
+  drawingContext.shadowBlur = 30;
+  drawingContext.shadowColor = 'rgba(0, 100, 200, 1.0)';
+  
+  // Pulsing blue outline (scales shimmer)
+  let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
+  noFill();
+  stroke(0, 150, 255, pulseAlpha);
+  strokeWeight(4);
+  rect(this.x, this.y, this.w, this.h, 5);
+  
+  // Secondary pulse (dragon scales pattern)
+  stroke(50, 200, 255, pulseAlpha * 0.6);
+  strokeWeight(2);
+  rect(this.x - 2, this.y - 2, this.w + 4, this.h + 4, 5);
+  
+  // Blue scale particles around body
+  for (let i = 0; i < 4; i++) {
+    let scaleX = this.x + random(0, this.w);
+    let scaleY = this.y + random(0, this.h);
+    fill(0, 150, 255, random(120, 220));
+    noStroke();
+    // Small diamond shapes (scales)
+    push();
+    translate(scaleX, scaleY);
+    rotate(random(TWO_PI));
+    rect(0, 0, random(4, 8), random(4, 8));
+    pop();
+  }
+  
+  // Timer indicator
+  let timeLeft = Math.ceil(this.azureScalesTimer / 60);
+  fill(0, 180, 255, 220);
+  noStroke();
+  textAlign(CENTER, BOTTOM);
+  textSize(14);
+  text(`DRAGON SCALES: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
+  
+  pop();
+  }
+
+  // Undying Tortoise Body effect (Aaron Shu)
+if (this.isTortoiseBodyActive && this.tortoiseBodyTimer > 0) {
+  push();
+  
+  // Golden yellow aura (defensive shield)
+  drawingContext.shadowBlur = 30;
+  drawingContext.shadowColor = 'rgba(255, 215, 0, 1.0)';
+  
+  // Pulsing golden outline (tortoise shell pattern)
+  let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
+  noFill();
+  stroke(255, 215, 0, pulseAlpha);
+  strokeWeight(4);
+  rect(this.x, this.y, this.w, this.h, 5);
+  
+  // Secondary pulse (hexagonal shell pattern)
+  stroke(255, 235, 100, pulseAlpha * 0.6);
+  strokeWeight(2);
+  rect(this.x - 2, this.y - 2, this.w + 4, this.h + 4, 5);
+  
+  // Golden shield particles around body
+  for (let i = 0; i < 4; i++) {
+    let shieldX = this.x + random(0, this.w);
+    let shieldY = this.y + random(0, this.h);
+    fill(255, 215, 0, random(120, 220));
+    noStroke();
+    // Small hexagon shapes (shell segments)
+    push();
+    translate(shieldX, shieldY);
+    rotate(random(TWO_PI));
+    ellipse(0, 0, random(5, 10), random(5, 10));
+    pop();
+  }
+  
+  // Timer indicator
+  let timeLeft = Math.ceil(this.tortoiseBodyTimer / 60);
+    fill(255, 215, 0, 220);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`TORTOISE BODY: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
+  
+    pop();
+  }
+
+  // Ocean Mending Water effect (Aaron Shu)
+if (this.isOceanMendingActive && this.oceanMendingTimer > 0) {
+  push();
+  
+  // Water/cleansing aura (cyan/aqua glow)
+  drawingContext.shadowBlur = 35;
+  drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
+  
+  // Pulsing cyan outline (water flow)
+  let pulseAlpha = 180 + sin(frameCount * 0.25) * 75;
+  noFill();
+  stroke(0, 220, 255, pulseAlpha);
+  strokeWeight(5);
+  rect(this.x, this.y, this.w, this.h, 5);
+  
+  // Secondary pulse (healing waves)
+  stroke(100, 240, 255, pulseAlpha * 0.7);
+  strokeWeight(3);
+  rect(this.x - 3, this.y - 3, this.w + 6, this.h + 6, 5);
+  
+  // Water droplet particles (cleansing effect)
+  for (let i = 0; i < 6; i++) {
+    let dropX = this.x + random(0, this.w);
+    let dropY = this.y + random(0, this.h);
+    fill(0, 220, 255, random(150, 255));
+    noStroke();
+    ellipse(dropX, dropY, random(4, 10), random(6, 12));
+  }
+  
+  // Rising bubbles (purification)
+  for (let i = 0; i < 3; i++) {
+    let bubbleX = this.x + random(0, this.w);
+    let bubbleY = this.y + this.h - (frameCount % 60) * 2 + (i * 20);
+    fill(100, 240, 255, random(80, 150));
+    noStroke();
+    ellipse(bubbleX, bubbleY, random(6, 12), random(6, 12));
+  }
+  
+  // Timer indicator
+  let timeLeft = Math.ceil(this.oceanMendingTimer / 60);
+    fill(0, 220, 255, 255);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`OCEAN MENDING: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
+  
+    pop();
+  }
+
 }
 
   drawHitbox() {
