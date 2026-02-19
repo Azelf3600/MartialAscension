@@ -59,6 +59,10 @@ function initMatch() {
   showRoundResult = false;
   roundResultTimer = 180;
 
+  projectiles = [];
+  if (p1Buffer) p1Buffer.clear();
+  if (p2Buffer) p2Buffer.clear();
+
   // ── Create players FIRST ──────────────────────────────
   let charH = height * 0.5;
   let p1Data = FIGHTERS[p1Selected];
@@ -87,45 +91,88 @@ function initMatch() {
     p2Data.archetype
   );
 
-  // ── Reset per-round state AFTER players exist ─────────
+    // Reset attack states
+  player1.attacking = null;
+  player1.attackTimer = 0;
+  player1.isPerformingCombo = false;
+  player1.hasHit = false;
+  player1.recoveryTimer = 0;
+  
+  player2.attacking = null;
+  player2.attackTimer = 0;
+  player2.isPerformingCombo = false;
+  player2.hasHit = false;
+  player2.recoveryTimer = 0;
+  
+  // Reset movement states
+  player1.isDashing = false;
+  player1.dashTimer = 0;
+  player1.isFlying = false;
+  player1.isLunging = false;
+  player1.lungeTimer = 0;
+  player1.isGodSlashing = false;
+  player1.godSlashTimer = 0;
+  player1.isSeaDragonCharging = false;
+  player1.seaDragonTimer = 0;
+  player1.seaDragonTarget = null;
+  player1.isAzureDragonActive = false;
+  player1.azureDragonTimer = 0;
+  player2.isDashing = false;
+  player2.dashTimer = 0;
+  player2.isFlying = false;
+  player2.isLunging = false;
+  player2.lungeTimer = 0;
+  player2.isGodSlashing = false;
+  player2.godSlashTimer = 0;
+  player2.isSeaDragonCharging = false;
+  player2.seaDragonTimer = 0;
+  player2.seaDragonTarget = null;
+  player2.isAzureDragonActive = false;
+  player2.azureDragonTimer = 0;
+  
+  // Reset signature flags
   player1.hasUsedJudgment = false;
   player2.hasUsedJudgment = false;
+  player1.hasUsedPoisonRain = false;
+  player2.hasUsedPoisonRain = false;
+  player1.hasUsedAzureDragon = false;
+  player2.hasUsedAzureDragon = false;
+  
+  // Reset power-ups
+  player1.isPoisonHandsActive = false;
+  player2.isPoisonHandsActive = false;
   player1.isPoisonFieldActive = false;
   player2.isPoisonFieldActive = false;
   player1.isInPoisonField = false;
   player2.isInPoisonField = false;
   player1.poisonFieldTimer = 0;
   player2.poisonFieldTimer = 0;
-
-  // Reset per-round signature flags
-  player1.hasUsedJudgment = false;
-  player2.hasUsedJudgment = false;
-  player1.hasUsedPoisonRain = false;
-  player2.hasUsedPoisonRain = false;
   player1.isPoisonRainActive = false;
   player2.isPoisonRainActive = false;
   player1.poisonRainTimer = 0;
-  player2.poisonRainTimer = 0;  
-  player1.hasUsedAzureDragon = false;
-  player2.hasUsedAzureDragon = false;
-
-  // NEW: Reset Azure Dragon Scales
+  player2.poisonRainTimer = 0;
+  
+  // Reset Aaron Shu power-ups
   player1.isAzureScalesActive = false;
   player2.isAzureScalesActive = false;
   player1.azureScalesTimer = 0;
   player2.azureScalesTimer = 0;
-
-  // NEW: Reset Undying Tortoise Body
   player1.isTortoiseBodyActive = false;
   player2.isTortoiseBodyActive = false;
   player1.tortoiseBodyTimer = 0;
   player2.tortoiseBodyTimer = 0;
-
-  // NEW: Reset Ocean Mending Water
   player1.isOceanMendingActive = false;
   player2.isOceanMendingActive = false;
   player1.oceanMendingTimer = 0;
   player2.oceanMendingTimer = 0;
+  
+  // Reset debuffs
+  player1.isPoisoned = false;
+  player1.poisonTimer = 0;
+  player1.poisonDamage = 0;
+  player2.isPoisoned = false;
+  player2.poisonTimer = 0;
+  player2.poisonDamage = 0;
 
   // ── Camera reset ──────────────────────────────────────
   if (gameCamera) {
@@ -520,6 +567,9 @@ function drawDamageIndicators() {
 }
 
   function updateMatchLogic() {
+  if (!fightStarted) {
+    return;
+  }
   matchTimerFrames--;
   if (matchTimerFrames <= 0) {
     if (matchTimer > 0) {

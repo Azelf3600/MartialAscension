@@ -183,7 +183,7 @@ const STANDARD_COMBOS = [
   //Aaron Shu Unique Combo
   { 
     name: "Azure Dragon Scales", 
-    sequence: ["HK", "DW", "DW"], 
+    sequence: ["LP", "LK", "DW", "BW"], 
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
@@ -193,7 +193,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Undying Tortoise Body", 
-    sequence: ["HP", "DW", "DW"], 
+    sequence: ["HP", "HK", "DW", "BW"], 
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
@@ -203,7 +203,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Ocean Mending Water", 
-    sequence: ["BW", "FW", "HP"], 
+    sequence: ["BW", "FW", "HP", "LP"], 
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
@@ -213,7 +213,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Unstoppable Sea Dragon", 
-    sequence: ["DW", "FW", "HK", "HK"], 
+    sequence: ["FW", "DW", "FW", "HK", "HK"], 
     damageMult: 1.0, 
     type: "SEA_DRAGON_CHARGE",
     characterSpecific: "Aaron Shu",
@@ -225,7 +225,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Azure Flowing Dragon", 
-    sequence: ["DW", "FW", "LK", "HK", "DW"], 
+    sequence: ["DW", "DW", "FW", "LK", "HK", "DW"], 
     damageMult: 1.0, 
     type: "AZURE_DRAGON_LAUNCHER",
     characterSpecific: "Aaron Shu",

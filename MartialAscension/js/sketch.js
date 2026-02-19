@@ -206,6 +206,10 @@ function keyPressed() {
 }
 
 function handleRecording(char, buffer, code) {
+  if (!fightStarted || roundOver || showRoundResult) {
+    return; 
+  }
+  
   let move = InputBuffer.getDirectionalInput(code, char);
 
   if (!move) {

@@ -20,7 +20,7 @@ class Character {
       this.blockStun = 12;
     } else if (this.archetype === "Defensive") {
       this.maxHp = 1200;
-      this.dmgMod = 0.8;
+      this.dmgMod = 0.5;
       this.blockMod = 0.7;
       this.blockStun = 10;
     } else {

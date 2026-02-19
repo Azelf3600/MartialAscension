@@ -106,14 +106,14 @@ function checkHit(attacker, defender) {
         if (attacker.attacking === "Unstoppable Sea Dragon") {
         if (attacker.archetype === "Defensive") {
           wasTortoiseActive = true;
-          effectiveDmgMod = 1.2; // Boost from 0.8 to 1.2 (60 damage)
+          effectiveDmgMod = 1.0; // Boost from 0.8 to 1.2 (60 damage)
         } else {
-          effectiveDmgMod = 0.8; // Keep base (40 damage with Azure Scales consumption)
+          effectiveDmgMod = 0.5; // Keep base (40 damage with Azure Scales consumption)
         }
       }  
           // Normal Tortoise Body check
           else if (attacker.isTortoiseBodyActive && attacker.archetype === "Defensive") {
-            effectiveDmgMod = 1.2; // Boost from 0.8 to 1.2
+            effectiveDmgMod = 1.0; // Boost from 0.8 to 1.2
           }
   
           finalCalculatedDmg = baseDmg * effectiveDmgMod * attacker.comboDamageMod * poisonBonus;
