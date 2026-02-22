@@ -68,6 +68,28 @@ class Projectile {
       this.slowSpeed = 5;            // Slow phase speed
       this.burstSpeed = 35;          // Burst phase speed
     }
+    else if (type === "demonic_claw") {
+      // ✅ UPDATED: Demonic Heaven's Claw - ground launcher with full animation
+      this.w = 40; // Width as specified
+      this.h = 0; // Starts at 0, grows to player height
+      this.maxH = 200; // Player height
+      this.startX = x;
+      this.startY = y; // Ground position
+      this.distanceTraveled = 0;
+      this.maxDistance = 200; // Travel distance = character height
+  
+      // ✅ NEW: Phase timings with animation
+      this.indicatorTimer = 60; // 1 second indicator
+      this.riseTimer = 15; // 0.25 seconds to rise (fast)
+      this.lingerTimer = 30; // 0.5 second linger at top
+      this.descendTimer = 15; // 0.25 seconds to descend (fast)
+      this.phase = "indicator"; // "indicator", "rise", "linger", "descend"
+  
+      // Lock owner if not awakened
+      if (owner && !owner.isDemonicAwakeningActive) {
+          owner.demonicClawOwnerLocked = true;
+      }
+    }   
     else { // Sword Qi Strike - horizontal projectile
       this.w = 100;
       this.h = 20;
@@ -137,7 +159,74 @@ update() {
     if (this.distanceTraveled >= this.maxDistance) {
       this.active = false;
     }
-  } else {
+  }
+else if (this.type === "demonic_claw") {
+  // ✅ UPDATED: Demonic Claw phases with full animation
+  
+  // Phase 1: Indicator (1 second)
+  if (this.phase === "indicator") {
+    this.indicatorTimer--;
+    
+    if (this.indicatorTimer <= 0) {
+      this.phase = "rise";
+      console.log("Demonic Claw rising!");
+    }
+  }
+  
+  // Phase 2: Rise (0.25 seconds - fast upward)
+  else if (this.phase === "rise") {
+    this.riseTimer--;
+    
+    // Grow hitbox upward smoothly
+    let riseProgress = (15 - this.riseTimer) / 15; // 0 to 1
+    this.h = this.maxH * riseProgress;
+    this.distanceTraveled = this.h;
+    
+    if (this.riseTimer <= 0) {
+      this.phase = "linger";
+      this.h = this.maxH; // Ensure full height
+      console.log("Demonic Claw lingering at top!");
+    }
+  }
+  
+  // Phase 3: Linger (0.5 seconds - stays at full height)
+  else if (this.phase === "linger") {
+    this.lingerTimer--;
+    
+    // Maintain full height
+    this.h = this.maxH;
+    
+    if (this.lingerTimer <= 0) {
+      this.phase = "descend";
+      console.log("Demonic Claw descending!");
+    }
+  }
+  
+  // Phase 4: Descend (0.25 seconds - fast downward)
+  else if (this.phase === "descend") {
+    this.descendTimer--;
+    
+    // Shrink hitbox downward smoothly
+    let descendProgress = this.descendTimer / 15; // 1 to 0
+    this.h = this.maxH * descendProgress;
+    
+    if (this.descendTimer <= 0) {
+      this.phase = "disappear";
+      
+      // Release owner lock if they were locked
+      if (this.owner && this.owner.demonicClawOwnerLocked) {
+        this.owner.attacking = null;
+        this.owner.attackTimer = 0;
+        this.owner.isPerformingCombo = false;
+        this.owner.demonicClawOwnerLocked = false;
+        console.log("Demonic Claw disappeared - owner unlocked!");
+      }
+      
+      this.active = false;
+    }
+  }
+}
+  else {
     // ALL other projectiles use horizontal logic
     this.distanceTraveled = abs(this.x - this.startX);
     
@@ -160,23 +249,17 @@ update() {
   }
 }
   
-  draw() {
+draw() {
   if (!this.active) return;
   
   push();
   
   if (this.type === "judgment") {
-    // Judgment beam visual (vertical divine light FROM TOP TO CURRENT POSITION)
-    
+    // Judgment beam visual
     rectMode(CORNER);
+    let beamTopY = -200;
+    let beamHeight = this.y - beamTopY + this.h/2;
     
-    // Calculate beam from top of screen to current position
-    let beamTopY = -200; // Start from above screen
-    let beamHeight = this.y - beamTopY + this.h/2; // Full height from top to current
-    
-    // Draw continuous beam trail (no segments, one solid beam)
-    
-    // Outer glow layer
     drawingContext.shadowBlur = 50;
     drawingContext.shadowColor = 'rgba(220, 240, 255, 0.8)';
     
@@ -184,11 +267,9 @@ update() {
     noStroke();
     rect(this.x - this.w * 0.6, beamTopY, this.w * 1.2, beamHeight, 20);
     
-    // Middle layer
     fill(200, 230, 255, 150);
     rect(this.x - this.w * 0.5, beamTopY, this.w, beamHeight, 15);
     
-    // Core beam (brightest)
     drawingContext.shadowBlur = 30;
     drawingContext.shadowColor = 'rgba(240, 250, 255, 1.0)';
     
@@ -197,12 +278,10 @@ update() {
     strokeWeight(2);
     rect(this.x - this.w * 0.5, beamTopY, this.w, beamHeight, 12);
     
-    // Inner bright core
     fill(255, 255, 255, 255);
     noStroke();
     rect(this.x - this.w * 0.3, beamTopY, this.w * 0.6, beamHeight, 8);
     
-    // Energy particles along the beam
     for (let i = 0; i < 15; i++) {
       let particleX = this.x + random(-this.w/2, this.w/2);
       let particleY = beamTopY + random(0, beamHeight);
@@ -211,9 +290,7 @@ update() {
       ellipse(particleX, particleY, random(5, 15), random(5, 15));
     }
     
-    // Impact effect at the bottom (current position)
     if (this.isLingering || this.currentSpeed > 0) {
-      // Draw impact burst at bottom of beam
       drawingContext.shadowBlur = 40;
       drawingContext.shadowColor = 'rgba(255, 255, 255, 1.0)';
       
@@ -225,83 +302,71 @@ update() {
         ellipse(this.x, this.y + this.h/2, burstSize, burstSize * 0.5);
       }
     }
+  } 
+  
+  else if (this.type === "poison_qi") {
+    // Poison Qi Palm visual
+    for (let i = 0; i < this.trailPoints.length; i++) {
+      let point = this.trailPoints[i];
+      let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
+      fill(0, 255, 100, trailAlpha);
+      noStroke();
+      ellipse(point.x, point.y, this.w * 0.6, this.h * 0.6);
+    }
     
-  } else if (this.type === "poison_qi") {
-      // NEW: Poison Qi Palm visual (GREEN)
-      
-      // Draw trail (green energy trail)
-      for (let i = 0; i < this.trailPoints.length; i++) {
-        let point = this.trailPoints[i];
-        let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
-        fill(0, 255, 100, trailAlpha); // Green trail
-        noStroke();
-        ellipse(point.x, point.y, this.w * 0.6, this.h * 0.6);
-      }
-      
-      rectMode(CENTER);
-      drawingContext.shadowBlur = 25;
-      drawingContext.shadowColor = 'rgba(0, 255, 0, 0.9)'; // Green glow
-      
-      // Outer glow
-      fill(0, 255, 100, 100);
-      noStroke();
-      ellipse(this.x, this.y, this.w * 1.3, this.h * 1.3);
-      
-      // Main body
-      fill(50, 255, 150, this.alpha);
-      stroke(0, 200, 100);
-      strokeWeight(2);
-      ellipse(this.x, this.y, this.w, this.h);
-      
-      // Inner bright core
-      fill(150, 255, 200, 250);
-      noStroke();
-      ellipse(this.x, this.y, this.w * 0.5, this.h * 0.5);
-      
-      // Toxic particles
-      for (let i = 0; i < 4; i++) {
-        let particleX = this.x + random(-this.w/3, this.w/3);
-        let particleY = this.y + random(-this.h/3, this.h/3);
-        fill(0, 255, 0, random(150, 255));
-        noStroke();
-        ellipse(particleX, particleY, random(3, 8), random(3, 8));
-      }
-      
-    }
-
-  else if (this.type === "flame_needle") {
-  // Flame Poison Needle visual (RED/ORANGE glow)
-  
-  // Draw trail (red/orange energy trail)
-  for (let i = 0; i < this.trailPoints.length; i++) {
-    let point = this.trailPoints[i];
-    let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
-    fill(255, 80, 0, trailAlpha); // Orange-red trail
-    noStroke();
-    ellipse(point.x, point.y, this.w * 0.6, this.h * 0.6);
-    }
-  
     rectMode(CENTER);
     drawingContext.shadowBlur = 25;
-    drawingContext.shadowColor = 'rgba(255, 50, 0, 1.0)'; // Red glow
+    drawingContext.shadowColor = 'rgba(0, 255, 0, 0.9)';
+    
+    fill(0, 255, 100, 100);
+    noStroke();
+    ellipse(this.x, this.y, this.w * 1.3, this.h * 1.3);
+    
+    fill(50, 255, 150, this.alpha);
+    stroke(0, 200, 100);
+    strokeWeight(2);
+    ellipse(this.x, this.y, this.w, this.h);
+    
+    fill(150, 255, 200, 250);
+    noStroke();
+    ellipse(this.x, this.y, this.w * 0.5, this.h * 0.5);
+    
+    for (let i = 0; i < 4; i++) {
+      let particleX = this.x + random(-this.w/3, this.w/3);
+      let particleY = this.y + random(-this.h/3, this.h/3);
+      fill(0, 255, 0, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(3, 8), random(3, 8));
+    }
+  }
   
-    // Outer glow
+  else if (this.type === "flame_needle") {
+    // Flame Poison Needle visual
+    for (let i = 0; i < this.trailPoints.length; i++) {
+      let point = this.trailPoints[i];
+      let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
+      fill(255, 80, 0, trailAlpha);
+      noStroke();
+      ellipse(point.x, point.y, this.w * 0.6, this.h * 0.6);
+    }
+    
+    rectMode(CENTER);
+    drawingContext.shadowBlur = 25;
+    drawingContext.shadowColor = 'rgba(255, 50, 0, 1.0)';
+    
     fill(255, 50, 0, 80);
     noStroke();
     rect(this.x, this.y, this.w * 1.3, this.h * 1.3, 10);
-  
-    // Main body (red elongated needle)
+    
     fill(255, 80, 30, this.alpha);
     stroke(255, 150, 0);
     strokeWeight(2);
     rect(this.x, this.y, this.w, this.h, 6);
-  
-    // Inner bright core (orange-white)
+    
     fill(255, 200, 100, 250);
     noStroke();
     rect(this.x, this.y, this.w * 0.5, this.h * 0.5, 4);
-  
-    // Fire particles
+    
     for (let i = 0; i < 4; i++) {
       let particleX = this.x + random(-this.w/3, this.w/3);
       let particleY = this.y + random(-this.h/2, this.h/2);
@@ -310,47 +375,121 @@ update() {
       ellipse(particleX, particleY, random(3, 8), random(3, 8));
     }
   }
-  else if (this.type === "poison_rain") {  
-  // Draw trail (green energy trail going upward)
-  for (let i = 0; i < this.trailPoints.length; i++) {
-    let point = this.trailPoints[i];
-    let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
-    fill(0, 255, 100, trailAlpha);
-    noStroke();
-    ellipse(point.x, point.y, this.w * 0.5, this.h * 0.3);
-  }
   
-  rectMode(CENTER);
+  else if (this.type === "poison_rain") {
+    // Poison Rain visual
+    for (let i = 0; i < this.trailPoints.length; i++) {
+      let point = this.trailPoints[i];
+      let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
+      fill(0, 255, 100, trailAlpha);
+      noStroke();
+      ellipse(point.x, point.y, this.w * 0.5, this.h * 0.3);
+    }
+    
+    rectMode(CENTER);
     drawingContext.shadowBlur = 25;
     drawingContext.shadowColor = 'rgba(0, 255, 0, 0.9)';
-  
-    // Outer glow
+    
     fill(0, 255, 100, 80);
     noStroke();
     ellipse(this.x, this.y, this.w * 1.3, this.h * 1.3);
-  
-    // Main raindrop body (elongated like a teardrop)
+    
     fill(50, 255, 150, this.alpha);
     stroke(0, 200, 100);
     strokeWeight(2);
     ellipse(this.x, this.y, this.w, this.h);
-  
-    // Inner bright core
+    
     fill(150, 255, 200, 250);
     noStroke();
     ellipse(this.x, this.y, this.w * 0.5, this.h * 0.4);
-  
-  // Toxic particles
-  for (let i = 0; i < 3; i++) {
-    let particleX = this.x + random(-this.w/3, this.w/3);
-    let particleY = this.y + random(-this.h/3, this.h/3);
-    fill(0, 255, 0, random(150, 255));
-    noStroke();
-    ellipse(particleX, particleY, random(3, 8), random(3, 8));
+    
+    for (let i = 0; i < 3; i++) {
+      let particleX = this.x + random(-this.w/3, this.w/3);
+      let particleY = this.y + random(-this.h/3, this.h/3);
+      fill(0, 255, 0, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(3, 8), random(3, 8));
     }
   }
+  
+  else if (this.type === "demonic_claw") {
+  // ✅ UPDATED: Demonic Heaven's Claw visual with all phases
+  
+  // Indicator phase - warning on ground
+  if (this.phase === "indicator") {
+    let pulseAlpha = 150 + sin(frameCount * 0.4) * 100;
+    
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = 'rgba(150, 0, 150, 0.8)';
+    
+    // Warning circle on ground
+    noFill();
+    stroke(200, 0, 150, pulseAlpha);
+    strokeWeight(5);
+    ellipse(this.x, this.startY, 60, 20);
+    
+    // Inner circle
+    stroke(150, 0, 150, pulseAlpha * 1.2);
+    strokeWeight(3);
+    ellipse(this.x, this.startY, 40, 15);
+    
+    // Center danger marker
+    fill(255, 0, 100, pulseAlpha);
+    noStroke();
+    ellipse(this.x, this.startY, 10, 5);
+  }
+  
+  // Rise, Linger, and Descend phases - show the claw pillar
+  else if (this.phase === "rise" || this.phase === "linger" || this.phase === "descend") {
+    rectMode(CORNER);
+    
+    drawingContext.shadowBlur = 35;
+    drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
+    
+    // Demonic claw energy (dark purple/red)
+    fill(150, 0, 150, 200);
+    noStroke();
+    rect(this.x - this.w/2, this.startY - this.h, this.w, this.h, 5);
+    
+    // Claw edges (darker red)
+    stroke(200, 0, 100, 255);
+    strokeWeight(3);
+    noFill();
+    rect(this.x - this.w/2, this.startY - this.h, this.w, this.h, 5);
+    
+    // Energy particles
+    for (let i = 0; i < 6; i++) {
+      let particleX = this.x + random(-this.w/2, this.w/2);
+      let particleY = this.startY - random(0, this.h);
+      fill(200, 0, 150, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(4, 10), random(4, 10));
+    }
+    
+    // Claw marks (vertical slashes)
+    for (let i = 0; i < 3; i++) {
+      let slashX = this.x - this.w/2 + (i * this.w/3) + this.w/6;
+      stroke(255, 0, 150, 200);
+      strokeWeight(2);
+      line(slashX, this.startY - this.h, slashX, this.startY);
+    }
+    
+    // ✅ NEW: Extra visual feedback during linger
+    if (this.phase === "linger") {
+      // Pulsing intensity during linger
+      let lingerPulse = 150 + sin(frameCount * 0.5) * 100;
+      
+      // Outer aura during linger
+      noFill();
+      stroke(200, 0, 150, lingerPulse);
+      strokeWeight(4);
+      rect(this.x - this.w/2 - 5, this.startY - this.h - 5, this.w + 10, this.h + 10, 5);
+    }
+  }
+}
+  
   else {
-    // Sword Qi Strike visual (horizontal)
+    // Default: Sword Qi Strike visual (horizontal)
     for (let i = 0; i < this.trailPoints.length; i++) {
       let point = this.trailPoints[i];
       let trailAlpha = map(i, 0, this.trailPoints.length, 50, 200);
@@ -384,6 +523,12 @@ checkCollision(target) {
     this.x + this.w/2 > target.x &&
     this.y - this.h/2 < target.y + target.h &&
     this.y + this.h/2 > target.y) {
+
+    // ✅ NEW: Demonic Claw doesn't set hasHit, so it can hit multiple times
+    if (this.type === "demonic_claw") {
+      // Don't set hasHit - claw stays active through all phases
+      return true;
+    }
     
     this.hasHit = true;
     
@@ -446,13 +591,14 @@ function checkProjectileCollisions(player1, player2) {
         proj.y = groundY - proj.h/2;
       }
     }
-    
     // NEW: Ground collision for poison rain - just disappear
     if (proj.type === "poison_rain" && proj.active) {
       let groundY = height - 100;
       if (proj.y + proj.h/2 >= groundY) {
         proj.active = false; // Just disappear on ground hit
       }
+    }
+    if (proj.type === "demonic_claw" && (proj.phase === "rise" || proj.phase === "linger")) {
     }
   }
 }
@@ -474,7 +620,7 @@ function applyProjectileDamage(target, projectile, attacker) {
     ignoreBlock = true;
   } else if (projectile.type === "poison_qi") {
     baseDmg = 20;
-    stunTime = 120;
+    stunTime = 180;
     knockback = 20;
     ignoreModifiers = false;
     ignoreBlock = false;
@@ -485,7 +631,6 @@ function applyProjectileDamage(target, projectile, attacker) {
     ignoreModifiers = false;
     ignoreBlock = false;
   
-  // NEW: Only apply poison if Ocean Mending isn't active
   if (!target.isOceanMendingActive) {
       target.isPoisoned = true;
       target.poisonDamage = 10;
@@ -506,6 +651,15 @@ function applyProjectileDamage(target, projectile, attacker) {
     ignoreModifiers = false; // Uses archetype modifiers
     ignoreBlock = true;
   }
+  else if (projectile.type === "demonic_claw") {
+    // ✅ NEW: Demonic Heaven's Claw
+    baseDmg = 30;
+    stunTime = 0; // No stun (can act immediately after launch)
+    knockback = 0; // No horizontal knockback (launcher handles this)
+    ignoreModifiers = false; // Uses archetype modifiers
+    ignoreBlock = false; // Can be blocked
+    }
+
   
   let finalDmg;
   if (ignoreModifiers) {
@@ -516,6 +670,20 @@ function applyProjectileDamage(target, projectile, attacker) {
   
   applyDamage(target, finalDmg, attacker, stunTime, knockback, ignoreBlock);
   
+  // ✅ NEW: Demonic Claw launcher effect
+  if (projectile.type === "demonic_claw" && !target.isBlocking) {
+    // Skip if Ocean Mending is active
+    if (target.isOceanMendingActive) {
+      console.log("Demonic Claw launch blocked by Ocean Mending Water!");
+    } else {
+      // Launch enemy upward (no stun)
+      target.velY = -target.jumpPower * 1.8; // Strong launch
+      target.isGrounded = false;
+      target.hitStun = 0; // No stun - can act immediately
+      console.log("Demonic Claw launched enemy!");
+    }
+  }
+
   if (typeof spawnDamageIndicator === 'function') {
     spawnDamageIndicator(target.x + target.w/2, target.y, Math.floor(finalDmg), target.isBlocking);
   }

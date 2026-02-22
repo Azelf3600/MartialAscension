@@ -12,8 +12,7 @@ const PLAYER_CONTROLS = {
     lightKick: 72,   // 'H'
     heavyKick: 74,   // 'J'
     block: 32        // 'Space'
-  },
-  /*
+  },/*
   P2: {
     left: 37, //left arrow
     right: 39, //right arrow
@@ -36,6 +35,6 @@ const PLAYER_CONTROLS = {
     lightKick: 75,   // 'K'
     heavyKick: 76,   // 'L'
     block: 77        // 'M'
-  }
+  } 
 };
 

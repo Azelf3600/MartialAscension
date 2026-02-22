@@ -183,7 +183,7 @@ const STANDARD_COMBOS = [
   //Aaron Shu Unique Combo
   { 
     name: "Azure Dragon Scales", 
-    sequence: ["LP", "LK", "DW", "BW"], 
+    sequence: ["HP", "DW", "DW"], 
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
@@ -193,7 +193,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Undying Tortoise Body", 
-    sequence: ["HP", "HK", "DW", "BW"], 
+    sequence: ["HK", "DW", "DW"], 
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
@@ -203,7 +203,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Ocean Mending Water", 
-    sequence: ["BW", "FW", "HP", "LP"], 
+    sequence: ["HP", "BW", "DW", "FW"], 
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
@@ -213,7 +213,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Unstoppable Sea Dragon", 
-    sequence: ["FW", "DW", "FW", "HK", "HK"], 
+    sequence: ["DW", "FW", "LK", "HK"], 
     damageMult: 1.0, 
     type: "SEA_DRAGON_CHARGE",
     characterSpecific: "Aaron Shu",
@@ -225,7 +225,7 @@ const STANDARD_COMBOS = [
   },
   { 
     name: "Azure Flowing Dragon", 
-    sequence: ["DW", "DW", "FW", "LK", "HK", "DW"], 
+    sequence: ["DW", "BW", "FW", "LK", "HK"], 
     damageMult: 1.0, 
     type: "AZURE_DRAGON_LAUNCHER",
     characterSpecific: "Aaron Shu",
@@ -235,5 +235,69 @@ const STANDARD_COMBOS = [
     hits: [
       { attack: "DRAGON_LAUNCH", duration: 90 } // 2 seconds total (1s indicator + 1s emerge)
     ]
+  },
+  //Damon Cheon Unique Combos
+  { 
+    name: "Demonic Heavens Awakening", 
+    sequence: ["DW", "FW", "LK", "HP"], 
+    damageMult: 0, 
+    type: "POWERUP",
+    characterSpecific: "Damon Cheon",
+    cooldown: 300, // 5 seconds
+    duration: 300, // 5 seconds
+    hpCost: 100, // NEW: HP cost to activate
+    hits: []
+  },
+  { 
+    name: "Demonic Heavens Steps Forward", 
+    sequence: ["DW", "DW", "FW", "FW"], 
+    damageMult: 0, 
+    type: "MOVEMENT",
+    characterSpecific: "Damon Cheon",
+    cooldown: 300, // 5 seconds
+    isDemonicSteps: true, // NEW: Flag for special behavior
+    stepsDirection: "forward", // NEW: Which direction
+    hits: []
+  },
+  { 
+    name: "Demonic Heavens Steps Backward", 
+    sequence: ["DW", "DW", "BW", "BW"], 
+    damageMult: 0, 
+    type: "MOVEMENT",
+    characterSpecific: "Damon Cheon",
+    cooldown: 300, // 5 seconds
+    isDemonicSteps: true, // NEW: Flag for special behavior
+    stepsDirection: "backward", // NEW: Which direction
+    hits: []
+  },
+  { 
+    name: "Demonic Heavens Claw", 
+    sequence: ["DW", "DW", "LP", "HP"], 
+    damageMult: 1.0, 
+    type: "PROJECTILE",
+    characterSpecific: "Damon Cheon",
+    cooldown: 300, // 5 seconds
+    hits: [{ attack: "PROJECTILE", duration: 90 }] // 1.5 seconds total (indicator + emerge)
+  },
+  { 
+    name: "Demonic Heavens Abyss", 
+    sequence: ["DW", "DW", "LK", "HK"], 
+    damageMult: 0, 
+    type: "AOE",
+    characterSpecific: "Damon Cheon",
+    cooldown: 300, // 5 seconds
+    duration: 180, // 3 seconds
+   hits: []
+  },
+  { 
+    name: "Demonic Heaven Annihilation", 
+    sequence: ["FW", "LK", "HP", "LP", "HK"], 
+    damageMult: 0, 
+    type: "DAMAGE",
+    characterSpecific: "Damon Cheon",
+    duration: 480, // 8 seconds
+    requireLowHealth: true, // 50% HP or below
+    requireAnnihilationAvailable: true, // Once per round
+    hits: []
   }
 ];

@@ -8,10 +8,12 @@ const GAME_STATE = {
   MATCH_MULTI: "match_multi",
   PAUSE_MENU: "pause_menu",
   PAUSE_MENU_MULTI: "pause_menu_multi",
+  PAUSE_MENU_TRAINING: "pause_menu_training",
   LOADING_MATCH: "loading_match",
   LOADING_MATCH_MULTI: "loading_match_multi",
   WIN_SCREEN_MULTI: "win_screen_multi",
-  WIN_SCREEN: "win_screen"
+  WIN_SCREEN: "win_screen",
+  TRAINING: "training"
 };
 
 let currentState = GAME_STATE.MENU;
@@ -102,7 +104,15 @@ function draw() {
     case GAME_STATE.WIN_SCREEN_MULTI:
       drawWinScreenMulti();
       break;
-  }
+
+    case GAME_STATE.TRAINING:
+      drawTraining()
+      break;
+
+    case GAME_STATE.PAUSE_MENU_TRAINING:
+      drawPauseMenuTraining()
+      break;
+    }
   pop(); 
 
   // DEBUG STATE and FPS OVERLAY
@@ -209,6 +219,15 @@ function handleRecording(char, buffer, code) {
   if (!fightStarted || roundOver || showRoundResult) {
     return; 
   }
+
+    // ✅ NEW: Block all input if locked by Demonic Claw
+  if (char.demonicClawOwnerLocked) {
+    return;
+  }
+
+  if (char.isInDemonicAbyss) {
+    return;
+  }
   
   let move = InputBuffer.getDirectionalInput(code, char);
 
@@ -294,6 +313,11 @@ function handleRecording(char, buffer, code) {
         }
       }
 
+      if (result.type === "MOVEMENT" && char.isInPoisonField) {
+        console.log(`${result.name} blocked by Poison Flower Field!`);
+        return;
+      }
+
       // NEW: Azure Scales or Tortoise requirement check
       if (result.requireAzureScalesOrTortoise) {
         if (!char.isAzureScalesActive && !char.isTortoiseBodyActive) {
@@ -302,11 +326,27 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // ✅ NEW: Azure Dragon available check (once per round)
+      // NEW: Azure Dragon available check (once per round)
       if (result.requireAzureDragonAvailable) {
         if (char.hasUsedAzureDragon) {
           console.log(`${result.name} can only be used once per round!`);
           return;
+        }
+      }
+
+      // ✅ NEW: Annihilation available check (once per round)
+      if (result.requireAnnihilationAvailable) {
+        if (char.hasUsedAnnihilation) {
+          console.log(`${result.name} can only be used once per round!`);
+          return;
+        }
+      }
+
+      //NEW: HP cost check (for Demonic Heaven's Awakening)
+      if (result.hpCost) {
+        if (char.hp <= result.hpCost) {
+          console.log(`${result.name} requires ${result.hpCost} HP! Current: ${Math.floor(char.hp)} HP`);
+          return; // Not enough HP
         }
       }
       

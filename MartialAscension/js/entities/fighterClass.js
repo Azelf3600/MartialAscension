@@ -20,7 +20,7 @@ class Character {
       this.blockStun = 12;
     } else if (this.archetype === "Defensive") {
       this.maxHp = 1200;
-      this.dmgMod = 0.5;
+      this.dmgMod = 0.6;
       this.blockMod = 0.7;
       this.blockStun = 10;
     } else {
@@ -115,6 +115,7 @@ class Character {
     this.isInPoisonField = false;     
     this.poisonFieldDmgTickTimer = 0;   
     this.poisonFieldHealTickTimer = 0;  
+    this.canPoisonFieldTeleport = false; // ✅ NEW: Can teleport once per field
 
     this.hasUsedPoisonRain = false;     
     this.isPoisonRainActive = false;    
@@ -135,25 +136,64 @@ class Character {
     this.oceanMendingTimer = 0;
     this.oceanMendingDuration = 180; 
 
-    // NEW: Unstoppable Sea Dragon (Aaron Shu charge attack)
     this.isSeaDragonCharging = false;
     this.seaDragonTimer = 0;
-    this.seaDragonPhase = "none"; // "charge", "burst", "drag"
+    this.seaDragonPhase = "none"; 
     this.seaDragonDistanceTraveled = 0;
     this.seaDragonMaxDistance = 800;
     this.seaDragonSpeed = 0;
     this.seaDragonDirection = 0;
-    this.seaDragonTarget = null; // Dragged enemy
-    this.seaDragonDragStunTimer = 0; // Post-drag stun
+    this.seaDragonTarget = null; 
+    this.seaDragonDragStunTimer = 0; 
 
-    this.hasUsedAzureDragon = false; // Once per round flag
+    this.hasUsedAzureDragon = false; 
     this.isAzureDragonActive = false;
     this.azureDragonTimer = 0;
-    this.azureDragonPhase = "none"; // "submerge", "indicator", "emerge"
+    this.azureDragonPhase = "none"; 
     this.azureDragonIndicatorX = 0;
     this.azureDragonIndicatorY = 0;
     this.azureDragonTargetX = 0;
     this.azureDragonTargetY = 0;
+
+    this.isDemonicAwakeningActive = false;
+    this.demonicAwakeningTimer = 0;
+    this.demonicAwakeningDuration = 300;
+    this.demonicAwakeningCooldownPending = false;
+    this.isDemonicStepsActive = false;
+    this.demonicStepsTimer = 0;
+    this.demonicStepsDirection = 0;
+    this.demonicStepsSpeed = 0;
+    this.demonicStepsDistanceTraveled = 0;
+    this.demonicStepsMaxDistance = 500; 
+    this.demonicStepsTargetX = 0;
+    this.demonicStepsNextAttackBonus = false;
+    this.isDemonicClawActive = false;
+    this.demonicClawTimer = 0;
+    this.demonicClawPhase = "none"; 
+    this.demonicClawIndicatorX = 0;
+    this.demonicClawIndicatorY = 0;
+    this.demonicClawOwnerLocked = false; 
+    this.isDemonicAbyssActive = false;
+    this.demonicAbyssTimer = 0;
+    this.demonicAbyssDuration = 180; // 5 seconds
+    this.demonicAbyssCooldownPending = false;
+    this.demonicAbyssRange = 300; // 300px range
+    this.demonicAbyssDmgTickTimer = 0; // Damage tick timer
+    this.isInDemonicAbyss = false; // ✅ NEW: Debuff flag for being pulled
+    this.hasUsedAnnihilation = false; // Once per round flag
+    this.isAnnihilationMarked = false; // Is this character marked?
+    this.annihilationTimer = 0; // 8 second timer
+    this.annihilationDuration = 480; // 8 seconds
+    this.annihilationCumulativeDamage = 0; // Track damage dealt
+    this.annihilationCaster = null; // Who cast the mark
+    this.hasUsedAnnihilation = false;
+    this.isAnnihilationMarked = false;
+    this.annihilationTimer = 0;
+    this.annihilationDuration = 480;
+    this.annihilationCumulativeDamage = 0;
+    this.annihilationCaster = null;
+    this.annihilationExploding = false; // ✅ NEW
+    this.annihilationExplosionTimer = 0; // ✅ NEW
   }
 
   update(opponent, groundY) {
@@ -246,6 +286,144 @@ if (this.isOceanMendingActive && this.oceanMendingTimer > 0) {
   }
 }
 
+// NEW: Demonic Heaven's Awakening duration and cooldown
+if (this.isDemonicAwakeningActive && this.demonicAwakeningTimer > 0) {
+  this.demonicAwakeningTimer--;
+  
+  // Duration ended
+  if (this.demonicAwakeningTimer <= 0) {
+    this.isDemonicAwakeningActive = false;
+    
+    // Start cooldown
+    if (this.demonicAwakeningCooldownPending) {
+      this.comboCooldowns["Demonic Heavens Awakening"] = 180; // 3 seconds
+      this.demonicAwakeningCooldownPending = false;
+      console.log("Demonic Heaven's Awakening ended. Cooldown started.");
+    }
+  }
+}
+
+// NEW: Demonic Heaven's Abyss duration and effects
+if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
+  this.demonicAbyssTimer--;
+  
+  // Get opponent
+  let abyssOpponent = (this === player1) ? player2 : player1;
+  
+  // Check if opponent is in range
+  let distanceToOpponent = abs(abyssOpponent.x - this.x);
+  let isInRange = false;
+  
+  // Check if opponent is in front and within 300px
+  if (this.facing === 1 && abyssOpponent.x > this.x && distanceToOpponent <= this.demonicAbyssRange) {
+    isInRange = true;
+  } else if (this.facing === -1 && abyssOpponent.x < this.x && distanceToOpponent <= this.demonicAbyssRange) {
+    isInRange = true;
+  }
+  
+  if (isInRange) {
+    abyssOpponent.isInDemonicAbyss = true;
+    // Gravitational pull (slow pull towards caster)
+    let pullStrength = 2; // Slow pull speed
+    let pullDirection = (abyssOpponent.x > this.x) ? -pullStrength : pullStrength;
+    abyssOpponent.x += pullDirection;
+    
+    // Damage tick (10 damage per second)
+    this.demonicAbyssDmgTickTimer--;
+    if (this.demonicAbyssDmgTickTimer <= 0) {
+      this.demonicAbyssDmgTickTimer = 60; // Reset every second
+      
+      let abyssDmg = 10;
+      abyssOpponent.hp -= abyssDmg;
+      if (abyssOpponent.hp < 0) abyssOpponent.hp = 0;
+      
+      if (typeof spawnDamageIndicator === 'function') {
+        spawnDamageIndicator(
+          abyssOpponent.x + abyssOpponent.w / 2,
+          abyssOpponent.y - 20,
+          abyssDmg,
+          false
+        );
+      }
+      console.log(`Demonic Abyss damage: -${abyssDmg} HP to opponent`);
+    }
+  } else {
+    // ✅ NEW: Clear debuff when out of range
+    abyssOpponent.isInDemonicAbyss = false;
+  }
+  
+  // Duration ended
+  if (this.demonicAbyssTimer <= 0) {
+    this.isDemonicAbyssActive = false;
+    this.demonicClawOwnerLocked = false;
+    abyssOpponent.isInDemonicAbyss = false;
+
+    
+    // ✅ NEW: Explosion if cast during Awakening
+    if (this.isDemonicAwakeningActive && isInRange) {
+      // Apply explosion stun (3 seconds)
+      abyssOpponent.hitStun = 180; // 3 seconds
+      abyssOpponent.isHit = true;
+      console.log("Demonic Abyss explosion! Enemy stunned for 3 seconds!");
+    }
+    
+    // Start cooldown
+    if (this.demonicAbyssCooldownPending) {
+      this.comboCooldowns["Demonic Heavens Abyss"] = 300; // 5 seconds
+      this.demonicAbyssCooldownPending = false;
+      console.log("Demonic Heaven's Abyss ended. Cooldown started.");
+    }
+  }
+}
+if (this.isInDemonicAbyss) {
+  let abyssCaster = (this === player1) ? player2 : player1;
+  if (!abyssCaster.isDemonicAbyssActive) {
+    this.isInDemonicAbyss = false;
+  }
+}
+
+// ✅ NEW: Demonic Heaven Annihilation mark countdown
+if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
+  this.annihilationTimer--;
+  
+// Mark expired - EXPLOSION
+if (this.annihilationTimer <= 0) {
+  this.isAnnihilationMarked = false;
+  
+  // ✅ NEW: Trigger explosion visual
+  this.annihilationExploding = true;
+  this.annihilationExplosionTimer = 30; // 0.5 second explosion visual
+  
+  // Apply cumulative damage
+  let explosionDamage = this.annihilationCumulativeDamage;
+  this.hp -= explosionDamage;
+  if (this.hp < 0) this.hp = 0;
+  
+  if (typeof spawnDamageIndicator === 'function') {
+    spawnDamageIndicator(
+      this.x + this.w / 2,
+      this.y - 50,
+      Math.floor(explosionDamage),
+      false
+    );
+  }
+  
+  console.log(`ANNIHILATION EXPLOSION! ${Math.floor(explosionDamage)} damage dealt!`);
+  
+  this.annihilationCumulativeDamage = 0;
+  this.annihilationCaster = null;
+}
+
+// ✅ NEW: Explosion visual timer
+if (this.annihilationExploding && this.annihilationExplosionTimer > 0) {
+  this.annihilationExplosionTimer--;
+  
+    if (this.annihilationExplosionTimer <= 0) {
+      this.annihilationExploding = false;
+    }
+  }
+}
+
     // NEW: Poison DOT tick (Flame Poison Needle)
 if (this.isPoisoned && this.poisonTimer > 0) {
   this.poisonTimer--;
@@ -321,7 +499,7 @@ if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
   if (fieldOpponent.isOceanMendingActive) {
     console.log("Poison Field damage blocked by Ocean Mending Water!");
   } else {
-    let fieldDmg = 5;
+    let fieldDmg = 10;
     fieldOpponent.hp -= fieldDmg;
     if (fieldOpponent.hp < 0) fieldOpponent.hp = 0;
     
@@ -341,6 +519,7 @@ if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
   if (this.poisonFieldTimer <= 0) {
     this.isPoisonFieldActive = false;
     fieldOpponent.isInPoisonField = false; // Remove debuff
+    this.canPoisonFieldTeleport = false;
     
     // Start cooldown
     if (this.poisonFieldCooldownPending) {
@@ -400,7 +579,7 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
 
   handleMovement(groundY) {
   if (this.hitStun > 0) return;
-
+  if (this.demonicClawOwnerLocked) return;
   this.speed = width * 0.002; 
   this.isBlocking = keyIsDown(this.controls.block) && this.isGrounded;
   if (this.isBlocking) this.speed *= 0.3;
@@ -429,6 +608,31 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
       this.airDashSpeed = (targetX - this.x) / this.airDashTimer;
     }
   }
+
+  // ✅ NEW: Poison Field Teleport (once per field activation)
+if (this.isPoisonFieldActive && this.canPoisonFieldTeleport && this.isGrounded && !this.attacking) {
+  let buffer = (this === player1) ? p1Buffer : p2Buffer;
+  
+  if (buffer.checkDoubleTap("FW")) {
+    // Teleport behind enemy
+    let opponent = (this === player1) ? player2 : player1;
+    
+    // Position behind enemy (opposite side of their facing)
+    let teleportX = opponent.facing === 1 ? 
+      opponent.x - 150 : // Behind if enemy faces right
+      opponent.x + opponent.w + 150; // Behind if enemy faces left
+    
+    this.x = teleportX;
+    
+    // Consume teleport
+    this.canPoisonFieldTeleport = false;
+    
+    console.log("Poison Field Teleport! Behind enemy!");
+    
+    // Prevent normal dash from also triggering
+    return;
+  }
+}
 
   // Normal dash (only on ground)
   if (!this.attacking && this.isGrounded) {
@@ -570,6 +774,25 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
       }
     }
 
+    //NEW: Handle Demonic Heaven's Steps teleport dash
+    else if (this.isDemonicStepsActive && this.demonicStepsTimer > 0) {
+      this.demonicStepsTimer--;
+  
+    // Move towards target position
+      this.x += this.demonicStepsSpeed;
+      this.demonicStepsDistanceTraveled += Math.abs(this.demonicStepsSpeed);
+  
+    // Maintain ground position (no gravity)
+    this.velY = 0;
+  
+    // End dash
+    if (this.demonicStepsTimer <= 0 || this.demonicStepsDistanceTraveled >= this.demonicStepsMaxDistance) {
+      this.isDemonicStepsActive = false;
+      this.demonicStepsSpeed = 0;
+      this.demonicStepsDistanceTraveled = 0;
+    }
+  }
+
     // Handle God Slash (no gravity during slash)
     else if (this.isGodSlashing && this.godSlashTimer > 0) {
       this.godSlashTimer--;
@@ -693,9 +916,6 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
   // Phase 2: Indicator (10-70 frames = 1 second) - Show indicator at target location
   else if (this.azureDragonTimer > 50) {
     this.azureDragonPhase = "indicator";
-    
-    // Character is underground (invisible)
-    // Indicator is drawn in draw() method
   }
   
   // Phase 3: Emerge (70-120 frames = ~0.8 seconds) - Rise from indicator position
@@ -803,6 +1023,7 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
   }
 
   startAttack(type) {
+  if (this.demonicClawOwnerLocked) return;
   if (this.attackTimer <= 2 && !this.isBlocking) { 
     this.attacking = type;
     this.hasHit = false;
@@ -811,16 +1032,19 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
     
     // NEW: Apply Poison Hands damage bonus to basic attacks
     if (this.isPoisonHandsActive) {
-        // Increase damage multiplier by 50%
-          this.comboDamageMod = 1.5; // This will be applied in damage calculation
-        } else {
+      this.comboDamageMod = 1.5; // This will be applied in damage calculation
+      }
+    else if (this.demonicStepsNextAttackBonus) {
+      this.comboDamageMod = 1.5; // +50% damage
+      this.demonicStepsNextAttackBonus = false; // Consume bonus
+      console.log("Demonic Steps bonus applied! +50% damage on this attack!");
+    } else {
           this.comboDamageMod = 1.0; // Normal
         }
       }
     }
 
   executeCombo(comboData) {
-  
   // Check if this is a movement combo FIRST
   if (comboData.type === "MOVEMENT") {
     this.attacking = null;
@@ -833,6 +1057,35 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
       this.isGrounded = false;
       this.velY = -this.jumpPower * 0.8;
       this.flightLaunchTimer = 10;
+    }
+
+      // ✅ NEW: Demonic Heaven's Steps (Forward or Backward)
+    if (comboData.isDemonicSteps) {
+      let opponent = (this === player1) ? player2 : player1;
+    
+      if (comboData.stepsDirection === "forward") {
+        // Teleport in front of enemy
+        this.demonicStepsTargetX = this.x + (this.facing * 500);
+        this.demonicStepsDirection = 1; // Moving forward
+        console.log("Demonic Heaven's Steps FORWARD!");
+      } else {
+        // Dash backward 800px
+        this.demonicStepsTargetX = this.x + (this.facing * -500); // Opposite direction
+        this.demonicStepsDirection = -1; // Moving backward
+        console.log("Demonic Heaven's Steps BACKWARD!");
+      }
+    
+      // Activate dash
+      this.isDemonicStepsActive = true;
+      this.demonicStepsTimer = 15; // Same as Ethan's air dash (15 frames)
+      this.demonicStepsDistanceTraveled = 0;
+      this.demonicStepsSpeed = (this.demonicStepsTargetX - this.x) / this.demonicStepsTimer;
+    
+      // Grant next attack bonus if Demonic Awakening is active
+      if (this.isDemonicAwakeningActive) {
+        this.demonicStepsNextAttackBonus = true;
+        console.log("Demonic Steps during Awakening! Next attack +50% damage!");
+      }
     }
     
     if (comboData.cooldown) {
@@ -964,6 +1217,35 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
   
     console.log(`Ocean Mending Water healed ${healAmount} HP! ${consumedBuff} consumed. Debuff immunity for 3 seconds.`);
   }
+
+  // ✅ NEW: Demonic Heaven's Awakening
+  if (comboData.name === "Demonic Heavens Awakening") {
+    if (this.isDemonicAwakeningActive) {
+      console.log("Demonic Heaven's Awakening is already active!");
+      return;
+    }
+    
+    // Pay HP cost
+    this.hp -= comboData.hpCost; // Costs 50 HP
+    if (this.hp < 0) this.hp = 0;
+    
+    // Show HP cost indicator
+    if (typeof spawnDamageIndicator === 'function') {
+      spawnDamageIndicator(
+        this.x + this.w / 2,
+        this.y - 40,
+        comboData.hpCost,
+        false
+      );
+    }
+    
+    // Activate power-up
+    this.isDemonicAwakeningActive = true;
+    this.demonicAwakeningTimer = comboData.duration; // 300 frames (5 seconds)
+    this.demonicAwakeningCooldownPending = true;
+    
+    console.log("Demonic Heaven's Awakening activated! +40% damage, 50% lifesteal for 5 seconds");
+  }
   
   this.hasHit = false;
   this.recoveryTimer = 0;
@@ -993,8 +1275,28 @@ if (comboData.type === "AOE") {
     // Set up tick timers
     this.poisonFieldDmgTickTimer = 60;  // First damage tick in 1 second
     this.poisonFieldHealTickTimer = 60; // First heal tick in 1 second
+    this.canPoisonFieldTeleport = true;
     
     console.log("Poison Flower Field activated!");
+  }
+
+  // ✅ NEW: Demonic Heaven's Abyss
+  if (comboData.name === "Demonic Heavens Abyss") {
+    if (this.isDemonicAbyssActive) {
+      console.log("Demonic Heaven's Abyss is already active!");
+      return;
+    }
+    
+    // Activate Abyss
+    this.isDemonicAbyssActive = true;
+    this.demonicAbyssTimer = comboData.duration; // 300 frames (5 seconds)
+    this.demonicAbyssCooldownPending = true;
+    this.demonicAbyssDmgTickTimer = 60; // First damage tick in 1 second
+    
+    // Lock caster in place (cannot move/attack)
+    this.demonicClawOwnerLocked = true; // Reuse the same lock flag
+    
+    console.log("Demonic Heaven's Abyss activated! Gravitational pull for 5 seconds!");
   }
   
   this.hasHit = false;
@@ -1004,7 +1306,27 @@ if (comboData.type === "AOE") {
   
   this.attacking = comboData.name;
   this.isPerformingCombo = true;
+
+  // ✅ UPDATED: Apply Demonic Steps bonus if active
+if (this.demonicStepsNextAttackBonus) {
+  this.comboDamageMod = comboData.damageMult * 1.5; // Base multiplier × 1.5
+  this.demonicStepsNextAttackBonus = false; // Consume bonus
+  console.log("Demonic Steps combo bonus applied! +50% damage!");
+} else {
   this.comboDamageMod = comboData.damageMult;
+}
+
+  // ✅ NEW: Demonic Heaven's Claw - lock unless Awakening is active
+  if (comboData.name === "Demonic Heavens Claw" && !this.isDemonicAwakeningActive) {
+    // Normal behavior: locked until projectile disappears (handled in projectile timer)
+    console.log("Demonic Claw - locked until claw disappears!");
+  } else if (comboData.name === "Demonic Heavens Claw" && this.isDemonicAwakeningActive) {
+    // Awakening override: can move immediately
+    this.attacking = null;
+    this.attackTimer = 0;
+    this.isPerformingCombo = false;
+    console.log("Demonic Claw during Awakening - free to move!");
+  }
 
   if (typeof damageIndicators !== 'undefined') {
     damageIndicators = damageIndicators.filter(ind => ind.life < 100);
@@ -1257,6 +1579,38 @@ if (comboData.name === "Azure Flowing Dragon") {
   
     console.log("Azure Flowing Dragon activated!");
   }
+
+  // ✅ NEW: Execute Damon Cheon Signature - Demonic Heaven Annihilation
+  if (comboData.name === "Demonic Heaven Annihilation") {
+    // Mark as used for this round
+    this.hasUsedAnnihilation = true;
+  
+    // Get opponent and mark them
+    let opponent = (this === player1) ? player2 : player1;
+  
+    opponent.isAnnihilationMarked = true;
+    opponent.annihilationTimer = comboData.duration; // 480 frames (8 seconds)
+    opponent.annihilationCumulativeDamage = 0; // Reset damage counter
+    opponent.annihilationCaster = this; // Track who cast it
+  
+    console.log("Demonic Heaven Annihilation! Enemy marked for 8 seconds!");
+  }
+
+  // Demonic Heaven's Claw (Ground launcher projectile)
+  if (comboData.name === "Demonic Heavens Claw") {
+    // Get opponent position for indicator
+    let opponent = (this === player1) ? player2 : player1;
+    this.demonicClawIndicatorX = opponent.x + opponent.w / 2; // Center on enemy
+    this.demonicClawIndicatorY = opponent.y + opponent.h; // At enemy's feet
+    
+    // Spawn the claw projectile at ground below enemy
+    let spawnX = this.demonicClawIndicatorX;
+    let spawnY = this.demonicClawIndicatorY;
+    
+    spawnProjectile(spawnX, spawnY, 1, this, "demonic_claw");
+    
+    console.log("Demonic Heaven's Claw activated!");
+  }
 } 
 
 draw() {
@@ -1360,6 +1714,36 @@ draw() {
       drawingContext.shadowColor = 'rgba(255, 255, 255, 1.0)';
       pop();
     }
+
+    // ✅ NEW: Demonic Heaven's Steps teleport effect
+if (this.isDemonicStepsActive && this.demonicStepsTimer > 0) {
+  push();
+  
+  // Dark purple/crimson teleport trail
+  drawingContext.shadowBlur = 35;
+  drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
+  
+  // Multiple afterimages
+  for (let i = 1; i <= 3; i++) {
+    let trailX = this.x - (this.demonicStepsSpeed * i * 2);
+    let alpha = 180 - (i * 60);
+    
+    fill(150, 0, 150, alpha);
+    noStroke();
+    rect(trailX, this.y, this.w, this.h, 5);
+  }
+  
+  // Demonic energy particles
+  for (let i = 0; i < 5; i++) {
+    let particleX = this.x + random(-30, 30);
+    let particleY = this.y + random(0, this.h);
+    fill(200, 0, 150, random(150, 255));
+    noStroke();
+    ellipse(particleX, particleY, random(5, 12), random(5, 12));
+  }
+  
+  pop();
+}
     
     // General flight glow
     if (!this.isAirDashing) {
@@ -1515,9 +1899,6 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
     }
   }
   
-  // Indicator phase - show where character will emerge (DRAWN ON GROUND)
-  // This is drawn separately below, not in character's draw
-  
   // Emerge phase - character rising from ground
   else if (this.azureDragonPhase === "emerge") {
     drawingContext.shadowBlur = 50;
@@ -1564,6 +1945,8 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
   else if (this.isAzureScalesActive) stroke(0, 150, 255, 255); // NEW: Deep blue outline
   else if (this.isTortoiseBodyActive) stroke(255, 215, 0, 255); // NEW: Golden outline
   else if (this.isOceanMendingActive) stroke(0, 220, 255, 255); // NEW: Cyan outline
+  else if (this.isDemonicStepsActive) stroke(150, 0, 150, 255); // ✅ NEW: Purple during dash
+  else if (this.isDemonicAwakeningActive) stroke(200, 0, 150, 255); // NEW: Dark crimson outline
   else if (this.isPoisonHandsActive) stroke(0, 255, 0, 200);  // Keep existing
   else stroke(0);
 
@@ -1880,6 +2263,249 @@ if (this.isOceanMendingActive && this.oceanMendingTimer > 0) {
   
     pop();
   }
+
+  //NEW: Demonic Heaven's Awakening effect (Damon Cheon)
+  if (this.isDemonicAwakeningActive && this.demonicAwakeningTimer > 0) {
+    push();
+    
+    // Dark crimson/purple aura (demonic energy)
+    drawingContext.shadowBlur = 40;
+    drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
+    
+    // Pulsing dark red outline (demonic power)
+    let pulseAlpha = 180 + sin(frameCount * 0.3) * 75;
+    noFill();
+    stroke(200, 0, 100, pulseAlpha);
+    strokeWeight(5);
+    rect(this.x, this.y, this.w, this.h, 5);
+    
+    // Secondary pulse (dark purple aura)
+    stroke(150, 0, 150, pulseAlpha * 0.7);
+    strokeWeight(3);
+    rect(this.x - 3, this.y - 3, this.w + 6, this.h + 6, 5);
+    
+    // Demonic energy particles (dark red/purple)
+    for (let i = 0; i < 8; i++) {
+      let particleX = this.x + random(0, this.w);
+      let particleY = this.y + random(0, this.h);
+      fill(random(150, 200), 0, random(100, 150), random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(4, 10), random(4, 10));
+    }
+    
+    // Rising dark flames (demonic power)
+    for (let i = 0; i < 4; i++) {
+      let flameX = this.x + random(0, this.w);
+      let flameY = this.y + this.h - (frameCount % 60) * 2 + (i * 20);
+      fill(150, 0, 100, random(100, 200));
+      noStroke();
+      ellipse(flameX, flameY, random(6, 14), random(10, 18));
+    }
+    
+    // Timer indicator
+    let timeLeft = Math.ceil(this.demonicAwakeningTimer / 60);
+    fill(200, 0, 150, 255);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`DEMONIC AWAKENING: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
+    
+    pop();
+  }
+
+  // ✅ NEW: Demonic Heaven's Abyss effect (Damon Cheon)
+if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
+  push();
+  
+  // Calculate range zone
+  let zoneX = this.facing === 1 ? this.x + this.w : this.x - this.demonicAbyssRange;
+  let zoneW = this.demonicAbyssRange;
+  let zoneY = this.y;
+  let zoneH = this.h;
+  
+  // Dark purple/red abyss zone
+  drawingContext.shadowBlur = 40;
+  drawingContext.shadowColor = 'rgba(150, 0, 100, 0.8)';
+  
+  // Pulsing zone overlay
+  let abyssPulse = 80 + sin(frameCount * 0.15) * 40;
+  fill(150, 0, 100, abyssPulse);
+  noStroke();
+  
+  if (this.facing === 1) {
+    rect(this.x + this.w, zoneY, zoneW, zoneH, 5);
+  } else {
+    rect(this.x - this.demonicAbyssRange, zoneY, zoneW, zoneH, 5);
+  }
+  
+  // Gravitational pull lines (animated toward caster)
+  for (let i = 0; i < 8; i++) {
+    let lineProgress = (frameCount * 0.05 + i * 0.3) % 1;
+    let lineX = this.facing === 1 ? 
+      this.x + this.w + (this.demonicAbyssRange * (1 - lineProgress)) :
+      this.x - (this.demonicAbyssRange * (1 - lineProgress));
+    
+    stroke(200, 0, 150, 150 * lineProgress);
+    strokeWeight(3);
+    
+    if (this.facing === 1) {
+      line(lineX, zoneY, this.x + this.w, this.y + this.h/2);
+    } else {
+      line(lineX, zoneY, this.x, this.y + this.h/2);
+    }
+  }
+  
+  // Dark energy particles swirling toward caster
+  for (let i = 0; i < 10; i++) {
+    let spiralAngle = (frameCount * 0.1 + i * 0.6) % TWO_PI;
+    let spiralDist = this.demonicAbyssRange * (0.5 + sin(frameCount * 0.05 + i) * 0.5);
+    
+    let particleX = this.facing === 1 ?
+      this.x + this.w + cos(spiralAngle) * spiralDist :
+      this.x - cos(spiralAngle) * spiralDist;
+    let particleY = this.y + this.h/2 + sin(spiralAngle) * 50;
+    
+    fill(150, 0, 100, random(100, 200));
+    noStroke();
+    ellipse(particleX, particleY, random(4, 10), random(4, 10));
+  }
+  
+  // Timer indicator
+  let timeLeft = Math.ceil(this.demonicAbyssTimer / 60);
+  fill(200, 0, 150, 255);
+  noStroke();
+  textAlign(CENTER, BOTTOM);
+  textSize(14);
+  text(`ABYSS: ${timeLeft}s`, this.x + this.w/2, this.y - 10);
+  
+  pop();
+}
+
+// ✅ NEW: Demonic Heaven Annihilation mark effect (on marked enemy)
+if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
+  push();
+  
+  // Pulsing black/dark purple mark on character center
+  let markPulse = 150 + sin(frameCount * 0.4) * 100;
+  let markSize = 20 + sin(frameCount * 0.3) * 8;
+  
+  drawingContext.shadowBlur = 40;
+  drawingContext.shadowColor = 'rgba(0, 0, 0, 1.0)';
+  
+  // Outer dark aura
+  fill(0, 0, 0, markPulse * 0.6);
+  noStroke();
+  ellipse(this.x + this.w/2, this.y + this.h/2, markSize * 2, markSize * 2);
+  
+  // Main black dot (pulsing)
+  fill(50, 0, 50, markPulse);
+  stroke(150, 0, 150, 255);
+  strokeWeight(3);
+  ellipse(this.x + this.w/2, this.y + this.h/2, markSize, markSize);
+  
+  // Inner core (darker)
+  fill(0, 0, 0, 255);
+  noStroke();
+  ellipse(this.x + this.w/2, this.y + this.h/2, markSize * 0.5, markSize * 0.5);
+  
+  // Dark energy particles orbiting the mark
+  for (let i = 0; i < 6; i++) {
+    let orbitAngle = (frameCount * 0.08 + i * TWO_PI / 6) % TWO_PI;
+    let orbitDist = markSize * 1.5;
+    
+    let particleX = this.x + this.w/2 + cos(orbitAngle) * orbitDist;
+    let particleY = this.y + this.h/2 + sin(orbitAngle) * orbitDist;
+    
+    fill(100, 0, 100, random(150, 255));
+    noStroke();
+    ellipse(particleX, particleY, random(3, 8), random(3, 8));
+  }
+  
+  // Timer indicator and damage counter
+  let timeLeft = Math.ceil(this.annihilationTimer / 60);
+  let dmgAccumulated = Math.floor(this.annihilationCumulativeDamage);
+  
+  fill(200, 0, 150, 255);
+  noStroke();
+  textAlign(CENTER, BOTTOM);
+  textSize(14);
+  text(`⚫ MARKED: ${timeLeft}s ⚫`, this.x + this.w/2, this.y - 10);
+  
+  // Damage counter below timer
+  fill(255, 0, 150, 220);
+  textSize(12);
+  text(`${dmgAccumulated} DMG`, this.x + this.w/2, this.y - 25);
+  
+  pop();
+}
+
+// ✅ NEW: Annihilation explosion visual
+if (this.annihilationExploding && this.annihilationExplosionTimer > 0) {
+  push();
+  
+  let explosionProgress = (30 - this.annihilationExplosionTimer) / 30; // 0 to 1
+  let explosionSize = 150 * explosionProgress;
+  let explosionAlpha = 255 * (1 - explosionProgress); // Fade out
+  
+  drawingContext.shadowBlur = 60;
+  drawingContext.shadowColor = 'rgba(100, 0, 100, 1.0)';
+  
+  // Outer explosion ring (expanding)
+  noFill();
+  stroke(150, 0, 150, explosionAlpha);
+  strokeWeight(10);
+  ellipse(this.x + this.w/2, this.y + this.h/2, explosionSize * 2, explosionSize * 2);
+  
+  // Middle ring
+  stroke(200, 0, 200, explosionAlpha * 0.8);
+  strokeWeight(6);
+  ellipse(this.x + this.w/2, this.y + this.h/2, explosionSize * 1.5, explosionSize * 1.5);
+  
+  // Core explosion
+  fill(100, 0, 100, explosionAlpha);
+  noStroke();
+  ellipse(this.x + this.w/2, this.y + this.h/2, explosionSize, explosionSize);
+  
+  // Explosion particles
+  for (let i = 0; i < 20; i++) {
+    let particleAngle = random(TWO_PI);
+    let particleDist = explosionSize * random(0.5, 1.5);
+    
+    let particleX = this.x + this.w/2 + cos(particleAngle) * particleDist;
+    let particleY = this.y + this.h/2 + sin(particleAngle) * particleDist;
+    
+    fill(150, 0, 150, explosionAlpha * random(0.5, 1));
+    noStroke();
+    ellipse(particleX, particleY, random(5, 15), random(5, 15));
+  }
+  
+  pop();
+}
+
+  // ✅ NEW: Demonic Steps next attack bonus indicator
+if (this.demonicStepsNextAttackBonus) {
+  push();
+  
+  // Pulsing "BONUS READY" indicator
+  let bonusPulse = 200 + sin(frameCount * 0.4) * 55;
+  
+  fill(255, 215, 0, bonusPulse);
+  noStroke();
+  textAlign(CENTER, BOTTOM);
+  textSize(16);
+  text("BONUS READY", this.x + this.w/2, this.y - 25);
+  
+  // Small golden particles
+  for (let i = 0; i < 3; i++) {
+    let sparkX = this.x + this.w/2 + random(-20, 20);
+    let sparkY = this.y - 30 + random(-10, 10);
+    fill(255, 215, 0, random(150, 255));
+    noStroke();
+    ellipse(sparkX, sparkY, random(3, 6), random(3, 6));
+  }
+  
+  pop();
+}
 
 }
 

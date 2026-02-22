@@ -43,10 +43,99 @@
   <script src="js/states/loadingMatchMulti.js"></script>
   <script src="js/states/winScreen.js"></script>
   <script src="js/states/winScreenMulti.js"></script>
-
+  <script src="js/states/training.js"></script>
+  <script src="js/states/pauseMenuTraining.js"></script>
 
   <!-- p5 ENTRY POINT (MUST BE LAST) -->
   <script src="js/sketch.js"></script>
+
+  <script> document.addEventListener('keydown', function(e) {
+  // Prevent Ctrl+F (Find)
+  if (e.ctrlKey && e.key === 'f') {
+    e.preventDefault();
+    console.log('Find blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+D (Bookmark)
+  if (e.ctrlKey && e.key === 'd') {
+    e.preventDefault();
+    console.log('Bookmark blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+S (Save)
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    console.log('Save blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+P (Print)
+  if (e.ctrlKey && e.key === 'p') {
+    e.preventDefault();
+    console.log('Print blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+H (History)
+  if (e.ctrlKey && e.key === 'h') {
+    e.preventDefault();
+    console.log('History blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+J (Downloads)
+  if (e.ctrlKey && e.key === 'j') {
+    e.preventDefault();
+    console.log('Downloads blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+T (New Tab)
+  if (e.ctrlKey && e.key === 't') {
+    e.preventDefault();
+    console.log('New tab blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+W (Close Tab)
+  if (e.ctrlKey && e.key === 'w') {
+    e.preventDefault();
+    console.log('Close tab blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+N (New Window)
+  if (e.ctrlKey && e.key === 'n') {
+    e.preventDefault();
+    console.log('New window blocked');
+    return false;
+  }
+  
+  // Prevent Ctrl+Shift+T (Reopen Closed Tab)
+  if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+    e.preventDefault();
+    console.log('Reopen tab blocked');
+    return false;
+  }
+  
+  // Prevent Backspace (Back)
+  if (e.key === 'Backspace' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    console.log('Backspace blocked');
+    return false;
+  }
+});
+
+// Disable text selection (helps prevent accidental highlights during gameplay)
+document.addEventListener('selectstart', function(e) {
+  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    return false;
+  }
+});
+</script>
 
 </body>
 </html>

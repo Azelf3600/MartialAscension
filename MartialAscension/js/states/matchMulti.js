@@ -129,6 +129,12 @@ function initMatch() {
   player2.seaDragonTarget = null;
   player2.isAzureDragonActive = false;
   player2.azureDragonTimer = 0;
+  player1.isDemonicStepsActive = false;
+  player2.isDemonicStepsActive = false;
+  player1.demonicStepsTimer = 0;
+  player2.demonicStepsTimer = 0;
+  player1.demonicStepsNextAttackBonus = false;
+  player2.demonicStepsNextAttackBonus = false;
   
   // Reset signature flags
   player1.hasUsedJudgment = false;
@@ -137,8 +143,10 @@ function initMatch() {
   player2.hasUsedPoisonRain = false;
   player1.hasUsedAzureDragon = false;
   player2.hasUsedAzureDragon = false;
+  player1.hasUsedAnnihilation = false; 
+  player2.hasUsedAnnihilation = false; 
   
-  // Reset power-ups
+  // Reset Lucas Tang power-ups
   player1.isPoisonHandsActive = false;
   player2.isPoisonHandsActive = false;
   player1.isPoisonFieldActive = false;
@@ -151,6 +159,8 @@ function initMatch() {
   player2.isPoisonRainActive = false;
   player1.poisonRainTimer = 0;
   player2.poisonRainTimer = 0;
+  player1.canPoisonFieldTeleport = false; // ✅ NEW
+  player2.canPoisonFieldTeleport = false; // ✅ NEW
   
   // Reset Aaron Shu power-ups
   player1.isAzureScalesActive = false;
@@ -165,6 +175,32 @@ function initMatch() {
   player2.isOceanMendingActive = false;
   player1.oceanMendingTimer = 0;
   player2.oceanMendingTimer = 0;
+
+  //Reset Damon Cheon power-ups
+  player1.isDemonicAwakeningActive = false;
+  player2.isDemonicAwakeningActive = false;
+  player1.demonicAwakeningTimer = 0;
+  player2.demonicAwakeningTimer = 0;
+  player1.demonicClawOwnerLocked = false;
+  player2.demonicClawOwnerLocked = false;
+  player1.isDemonicAbyssActive = false;
+  player2.isDemonicAbyssActive = false;
+  player1.demonicAbyssTimer = 0;
+  player2.demonicAbyssTimer = 0;
+  player1.isInDemonicAbyss = false; 
+  player2.isInDemonicAbyss = false; 
+  player1.isAnnihilationMarked = false;
+  player2.isAnnihilationMarked = false;
+  player1.annihilationTimer = 0;
+  player2.annihilationTimer = 0;
+  player1.annihilationCumulativeDamage = 0;
+  player2.annihilationCumulativeDamage = 0;
+  player1.annihilationCaster = null;
+  player2.annihilationCaster = null;
+  player1.annihilationExploding = false;
+  player2.annihilationExploding = false;
+  player1.annihilationExplosionTimer = 0;
+  player2.annihilationExplosionTimer = 0;
   
   // Reset debuffs
   player1.isPoisoned = false;
@@ -236,6 +272,60 @@ if (player1 && player2) {
     textAlign(CENTER, BOTTOM);
     textSize(20);
     text(`☠ POISON FIELD: ${timeLeft}s ☠`, 0, groundY - 10);
+    
+    pop();
+  }
+
+  // ✅ NEW: Draw Demonic Heaven's Abyss ground effect
+  let abyssCaster = null;
+  if (player1.isDemonicAbyssActive) abyssCaster = player1;
+  else if (player2.isDemonicAbyssActive) abyssCaster = player2;
+  
+  if (abyssCaster) {
+    push();
+    
+    // Calculate range line position
+    let lineStartX = abyssCaster.facing === 1 ? 
+      abyssCaster.x + abyssCaster.w : 
+      abyssCaster.x - abyssCaster.demonicAbyssRange;
+    let lineEndX = abyssCaster.facing === 1 ?
+      abyssCaster.x + abyssCaster.w + abyssCaster.demonicAbyssRange :
+      abyssCaster.x;
+    
+    // Pulsing dark purple/red ground line
+    let abyssPulse = 150 + sin(frameCount * 0.2) * 100;
+    let abyssThick = 5 + sin(frameCount * 0.25) * 3;
+    
+    drawingContext.shadowBlur = 35;
+    drawingContext.shadowColor = 'rgba(150, 0, 100, 1.0)';
+    
+    // Main ground line
+    stroke(150, 0, 100, abyssPulse);
+    strokeWeight(abyssThick);
+    line(lineStartX, groundY, lineEndX, groundY);
+    
+    // Secondary glow line
+    stroke(200, 0, 150, abyssPulse * 0.6);
+    strokeWeight(abyssThick * 2);
+    line(lineStartX, groundY, lineEndX, groundY);
+    
+    // Dark particles rising from ground
+    for (let i = 0; i < 15; i++) {
+      let particleX = random(lineStartX, lineEndX);
+      let particleY = groundY - random(5, 50);
+      
+      fill(150, 0, 100, random(100, 200));
+      noStroke();
+      ellipse(particleX, particleY, random(3, 8), random(3, 8));
+    }
+    
+    // Timer indicator on ground
+    let timeLeft = Math.ceil(abyssCaster.demonicAbyssTimer / 60);
+    fill(200, 0, 150, 220);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(20);
+    text(`⚫ DEMONIC ABYSS: ${timeLeft}s ⚫`, (lineStartX + lineEndX) / 2, groundY - 10);
     
     pop();
   }

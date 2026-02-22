@@ -108,12 +108,17 @@ function checkHit(attacker, defender) {
           wasTortoiseActive = true;
           effectiveDmgMod = 1.0; // Boost from 0.8 to 1.2 (60 damage)
         } else {
-          effectiveDmgMod = 0.5; // Keep base (40 damage with Azure Scales consumption)
+          effectiveDmgMod = 0.6; // Keep base (40 damage with Azure Scales consumption)
         }
       }  
           // Normal Tortoise Body check
           else if (attacker.isTortoiseBodyActive && attacker.archetype === "Defensive") {
             effectiveDmgMod = 1.0; // Boost from 0.8 to 1.2
+          }
+
+          // ✅ NEW: Demonic Heaven's Awakening - 1.4x damage (40% boost)
+          if (attacker.isDemonicAwakeningActive && attacker.archetype === "Offensive") {
+            effectiveDmgMod = 1.4; // Boost from 1.2 to 1.4 (40% increase)
           }
   
           finalCalculatedDmg = baseDmg * effectiveDmgMod * attacker.comboDamageMod * poisonBonus;
@@ -241,9 +246,46 @@ function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock =
     console.log(`Azure Scales reflected ${Math.floor(reflectedDmg)} damage!`);
   }
 
+  if (target.isAnnihilationMarked && target.annihilationCaster === attacker) {
+    target.annihilationCumulativeDamage += damageToApply;
+    console.log(`Annihilation tracking: ${Math.floor(damageToApply)} damage (Total: ${Math.floor(target.annihilationCumulativeDamage)})`);
+  }
+
   target.hp -= damageToApply;
   if (target.hp < 0) target.hp = 0;
   target.isHit = !target.isBlocking;
+
+  // ✅ NEW: Demonic Heaven's Awakening - 40% lifesteal
+if (attacker.isDemonicAwakeningActive) {
+  let lifestealAmount = damageToApply * 0.4; // 40% of damage dealt
+  
+  // Heal attacker (cap at maxHp)
+  attacker.hp = Math.min(attacker.hp + lifestealAmount, attacker.maxHp);
+  
+  // Show lifesteal indicator on attacker
+  if (typeof spawnDamageIndicator === 'function') {
+    spawnDamageIndicator(
+      attacker.x + attacker.w / 2,
+      attacker.y - 50,
+      Math.floor(lifestealAmount),
+      false
+    );
+  }
+  
+  console.log(`Demonic Awakening lifesteal: +${Math.floor(lifestealAmount)} HP`);
+}
+
+// NEW: Block isHit flag if Ocean Mending is active
+if (target.isOceanMendingActive) {
+  target.isHit = false; // No hit reaction
+} else {
+  target.isHit = !target.isBlocking;
+}
+
+if (typeof spawnDamageIndicator === "function") {
+  let displayVal = Math.floor(damageToApply);
+  spawnDamageIndicator(target.x + target.w / 2, target.y, displayVal, target.isBlocking);
+}
 
   // NEW: Block isHit flag if Ocean Mending is active
   if (target.isOceanMendingActive) {
