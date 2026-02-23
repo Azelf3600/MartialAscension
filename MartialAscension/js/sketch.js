@@ -2,10 +2,12 @@ const GAME_STATE = {
   MENU: "menu",
   CHARACTER_SELECT: "character_select",
   CHARACTER_SELECT_MULTI: "character_select_multi",
+  CHARACTER_SELECT_TRAINING: "character_select_training",
   STAGE_SELECT: "stage_select",
   STAGE_SELECT_MULTI: "stage_select_multi",
   MATCH: "match",
   MATCH_MULTI: "match_multi",
+  TRAINING: "training",
   PAUSE_MENU: "pause_menu",
   PAUSE_MENU_MULTI: "pause_menu_multi",
   PAUSE_MENU_TRAINING: "pause_menu_training",
@@ -13,7 +15,6 @@ const GAME_STATE = {
   LOADING_MATCH_MULTI: "loading_match_multi",
   WIN_SCREEN_MULTI: "win_screen_multi",
   WIN_SCREEN: "win_screen",
-  TRAINING: "training"
 };
 
 let currentState = GAME_STATE.MENU;
@@ -112,7 +113,12 @@ function draw() {
     case GAME_STATE.PAUSE_MENU_TRAINING:
       drawPauseMenuTraining()
       break;
+    
+    case GAME_STATE.CHARACTER_SELECT_TRAINING:
+      drawCharacterSelectTraining()
+      break;
     }
+
   pop(); 
 
   // DEBUG STATE and FPS OVERLAY
@@ -149,6 +155,17 @@ function windowResized() {
 }
 
 function keyPressed() {
+    // ✅ NEW: Pause Menu Toggle (ESC during match)
+  if (currentState === GAME_STATE.MATCH_MULTI && keyCode === ESCAPE) {
+    currentState = GAME_STATE.PAUSE_MENU_MULTI;
+    return;
+  }
+  
+  // ✅ NEW: Pause Menu Input Handling
+  if (currentState === GAME_STATE.PAUSE_MENU_MULTI) {
+    handlePauseMenuInput(key, keyCode);
+    return;
+  }
   // MULTIPLAYER CHARACTER SELECTION CONTROLS
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
     // PLAYER 1 Selection

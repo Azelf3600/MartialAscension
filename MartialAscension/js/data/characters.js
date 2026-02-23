@@ -1,7 +1,7 @@
 const FIGHTERS = [
   {
     name: "Ethan Li",
-    nickname: "White Wind Sword Master",
+    nickname: "White Wind Sword Saint",
     thumbPath: "Assets/sprites/profiles/EthanLi/Thumbnail/EthanLiThumbnail.png",
     previewPath: "Assets/sprites/profiles/EthanLi/Preview/EthanLiPreview.png",
     sect: "Sword God Palace",
@@ -9,7 +9,7 @@ const FIGHTERS = [
   },
   {
     name: "Lucas Tang",
-    nickname: "Ten Thousand Poison King",
+    nickname: "Ten Thousand Poison Sovereign",
     thumbPath: "Assets/sprites/profiles/LucasTang/Thumbnail/LucasTangThumbnail.png",
     previewPath: "Assets/sprites/profiles/LucasTang/Preview/LucasTangPreview.png",
     sect: "Poison Tang Clan",

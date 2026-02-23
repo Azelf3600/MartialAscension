@@ -382,45 +382,49 @@ if (this.isInDemonicAbyss) {
   }
 }
 
-// ✅ NEW: Demonic Heaven Annihilation mark countdown
+// ✅ UPDATED: Demonic Heaven Annihilation mark countdown
 if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
   this.annihilationTimer--;
   
-// Mark expired - EXPLOSION
-if (this.annihilationTimer <= 0) {
-  this.isAnnihilationMarked = false;
-  
-  // ✅ NEW: Trigger explosion visual
-  this.annihilationExploding = true;
-  this.annihilationExplosionTimer = 30; // 0.5 second explosion visual
-  
-  // Apply cumulative damage
-  let explosionDamage = this.annihilationCumulativeDamage;
-  this.hp -= explosionDamage;
-  if (this.hp < 0) this.hp = 0;
-  
-  if (typeof spawnDamageIndicator === 'function') {
-    spawnDamageIndicator(
-      this.x + this.w / 2,
-      this.y - 50,
-      Math.floor(explosionDamage),
-      false
-    );
+  // Mark expired - EXPLOSION
+  if (this.annihilationTimer <= 0) {
+    // ✅ KEEP mark visible during explosion
+    // this.isAnnihilationMarked = false; // DON'T clear yet
+    
+    // Trigger explosion visual
+    this.annihilationExploding = true;
+    this.annihilationExplosionTimer = 30; // 0.5 second explosion visual
+    
+    // Apply cumulative damage (50% of total dealt)
+    let explosionDamage = this.annihilationCumulativeDamage;
+    this.hp -= explosionDamage;
+    if (this.hp < 0) this.hp = 0;
+    
+    if (typeof spawnDamageIndicator === 'function') {
+      spawnDamageIndicator(
+        this.x + this.w / 2,
+        this.y - 50,
+        Math.floor(explosionDamage),
+        false
+      );
+    }
+    
+    console.log(`ANNIHILATION EXPLOSION! ${Math.floor(explosionDamage)} damage dealt!`);
+    
+    // Reset damage counter
+    this.annihilationCumulativeDamage = 0;
+    this.annihilationCaster = null;
   }
-  
-  console.log(`ANNIHILATION EXPLOSION! ${Math.floor(explosionDamage)} damage dealt!`);
-  
-  this.annihilationCumulativeDamage = 0;
-  this.annihilationCaster = null;
 }
 
-// ✅ NEW: Explosion visual timer
+// ✅ NEW: Explosion visual timer - clears mark when done
 if (this.annihilationExploding && this.annihilationExplosionTimer > 0) {
   this.annihilationExplosionTimer--;
   
-    if (this.annihilationExplosionTimer <= 0) {
-      this.annihilationExploding = false;
-    }
+  if (this.annihilationExplosionTimer <= 0) {
+    this.annihilationExploding = false;
+    this.isAnnihilationMarked = false; // ✅ Clear mark AFTER explosion finishes
+    console.log("Annihilation mark cleared!");
   }
 }
 
@@ -2381,7 +2385,7 @@ if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
   pop();
 }
 
-// ✅ NEW: Demonic Heaven Annihilation mark effect (on marked enemy)
+// ✅ Demonic Heaven Annihilation mark effect (on marked enemy)
 if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
   push();
   
@@ -2439,7 +2443,7 @@ if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
   pop();
 }
 
-// ✅ NEW: Annihilation explosion visual
+// ✅ Annihilation explosion visual (separate check)
 if (this.annihilationExploding && this.annihilationExplosionTimer > 0) {
   push();
   

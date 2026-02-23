@@ -246,10 +246,11 @@ function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock =
     console.log(`Azure Scales reflected ${Math.floor(reflectedDmg)} damage!`);
   }
 
-  if (target.isAnnihilationMarked && target.annihilationCaster === attacker) {
-    target.annihilationCumulativeDamage += damageToApply;
-    console.log(`Annihilation tracking: ${Math.floor(damageToApply)} damage (Total: ${Math.floor(target.annihilationCumulativeDamage)})`);
-  }
+if (target.isAnnihilationMarked && target.annihilationCaster === attacker) {
+  let trackedDamage = damageToApply * 0.5; // ✅ Only track 50% of damage dealt
+  target.annihilationCumulativeDamage += trackedDamage;
+  console.log(`Annihilation tracking: ${Math.floor(trackedDamage)} damage (Total: ${Math.floor(target.annihilationCumulativeDamage)})`);
+}
 
   target.hp -= damageToApply;
   if (target.hp < 0) target.hp = 0;
