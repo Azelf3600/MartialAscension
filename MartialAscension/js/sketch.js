@@ -117,7 +117,7 @@ function draw() {
     case GAME_STATE.CHARACTER_SELECT_TRAINING:
       drawCharacterSelectTraining()
       break;
-    }
+    } 
 
   pop(); 
 
