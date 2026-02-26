@@ -211,6 +211,14 @@ class Character {
     return; 
   }
 
+    const getOpponent = () => {
+    if (currentState === GAME_STATE.TRAINING) {
+      return (this === trainingPlayer) ? trainingDummy : trainingPlayer;
+    } else {
+      return (this === player1) ? player2 : player1;
+    }
+  };
+
   // Update cooldowns
   for (let comboName in this.comboCooldowns) {
     if (this.comboCooldowns[comboName] > 0) {
@@ -308,7 +316,7 @@ if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
   this.demonicAbyssTimer--;
   
   // Get opponent
-  let abyssOpponent = (this === player1) ? player2 : player1;
+  let abyssOpponent = getOpponent();
   
   // Check if opponent is in range
   let distanceToOpponent = abs(abyssOpponent.x - this.x);
@@ -376,7 +384,7 @@ if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
   }
 }
 if (this.isInDemonicAbyss) {
-  let abyssCaster = (this === player1) ? player2 : player1;
+  let abyssCaster = getOpponent();
   if (!abyssCaster.isDemonicAbyssActive) {
     this.isInDemonicAbyss = false;
   }
@@ -468,7 +476,7 @@ if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
   this.poisonFieldTimer--;
   
   // Get opponent
-  let fieldOpponent = (this === player1) ? player2 : player1;
+  let fieldOpponent = getOpponent();
   
   // Apply debuffs to opponent every frame
   fieldOpponent.isInPoisonField = true;
@@ -537,7 +545,7 @@ if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
 // Clear field debuff if caster's field is no longer active
 // (handles edge cases like caster KO)
 if (this.isInPoisonField) {
-  let fieldCaster = (this === player1) ? player2 : player1;
+  let fieldCaster = getOpponent();
   if (!fieldCaster.isPoisonFieldActive) {
     this.isInPoisonField = false;
   }
@@ -553,7 +561,7 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
     this.poisonRainSpawnTimer = 30; // Reset to spawn next drop in 1 second
     
     // Get current enemy position (follows enemy movement)
-    let rainTarget = (this === player1) ? player2 : player1;
+    let rainTarget = getOpponent();
     
     // Spawn above enemy
     let spawnX = rainTarget.x + rainTarget.w / 2;
@@ -581,16 +589,16 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
   this.applyPhysics(groundY);
 }
 
-  handleMovement(groundY) {
+handleMovement(groundY) {
   if (this.hitStun > 0) return;
   if (this.demonicClawOwnerLocked) return;
   this.speed = width * 0.002; 
   this.isBlocking = keyIsDown(this.controls.block) && this.isGrounded;
   if (this.isBlocking) this.speed *= 0.3;
 
-  // NEW: Apply Poison Field debuffs to affected character
+  // Apply Poison Field debuffs
   if (this.isInPoisonField) {
-    this.speed *= 0.5; // Halve walking speed
+    this.speed *= 0.5;
   }
 
   // Flight controls
@@ -603,64 +611,77 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
     }
     
     let buffer = (this === player1) ? p1Buffer : p2Buffer;
-    if (buffer.checkDoubleTap("FW") && this.canAirDash && !this.isAirDashing) {
+    
+    // ✅ FIX: Add training mode check
+    if (currentState === GAME_STATE.TRAINING) {
+      buffer = (this === trainingPlayer) ? p1Buffer : null;
+    }
+    
+    if (buffer && buffer.checkDoubleTap("FW") && this.canAirDash && !this.isAirDashing) {
       this.isAirDashing = true;
       this.canAirDash = false;
       this.airDashTimer = 15;
-      let opponent = (this === player1) ? player2 : player1;
+      let opponent = (currentState === GAME_STATE.TRAINING) ? 
+        ((this === trainingPlayer) ? trainingDummy : trainingPlayer) : 
+        ((this === player1) ? player2 : player1);
       let targetX = opponent.x + (opponent.facing === 1 ? -150 : opponent.w + 150);
       this.airDashSpeed = (targetX - this.x) / this.airDashTimer;
     }
   }
 
-  // ✅ NEW: Poison Field Teleport (once per field activation)
-if (this.isPoisonFieldActive && this.canPoisonFieldTeleport && this.isGrounded && !this.attacking) {
-  let buffer = (this === player1) ? p1Buffer : p2Buffer;
-  
-  if (buffer.checkDoubleTap("FW")) {
-    // Teleport behind enemy
-    let opponent = (this === player1) ? player2 : player1;
+  // ✅ FIX: Poison Field Teleport - add training check
+  if (this.isPoisonFieldActive && this.canPoisonFieldTeleport && this.isGrounded && !this.attacking) {
+    let buffer = (this === player1) ? p1Buffer : p2Buffer;
     
-    // Position behind enemy (opposite side of their facing)
-    let teleportX = opponent.facing === 1 ? 
-      opponent.x - 150 : // Behind if enemy faces right
-      opponent.x + opponent.w + 150; // Behind if enemy faces left
+    // ✅ Add training mode check
+    if (currentState === GAME_STATE.TRAINING) {
+      buffer = (this === trainingPlayer) ? p1Buffer : null;
+    }
     
-    this.x = teleportX;
-    
-    // Consume teleport
-    this.canPoisonFieldTeleport = false;
-    
-    console.log("Poison Field Teleport! Behind enemy!");
-    
-    // Prevent normal dash from also triggering
-    return;
+    if (buffer && buffer.checkDoubleTap("FW")) {
+      let opponent = (currentState === GAME_STATE.TRAINING) ? 
+        ((this === trainingPlayer) ? trainingDummy : trainingPlayer) : 
+        ((this === player1) ? player2 : player1);
+      
+      let teleportX = opponent.facing === 1 ? 
+        opponent.x - 150 : 
+        opponent.x + opponent.w + 150;
+      
+      this.x = teleportX;
+      this.canPoisonFieldTeleport = false;
+      console.log("Poison Field Teleport! Behind enemy!");
+      return;
+    }
   }
-}
 
-  // Normal dash (only on ground)
+  // ✅ FIX: Normal dash - add training check
   if (!this.attacking && this.isGrounded) {
     let buffer = (this === player1) ? p1Buffer : p2Buffer;
     
-    if (buffer.checkDoubleTap("FW")) {
-      this.isDashing = true;
-      this.dashDirection = this.facing; 
-      this.dashTimer = 18;
-      this.dashMaxSpeed = 60;
-      
-      // NEW: Halve dash speed if in poison field
-      let dashSpeed = this.isInPoisonField ? 25 : 50;
-      this.velX = this.facing * dashSpeed;
-      
-    } else if (buffer.checkDoubleTap("BW")) {
-      this.isDashing = true;
-      this.dashDirection = -this.facing; 
-      this.dashTimer = 16;
-      this.dashMaxSpeed = 52;
-      
-      // NEW: Halve dash speed if in poison field
-      let dashSpeed = this.isInPoisonField ? 21 : 42;
-      this.velX = -this.facing * dashSpeed;
+    // ✅ Add training mode check
+    if (currentState === GAME_STATE.TRAINING) {
+      buffer = (this === trainingPlayer) ? p1Buffer : null;
+    }
+    
+    if (buffer) {
+      if (buffer.checkDoubleTap("FW")) {
+        this.isDashing = true;
+        this.dashDirection = this.facing; 
+        this.dashTimer = 18;
+        this.dashMaxSpeed = 60;
+        
+        let dashSpeed = this.isInPoisonField ? 25 : 50;
+        this.velX = this.facing * dashSpeed;
+        
+      } else if (buffer.checkDoubleTap("BW")) {
+        this.isDashing = true;
+        this.dashDirection = -this.facing; 
+        this.dashTimer = 16;
+        this.dashMaxSpeed = 52;
+        
+        let dashSpeed = this.isInPoisonField ? 21 : 42;
+        this.velX = -this.facing * dashSpeed;
+      }
     }
   }
 
@@ -1048,7 +1069,15 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
       }
     }
 
-  executeCombo(comboData) {
+executeCombo(comboData) {
+  const getOpponent = () => {
+    if (currentState === GAME_STATE.TRAINING) {
+      return (this === trainingPlayer) ? trainingDummy : trainingPlayer;
+    } else {
+      return (this === player1) ? player2 : player1;
+    }
+  };
+  
   // Check if this is a movement combo FIRST
   if (comboData.type === "MOVEMENT") {
     this.attacking = null;
@@ -1065,7 +1094,7 @@ if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
 
       // ✅ NEW: Demonic Heaven's Steps (Forward or Backward)
     if (comboData.isDemonicSteps) {
-      let opponent = (this === player1) ? player2 : player1;
+      let opponent = getOpponent();
     
       if (comboData.stepsDirection === "forward") {
         // Teleport in front of enemy
@@ -1399,7 +1428,7 @@ if (this.demonicStepsNextAttackBonus) {
     this.godSlashPhase = "teleport"; // Start with teleport
   
     // Calculate teleport position (in front of enemy)
-    let opponent = (this === player1) ? player2 : player1;
+    let opponent = getOpponent();
     let teleportX = opponent.x + (opponent.facing === 1 ? opponent.w + 100 : -100);
     let teleportY = opponent.y - 150; // Above the enemy
   
@@ -1420,7 +1449,7 @@ if (this.demonicStepsNextAttackBonus) {
     this.hasUsedJudgment = true;
   
     // Calculate spawn position (top of screen, above enemy)
-    let opponent = (this === player1) ? player2 : player1;
+    let opponent = getOpponent();
     let spawnX = opponent.x + opponent.w / 2; // Centered on enemy
     let spawnY = -200; // Above screen
   
@@ -1486,7 +1515,7 @@ if (comboData.name === "Ten Thousand Poison Flower Rain") {
   this.poisonFieldTimer = 0;
 
   // Remove field debuff from opponent
-  let rainOpponent = (this === player1) ? player2 : player1;
+  let rainOpponent = getOpponent();
   rainOpponent.isInPoisonField = false;
 
   // Start cooldown for field if pending
@@ -1568,7 +1597,7 @@ if (comboData.name === "Azure Flowing Dragon") {
   }
   
     // Get opponent position for indicator
-    let opponent = (this === player1) ? player2 : player1;
+    let opponent = getOpponent();
     this.azureDragonIndicatorX = opponent.x + opponent.w / 2; // Center on enemy
     this.azureDragonIndicatorY = opponent.y + opponent.h; // At enemy's feet
   
@@ -1590,7 +1619,7 @@ if (comboData.name === "Azure Flowing Dragon") {
     this.hasUsedAnnihilation = true;
   
     // Get opponent and mark them
-    let opponent = (this === player1) ? player2 : player1;
+    let opponent = getOpponent();
   
     opponent.isAnnihilationMarked = true;
     opponent.annihilationTimer = comboData.duration; // 480 frames (8 seconds)
@@ -1603,7 +1632,7 @@ if (comboData.name === "Azure Flowing Dragon") {
   // Demonic Heaven's Claw (Ground launcher projectile)
   if (comboData.name === "Demonic Heavens Claw") {
     // Get opponent position for indicator
-    let opponent = (this === player1) ? player2 : player1;
+    let opponent = getOpponent();
     this.demonicClawIndicatorX = opponent.x + opponent.w / 2; // Center on enemy
     this.demonicClawIndicatorY = opponent.y + opponent.h; // At enemy's feet
     

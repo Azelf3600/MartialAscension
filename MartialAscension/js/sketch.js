@@ -13,6 +13,7 @@ const GAME_STATE = {
   PAUSE_MENU_TRAINING: "pause_menu_training",
   LOADING_MATCH: "loading_match",
   LOADING_MATCH_MULTI: "loading_match_multi",
+  LOADING_MATCH_TRAINING: "loading_match_training",
   WIN_SCREEN_MULTI: "win_screen_multi",
   WIN_SCREEN: "win_screen",
 };
@@ -117,6 +118,10 @@ function draw() {
     case GAME_STATE.CHARACTER_SELECT_TRAINING:
       drawCharacterSelectTraining()
       break;
+
+    case GAME_STATE.LOADING_MATCH_TRAINING:
+      drawLoadingMatchTraining()
+      break;
     }
 
   pop(); 
@@ -155,17 +160,99 @@ function windowResized() {
 }
 
 function keyPressed() {
-    // ✅ NEW: Pause Menu Toggle (ESC during match)
+  // ✅ Pause Menu Toggle (ESC during match)
   if (currentState === GAME_STATE.MATCH_MULTI && keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU_MULTI;
     return;
   }
   
-  // ✅ NEW: Pause Menu Input Handling
+  // ✅ Pause Menu Input Handling
   if (currentState === GAME_STATE.PAUSE_MENU_MULTI) {
     handlePauseMenuInput(key, keyCode);
     return;
   }
+
+    // ✅ NEW: Pause Menu Input Handling (Training)
+  if (currentState === GAME_STATE.PAUSE_MENU_TRAINING) {
+    handlePauseMenuTrainingInput(key, keyCode);
+    return;
+  }
+
+// ✅ SINGLE PLAYER CHARACTER SELECTION CONTROLS
+if (currentState === GAME_STATE.CHARACTER_SELECT) {
+  // Navigate with A/D
+  if (key === 'd' || key === 'D') {
+    selectedChar = (selectedChar + 1) % FIGHTERS.length;
+  }
+  if (key === 'a' || key === 'A') {
+    selectedChar = (selectedChar - 1 + FIGHTERS.length) % FIGHTERS.length;
+  }
+  
+  // Confirm with Space
+  if (key === ' ') {
+    setTimeout(() => {
+      currentState = GAME_STATE.STAGE_SELECT;
+    }, 500);
+  }
+  
+  // ✅ UPDATED: Back to menu with ESC (was Q)
+  if (keyCode === ESCAPE) {
+    currentState = GAME_STATE.MENU;
+  }
+}
+
+// ✅ SINGLE PLAYER STAGE SELECTION CONTROLS
+if (currentState === GAME_STATE.STAGE_SELECT) {
+  // Navigate with A/D
+  if (key === 'd' || key === 'D') {
+    selectedStage = (selectedStage + 1) % STAGES.length;
+  }
+  if (key === 'a' || key === 'A') {
+    selectedStage = (selectedStage - 1 + STAGES.length) % STAGES.length;
+  }
+  
+  // Confirm with Space
+  if (key === ' ') {
+    setTimeout(() => {
+      currentState = GAME_STATE.LOADING_MATCH;
+    }, 500);
+  }
+  
+  // ✅ UPDATED: Back to character select with ESC (was Q)
+  if (keyCode === ESCAPE) {
+    currentState = GAME_STATE.CHARACTER_SELECT;
+  }
+}
+
+// ✅ TRAINING CHARACTER SELECTION CONTROLS
+if (currentState === GAME_STATE.CHARACTER_SELECT_TRAINING) {
+  // Navigate with A/D
+  if (key === 'd' || key === 'D') {
+    selectedTrainingChar = (selectedTrainingChar + 1) % FIGHTERS.length;
+  }
+  if (key === 'a' || key === 'A') {
+    selectedTrainingChar = (selectedTrainingChar - 1 + FIGHTERS.length) % FIGHTERS.length;
+  }
+  
+  // Confirm with Space
+  if (key === ' ') {
+    setTimeout(() => {
+      console.log("Selected training character:", FIGHTERS[selectedTrainingChar].name);
+      currentState = GAME_STATE.LOADING_MATCH_TRAINING;
+    }, 500);
+  }
+  
+  // ✅ UPDATED: Back to menu with ESC (was Q)
+  if (keyCode === ESCAPE) {
+    currentState = GAME_STATE.MENU;
+  }
+}
+
+// ✅ NEW: TRAINING MODE CONTROLS
+if (currentState === GAME_STATE.TRAINING) {
+  handleTrainingInput(key, keyCode);
+}
+
   // MULTIPLAYER CHARACTER SELECTION CONTROLS
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
     // PLAYER 1 Selection
@@ -194,6 +281,11 @@ function keyPressed() {
       p1Ready = false;
       p2Ready = false;
     }
+
+      // ✅ UPDATED: Back to menu with ESC (was Q)
+    if (keyCode === ESCAPE) {
+      currentState = GAME_STATE.MENU;
+    }
   }
 
   // STAGE SELECTION CONTROLS (MULTIPLAYER)
@@ -209,18 +301,18 @@ function keyPressed() {
     // Confirm with Space 
     if (key === ' ') {
       setTimeout(() => {
-      currentRound = 1; // NEW: Reset to round 1
-      currentState = GAME_STATE.LOADING_MATCH_MULTI;
+        currentRound = 1;
+        currentState = GAME_STATE.LOADING_MATCH_MULTI;
       }, 500);
     }
     
-    // Back to character select with Q
-    if (key === 'q' || key === 'Q') {
+    // Back to character select with Escape
+    if (keyCode === ESCAPE) {
       currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
     }
   }
 
-    // NEW: WIN SCREEN CONTROLS
+  // WIN SCREEN CONTROLS
   if (currentState === GAME_STATE.WIN_SCREEN_MULTI) {
     handleWinScreenInput(key, keyCode);
   }
@@ -233,11 +325,14 @@ function keyPressed() {
 }
 
 function handleRecording(char, buffer, code) {
-  if (!fightStarted || roundOver || showRoundResult) {
-    return; 
+  // ✅ UPDATED: Allow training mode to bypass fightStarted check
+  if (currentState !== GAME_STATE.TRAINING) {
+    if (!fightStarted || roundOver || showRoundResult) {
+      return;
+    }
   }
 
-    // ✅ NEW: Block all input if locked by Demonic Claw
+  // Block all input if locked
   if (char.demonicClawOwnerLocked) {
     return;
   }
@@ -256,6 +351,11 @@ function handleRecording(char, buffer, code) {
   }
 
   if (move) {
+    // Record input in training history
+    if (currentState === GAME_STATE.TRAINING) {
+      recordTrainingInput(move);
+    }
+
     buffer.recordInput(move);
     
     // Pass character into checkCombo
@@ -264,12 +364,12 @@ function handleRecording(char, buffer, code) {
     if (result) {
       console.log(`Combo detected: ${result.name} for ${char.name}`);
 
-      // ✅ NEW: Check cooldown BEFORE clearing buffer
+      // Check cooldown BEFORE clearing buffer
       if (result.cooldown) {
         let cooldownKey = result.name;
         if (char.comboCooldowns[cooldownKey] && char.comboCooldowns[cooldownKey] > 0) {
           console.log(`${result.name} is on cooldown! Wait ${Math.ceil(char.comboCooldowns[cooldownKey] / 60)} seconds`);
-          return; // Exit early - buffer stays intact
+          return;
         }
       }
 
@@ -289,20 +389,28 @@ function handleRecording(char, buffer, code) {
         }
       }
       
-      // Low health requirement check (50% or below)
+      // ✅ UPDATED: Low health requirement check (bypass in training)
       if (result.requireLowHealth) {
-        let healthPercent = char.hp / char.maxHp;
-        if (healthPercent > 0.5) {
-          console.log(`${result.name} requires 50% HP or below! Current: ${Math.floor(healthPercent * 100)}%`);
-          return;
+        if (currentState !== GAME_STATE.TRAINING) {
+          let healthPercent = char.hp / char.maxHp;
+          if (healthPercent > 0.5) {
+            console.log(`${result.name} requires 50% HP or below! Current: ${Math.floor(healthPercent * 100)}%`);
+            return;
+          }
+        } else {
+          console.log("Training Mode: HP requirement bypassed!");
         }
       }
       
-      // Judgment available check (once per round)
+      // ✅ UPDATED: Judgment available check (bypass in training)
       if (result.requireJudgmentAvailable) {
-        if (char.hasUsedJudgment) {
-          console.log(`${result.name} can only be used once per round!`);
-          return;
+        if (currentState !== GAME_STATE.TRAINING) {
+          if (char.hasUsedJudgment) {
+            console.log(`${result.name} can only be used once per round!`);
+            return;
+          }
+        } else {
+          console.log("Training Mode: Once-per-round restriction bypassed!");
         }
       }
 
@@ -322,11 +430,15 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // Poison Rain available check (once per round)
+      // ✅ UPDATED: Poison Rain available check (bypass in training)
       if (result.requireRainAvailable) {
-        if (char.hasUsedPoisonRain) {
-          console.log(`${result.name} can only be used once per round!`);
-          return;
+        if (currentState !== GAME_STATE.TRAINING) {
+          if (char.hasUsedPoisonRain) {
+            console.log(`${result.name} can only be used once per round!`);
+            return;
+          }
+        } else {
+          console.log("Training Mode: Once-per-round restriction bypassed!");
         }
       }
 
@@ -335,7 +447,7 @@ function handleRecording(char, buffer, code) {
         return;
       }
 
-      // NEW: Azure Scales or Tortoise requirement check
+      // Azure Scales or Tortoise requirement check
       if (result.requireAzureScalesOrTortoise) {
         if (!char.isAzureScalesActive && !char.isTortoiseBodyActive) {
           console.log(`${result.name} requires Azure Dragon Scales or Undying Tortoise Body to be active!`);
@@ -343,27 +455,35 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // NEW: Azure Dragon available check (once per round)
+      // ✅ UPDATED: Azure Dragon available check (bypass in training)
       if (result.requireAzureDragonAvailable) {
-        if (char.hasUsedAzureDragon) {
-          console.log(`${result.name} can only be used once per round!`);
-          return;
+        if (currentState !== GAME_STATE.TRAINING) {
+          if (char.hasUsedAzureDragon) {
+            console.log(`${result.name} can only be used once per round!`);
+            return;
+          }
+        } else {
+          console.log("Training Mode: Once-per-round restriction bypassed!");
         }
       }
 
-      // ✅ NEW: Annihilation available check (once per round)
+      // ✅ UPDATED: Annihilation available check (bypass in training)
       if (result.requireAnnihilationAvailable) {
-        if (char.hasUsedAnnihilation) {
-          console.log(`${result.name} can only be used once per round!`);
-          return;
+        if (currentState !== GAME_STATE.TRAINING) {
+          if (char.hasUsedAnnihilation) {
+            console.log(`${result.name} can only be used once per round!`);
+            return;
+          }
+        } else {
+          console.log("Training Mode: Once-per-round restriction bypassed!");
         }
       }
 
-      //NEW: HP cost check (for Demonic Heaven's Awakening)
+      // HP cost check (for Demonic Heaven's Awakening)
       if (result.hpCost) {
         if (char.hp <= result.hpCost) {
           console.log(`${result.name} requires ${result.hpCost} HP! Current: ${Math.floor(char.hp)} HP`);
-          return; // Not enough HP
+          return;
         }
       }
       
@@ -406,40 +526,40 @@ function handleRecording(char, buffer, code) {
 }
 
 function mouseReleased() {
-  // Back Button Logic
-  if (currentState === GAME_STATE.CHARACTER_SELECT || currentState === GAME_STATE.STAGE_SELECT) {
-    let backBtn = { x: width * 0.1, y: height * 0.9, w: width * 0.1, h: height * 0.05 };
-    if (isHovering(backBtn)) {
-      if (currentState === GAME_STATE.STAGE_SELECT) currentState = GAME_STATE.CHARACTER_SELECT;
-      else currentState = GAME_STATE.MENU;
+  // ✅ EXPANDED: Back Button Click Logic for all selection screens
+  if (currentState === GAME_STATE.CHARACTER_SELECT || 
+      currentState === GAME_STATE.CHARACTER_SELECT_MULTI||
+      currentState === GAME_STATE.CHARACTER_SELECT_TRAINING ||
+      currentState === GAME_STATE.STAGE_SELECT ||
+      currentState === GAME_STATE.STAGE_SELECT_MULTI) {
+    
+    let btnW = width * 0.1;
+    let btnH = height * 0.05;
+    let backBtn = { 
+      x: width * 0.1,
+      y: height * 0.05, 
+      w: btnW, 
+      h: btnH 
+    };
+    
+    // Check if clicked on back button
+    let isClicked = mouseX > backBtn.x - btnW/2 && 
+                    mouseX < backBtn.x + btnW/2 && 
+                    mouseY > backBtn.y - btnH/2 && 
+                    mouseY < backBtn.y + btnH/2;
+    
+    if (isClicked) {
+      // Handle navigation based on current state
+      if (currentState === GAME_STATE.STAGE_SELECT) {
+        currentState = GAME_STATE.CHARACTER_SELECT;
+      } else if (currentState === GAME_STATE.STAGE_SELECT_MULTI) {
+        currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
+      } else {
+        // From any character select screen, go back to menu
+        currentState = GAME_STATE.MENU;
+      }
       return;
     }
-  }
-
-  // Fighter Selection (Single Player)
-  if (currentState === GAME_STATE.CHARACTER_SELECT) {
-    let cols = 4;
-    let spacing = width * 0.02;
-    let boxW = width * 0.15;
-    let boxH = height * 0.4;
-    let totalGridW = (cols * boxW) + ((cols - 1) * spacing);
-    let startX = (width - totalGridW) / 2;
-    let centerY = height / 2;
-
-    FIGHTERS.forEach((fighter, index) => {
-      let x = startX + (index * (boxW + spacing));
-      let y = centerY - boxH / 2;
-
-      if (mouseX > x && mouseX < x + boxW && mouseY > y && mouseY < y + boxH) {
-        selectedChar = index;
-        currentState = GAME_STATE.STAGE_SELECT;
-      }
-    });
-  }
-
-  // Stage Selection (Single Player)
-  if (currentState === GAME_STATE.STAGE_SELECT) {
-    handleStageSelection(GAME_STATE.MATCH);
   }
 }
 

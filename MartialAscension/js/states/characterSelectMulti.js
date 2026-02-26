@@ -96,7 +96,19 @@ function drawCharacterSelectMulti() {
     pop();
   }
 
-  if (typeof drawBackButton === "function") drawBackButton();
+  // Back button
+  if (typeof drawBackButton === "function") {
+    drawBackButton();
+  } else {
+    // Fallback if drawBackButton isn't global
+    push();
+    textAlign(LEFT, TOP);
+    textFont(metalFont);
+    fill(255);
+    textSize(width * 0.015);
+    text("< BACK (Q)", width * 0.05, height * 0.05);
+    pop();
+  }
 }
 
 function drawMultiplayerPreview(edgeX, index, isReady, playerNum) {
