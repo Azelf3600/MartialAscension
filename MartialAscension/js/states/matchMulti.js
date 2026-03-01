@@ -623,14 +623,22 @@ function drawRoundResultScreen() {
 }
 
 function spawnDamageIndicator(x, y, amount, isBlocked) {
-  damageIndicators.push({
-    x: x,
-    y: y,
-    amount: amount,
-    label: isBlocked ? "BLOCK " : "",
-    life: 255,
-    velY: -2
-  });
+  if (currentState === GAME_STATE.TRAINING) {
+    spawnTrainingDamageIndicator(x, y, amount, isBlocked);
+  } else if (currentState === GAME_STATE.MATCH) {
+    // ✅ Single player mode
+    spawnDamageIndicatorSingle(x, y, amount, isBlocked);
+  } else {
+    // ✅ Multiplayer mode
+    damageIndicators.push({
+      x: x,
+      y: y,
+      amount: amount,
+      label: isBlocked ? "BLOCK " : "",
+      life: 255,
+      velY: -2
+    });
+  }
 }
 
 function updateDamageIndicators() {

@@ -355,23 +355,6 @@ function drawTrainingDamageIndicators() {
   pop();
 }
 
-// Override global spawnDamageIndicator when in training
-function spawnDamageIndicator(x, y, amount, isBlocked) {
-  if (currentState === GAME_STATE.TRAINING) {
-    spawnTrainingDamageIndicator(x, y, amount, isBlocked);
-  } else {
-    // Use matchMulti version
-    damageIndicators.push({
-      x: x,
-      y: y,
-      amount: amount,
-      label: isBlocked ? "BLOCK " : "",
-      life: 255,
-      velY: -2
-    });
-  }
-}
-
 // Draw Poison Flower Field ground effect
 function drawPoisonFieldEffect(p1, p2) {
   let fieldCaster = null;

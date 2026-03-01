@@ -5,15 +5,21 @@ let singleBtn, multiBtn, trainingBtn; // ✅ Added trainingBtn
 function preloadMainMenu() {
   metalFont = loadFont("Assets/fonts/MetalMania-Regular.ttf");
 
-  // For fighter images
   FIGHTERS.forEach(fighter => {
-    // Load the small headshot for the grid
     if (fighter.thumbPath) {
       fighter.thumbImg = loadImage(fighter.thumbPath);
     }
-    // Load the half-body for the side preview
     if (fighter.previewPath) {
       fighter.previewImg = loadImage(fighter.previewPath);
+    }
+    
+    // ✅ NEW: Load lore chapter images
+    if (fighter.loreChapters) {
+      fighter.loreChapters.forEach(chapter => {
+        if (chapter.path) {
+          chapter.img = loadImage(chapter.path);
+        }
+      });
     }
   });
 
@@ -63,7 +69,7 @@ function drawMenu() {
   drawText("Click to proceed", centerX, centerY - height * 0.03, width * 0.015);
 
   // ✅ Draw all three buttons
-  drawButton("Single Player", singleBtn);
+  drawButton("Campaign", singleBtn);
   drawButton("Multiplayer", multiBtn);
   drawButton("Training", trainingBtn); // ✅ NEW
 

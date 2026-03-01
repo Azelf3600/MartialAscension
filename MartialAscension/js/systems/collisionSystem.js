@@ -328,3 +328,14 @@ function handleBodyCollision(p1, p2) {
     }
   }
 }
+
+function spawnDamageIndicatorSingle(x, y, amount, isBlocked) {
+  singleDamageIndicators.push({
+    x: x,
+    y: y,
+    amount: amount,
+    label: isBlocked ? "BLOCK " : "",
+    life: 255,
+    velY: -2
+  });
+}

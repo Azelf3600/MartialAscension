@@ -1,38 +1,38 @@
-let loadingTimer = 0;
-const LOADING_DURATION = 300;
-let loadingInitialized = false;
+let loadingTimerMulti = 0; // Changed from loadingTimer
+const LOADING_DURATION_MULTI = 300; // Changed from LOADING_DURATION
+let loadingInitializedMulti = false; // Changed from loadingInitialized
 
 function drawLoadingMatchMulti() {
   background(0);
   
   // Reset timer on first frame
-  if (!loadingInitialized) {
-    loadingTimer = 0;
-    loadingInitialized = true;
+  if (!loadingInitializedMulti) {
+    loadingTimerMulti = 0;
+    loadingInitializedMulti = true;
   }
   
-  loadingTimer++;
+  loadingTimerMulti++;
 
-  if (loadingTimer >= LOADING_DURATION) {
-    loadingTimer = 0;
-    loadingInitialized = false;
+  if (loadingTimerMulti >= LOADING_DURATION_MULTI) {
+    loadingTimerMulti = 0;
+    loadingInitializedMulti = false;
     
-    // NEW: Force initMatch() to be called
+    // Initialize multiplayer match
     initMatch();
     
     currentState = GAME_STATE.MATCH_MULTI;
     return;
   }
 
-  if (loadingTimer < 40) return;
+  if (loadingTimerMulti < 40) return;
 
-  let animProgress = constrain((loadingTimer - 40) / 60, 0, 1);
+  let animProgress = constrain((loadingTimerMulti - 40) / 60, 0, 1);
   let slideOffset = lerp(width, 0, animProgress);
 
   let p1Data = FIGHTERS[p1Selected];
   let p2Data = FIGHTERS[p2Selected];
 
-  // Draw Players
+  // Draw Players - keep same function name since it's local to this file
   drawLoadingSide(-slideOffset, p1Data, 1);
   drawLoadingSide(slideOffset, p2Data, 2);
 
@@ -43,6 +43,7 @@ function drawLoadingMatchMulti() {
   pop();
 }
 
+// Keep this function name - it's local to this file
 function drawLoadingSide(slideX, data, playerNum) {
   let isP1 = (playerNum === 1);
   

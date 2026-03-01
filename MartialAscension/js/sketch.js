@@ -3,7 +3,6 @@ const GAME_STATE = {
   CHARACTER_SELECT: "character_select",
   CHARACTER_SELECT_MULTI: "character_select_multi",
   CHARACTER_SELECT_TRAINING: "character_select_training",
-  STAGE_SELECT: "stage_select",
   STAGE_SELECT_MULTI: "stage_select_multi",
   MATCH: "match",
   MATCH_MULTI: "match_multi",
@@ -16,12 +15,22 @@ const GAME_STATE = {
   LOADING_MATCH_TRAINING: "loading_match_training",
   WIN_SCREEN_MULTI: "win_screen_multi",
   WIN_SCREEN: "win_screen",
+  LORE_SCREEN: "lore_screen"
 };
 
 let currentState = GAME_STATE.MENU;
+let previousState = GAME_STATE.MENU;
 let p1Buffer;
 let p2Buffer;
 let gameCamera; // Declare it here
+
+
+// Single Player Campaign Variables
+let campaignProgress = 0; 
+let campaignOpponents = []; 
+let campaignStages = []; 
+let campaignPlayerChar = 0; 
+let singleDamageIndicators = [];
 
 function preload() {
   // Preload fonts and images (found in mainMenu.js)
@@ -49,6 +58,13 @@ function draw() {
   background(0);   
   push();     
 
+  if (currentState !== previousState) {
+    if (currentState === GAME_STATE.LORE_SCREEN) {
+      initLoreScreen(); // Reinit every time we enter lore screen
+    }
+    previousState = currentState;
+  }
+
   switch (currentState) {
     case GAME_STATE.MENU:
       drawMenu();
@@ -60,10 +76,6 @@ function draw() {
 
     case GAME_STATE.CHARACTER_SELECT_MULTI:
       drawCharacterSelectMulti();
-      break;
-
-    case GAME_STATE.STAGE_SELECT:
-      drawStageSelect();
       break;
 
     case GAME_STATE.STAGE_SELECT_MULTI:
@@ -79,13 +91,19 @@ function draw() {
       break;
 
     case GAME_STATE.MATCH:
-      // Single player input cleanup
+      // ✅ Force initialization if needed
+      if (!singlePlayer1 || !singlePlayer2) {
+        console.log("⚠️ Force calling initMatchSingle() from sketch.js");
+        if (typeof initMatchSingle === 'function') {
+          initMatchSingle();
+        }
+      }
+  
       p1Buffer.update();
       drawMatch();
       break;
 
     case GAME_STATE.MATCH_MULTI:
-      // Multi player input cleanup
       p1Buffer.update();
       p2Buffer.update();
       drawMatchMulti();
@@ -121,6 +139,10 @@ function draw() {
 
     case GAME_STATE.LOADING_MATCH_TRAINING:
       drawLoadingMatchTraining()
+      break;
+
+    case GAME_STATE.LORE_SCREEN:
+      drawLoreScreen(); // ✅ No init check needed - handled above
       break;
     }
 
@@ -160,6 +182,28 @@ function windowResized() {
 }
 
 function keyPressed() {
+  // ✅ Pause Menu Toggle (ESC during single player match)
+  if (currentState === GAME_STATE.MATCH && keyCode === ESCAPE) {
+    currentState = GAME_STATE.PAUSE_MENU;
+    return;
+  }
+  
+  // ✅ Pause Menu Input Handling (Single Player)
+  if (currentState === GAME_STATE.PAUSE_MENU) {
+    handlePauseMenuInput(key, keyCode);
+    return;
+  }
+
+  // ✅ Win Screen Input (Single Player)
+  if (currentState === GAME_STATE.WIN_SCREEN) {
+    handleWinScreenSingleInput(key, keyCode);
+    return;
+  }
+
+  if (currentState === GAME_STATE.LORE_SCREEN) {
+    handleLoreScreenInput(key, keyCode);
+  }
+
   // ✅ Pause Menu Toggle (ESC during match)
   if (currentState === GAME_STATE.MATCH_MULTI && keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU_MULTI;
@@ -188,39 +232,17 @@ if (currentState === GAME_STATE.CHARACTER_SELECT) {
     selectedChar = (selectedChar - 1 + FIGHTERS.length) % FIGHTERS.length;
   }
   
-  // Confirm with Space
+  // ✅ UPDATED: Confirm with Space - setup campaign and go to lore screen
   if (key === ' ') {
     setTimeout(() => {
-      currentState = GAME_STATE.STAGE_SELECT;
+      setupCampaign(selectedChar);
+      currentState = GAME_STATE.LORE_SCREEN;
     }, 500);
   }
   
-  // ✅ UPDATED: Back to menu with ESC (was Q)
+  // Back to menu with ESC
   if (keyCode === ESCAPE) {
     currentState = GAME_STATE.MENU;
-  }
-}
-
-// ✅ SINGLE PLAYER STAGE SELECTION CONTROLS
-if (currentState === GAME_STATE.STAGE_SELECT) {
-  // Navigate with A/D
-  if (key === 'd' || key === 'D') {
-    selectedStage = (selectedStage + 1) % STAGES.length;
-  }
-  if (key === 'a' || key === 'A') {
-    selectedStage = (selectedStage - 1 + STAGES.length) % STAGES.length;
-  }
-  
-  // Confirm with Space
-  if (key === ' ') {
-    setTimeout(() => {
-      currentState = GAME_STATE.LOADING_MATCH;
-    }, 500);
-  }
-  
-  // ✅ UPDATED: Back to character select with ESC (was Q)
-  if (keyCode === ESCAPE) {
-    currentState = GAME_STATE.CHARACTER_SELECT;
   }
 }
 
@@ -318,15 +340,27 @@ if (currentState === GAME_STATE.TRAINING) {
   }
 
   // MATCH INPUT RECORDING (COMBO SYSTEM)
-  if (currentState === GAME_STATE.MATCH || currentState === GAME_STATE.MATCH_MULTI) {
+  if (currentState === GAME_STATE.MATCH) {
+    // ✅ Single player uses singlePlayer1
+    if (typeof singlePlayer1 !== 'undefined') handleRecording(singlePlayer1, p1Buffer, keyCode);
+  } else if (currentState === GAME_STATE.MATCH_MULTI) {
+    // ✅ Multiplayer uses player1 and player2
     if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
     if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
   }
 }
 
 function handleRecording(char, buffer, code) {
-  // ✅ UPDATED: Allow training mode to bypass fightStarted check
-  if (currentState !== GAME_STATE.TRAINING) {
+  // ✅ FIXED: Check correct fightStarted flag based on game mode
+  if (currentState === GAME_STATE.TRAINING) {
+    // Training mode - no restrictions
+  } else if (currentState === GAME_STATE.MATCH) {
+    // ✅ Single player - check singleFightStarted
+    if (!singleFightStarted || singleMatchOver) {
+      return;
+    }
+  } else if (currentState === GAME_STATE.MATCH_MULTI) {
+    // ✅ Multiplayer - check fightStarted, roundOver, showRoundResult
     if (!fightStarted || roundOver || showRoundResult) {
       return;
     }
@@ -530,7 +564,6 @@ function mouseReleased() {
   if (currentState === GAME_STATE.CHARACTER_SELECT || 
       currentState === GAME_STATE.CHARACTER_SELECT_MULTI||
       currentState === GAME_STATE.CHARACTER_SELECT_TRAINING ||
-      currentState === GAME_STATE.STAGE_SELECT ||
       currentState === GAME_STATE.STAGE_SELECT_MULTI) {
     
     let btnW = width * 0.1;
@@ -543,10 +576,7 @@ function mouseReleased() {
     };
     
     // Check if clicked on back button
-    let isClicked = mouseX > backBtn.x - btnW/2 && 
-                    mouseX < backBtn.x + btnW/2 && 
-                    mouseY > backBtn.y - btnH/2 && 
-                    mouseY < backBtn.y + btnH/2;
+    let isClicked = mouseX > backBtn.x - btnW/2 && mouseX < backBtn.x + btnW/2 && mouseY > backBtn.y - btnH/2 && mouseY < backBtn.y + btnH/2;
     
     if (isClicked) {
       // Handle navigation based on current state
@@ -580,4 +610,32 @@ function handleStageSelection(nextState) {
       currentState = nextState;
     }
   });
+}
+
+// ✅ NEW: Setup campaign based on selected character
+function setupCampaign(playerCharIndex) {
+  campaignPlayerChar = playerCharIndex;
+  campaignProgress = 0; // Start at chapter 1
+  
+  // Define opponents and stages based on player character
+  if (playerCharIndex === 0) { // Ethan Li
+    campaignOpponents = [1, 2, 3]; // Lucas Tang, Aaron Shu, Damon Cheon
+    campaignStages = [1, 2, 3]; // Sword God Arena, Black Forest, Ancient Immortal Battlefield
+  } 
+  else if (playerCharIndex === 1) { // Lucas Tang
+    campaignOpponents = [2, 0, 3]; // Aaron Shu, Ethan Li, Damon Cheon
+    campaignStages = [0, 1, 3]; // TBD later
+  } 
+  else if (playerCharIndex === 2) { // Aaron Shu
+    campaignOpponents = [1, 0, 3]; // Lucas Tang, Ethan Li, Damon Cheon
+    campaignStages = [0, 1, 3]; // TBD later
+  } 
+  else if (playerCharIndex === 3) { // Damon Cheon
+    campaignOpponents = [2, 1, 0]; // Aaron Shu, Lucas Tang, Ethan Li
+    campaignStages = [0, 1, 2]; // TBD later
+  }
+  
+  console.log(`Campaign started: ${FIGHTERS[playerCharIndex].name}`);
+  console.log(`Opponents:`, campaignOpponents.map(i => FIGHTERS[i].name));
+  console.log(`Stages:`, campaignStages);
 }

@@ -177,7 +177,7 @@ class Character {
     this.demonicAbyssTimer = 0;
     this.demonicAbyssDuration = 180; // 5 seconds
     this.demonicAbyssCooldownPending = false;
-    this.demonicAbyssRange = 300; // 300px range
+    this.demonicAbyssRange = 500; // 300px range
     this.demonicAbyssDmgTickTimer = 0; // Damage tick timer
     this.isInDemonicAbyss = false; // ✅ NEW: Debuff flag for being pulled
     this.hasUsedAnnihilation = false; // Once per round flag
@@ -211,10 +211,14 @@ class Character {
     return; 
   }
 
-    const getOpponent = () => {
+  const getOpponent = () => {
     if (currentState === GAME_STATE.TRAINING) {
       return (this === trainingPlayer) ? trainingDummy : trainingPlayer;
+    } else if (currentState === GAME_STATE.MATCH) {
+      // ✅ Single player mode
+      return (this === singlePlayer1) ? singlePlayer2 : singlePlayer1;
     } else {
+      // ✅ Multiplayer mode
       return (this === player1) ? player2 : player1;
     }
   };
@@ -592,6 +596,7 @@ if (this.isPoisonRainActive && this.poisonRainTimer > 0) {
 handleMovement(groundY) {
   if (this.hitStun > 0) return;
   if (this.demonicClawOwnerLocked) return;
+  
   this.speed = width * 0.002; 
   this.isBlocking = keyIsDown(this.controls.block) && this.isGrounded;
   if (this.isBlocking) this.speed *= 0.3;
@@ -599,6 +604,18 @@ handleMovement(groundY) {
   // Apply Poison Field debuffs
   if (this.isInPoisonField) {
     this.speed *= 0.5;
+  }
+
+  // ✅ UPDATED: Get correct buffer based on game mode
+  let buffer = null;
+  if (currentState === GAME_STATE.TRAINING) {
+    buffer = (this === trainingPlayer) ? p1Buffer : null;
+  } else if (currentState === GAME_STATE.MATCH) {
+    // ✅ Single player mode - only singlePlayer1 has input
+    buffer = (this === singlePlayer1) ? p1Buffer : null;
+  } else if (currentState === GAME_STATE.MATCH_MULTI) {
+    // ✅ Multiplayer mode
+    buffer = (this === player1) ? p1Buffer : (this === player2) ? p2Buffer : null;
   }
 
   // Flight controls
@@ -610,38 +627,38 @@ handleMovement(groundY) {
       this.slowFallActive = false;
     }
     
-    let buffer = (this === player1) ? p1Buffer : p2Buffer;
-    
-    // ✅ FIX: Add training mode check
-    if (currentState === GAME_STATE.TRAINING) {
-      buffer = (this === trainingPlayer) ? p1Buffer : null;
-    }
-    
     if (buffer && buffer.checkDoubleTap("FW") && this.canAirDash && !this.isAirDashing) {
       this.isAirDashing = true;
       this.canAirDash = false;
       this.airDashTimer = 15;
-      let opponent = (currentState === GAME_STATE.TRAINING) ? 
-        ((this === trainingPlayer) ? trainingDummy : trainingPlayer) : 
-        ((this === player1) ? player2 : player1);
+      
+      // ✅ UPDATED: Get opponent based on game mode
+      let opponent;
+      if (currentState === GAME_STATE.TRAINING) {
+        opponent = (this === trainingPlayer) ? trainingDummy : trainingPlayer;
+      } else if (currentState === GAME_STATE.MATCH) {
+        opponent = (this === singlePlayer1) ? singlePlayer2 : singlePlayer1;
+      } else {
+        opponent = (this === player1) ? player2 : player1;
+      }
+      
       let targetX = opponent.x + (opponent.facing === 1 ? -150 : opponent.w + 150);
       this.airDashSpeed = (targetX - this.x) / this.airDashTimer;
     }
   }
 
-  // ✅ FIX: Poison Field Teleport - add training check
+  // ✅ UPDATED: Poison Field Teleport
   if (this.isPoisonFieldActive && this.canPoisonFieldTeleport && this.isGrounded && !this.attacking) {
-    let buffer = (this === player1) ? p1Buffer : p2Buffer;
-    
-    // ✅ Add training mode check
-    if (currentState === GAME_STATE.TRAINING) {
-      buffer = (this === trainingPlayer) ? p1Buffer : null;
-    }
-    
     if (buffer && buffer.checkDoubleTap("FW")) {
-      let opponent = (currentState === GAME_STATE.TRAINING) ? 
-        ((this === trainingPlayer) ? trainingDummy : trainingPlayer) : 
-        ((this === player1) ? player2 : player1);
+      // Get opponent based on game mode
+      let opponent;
+      if (currentState === GAME_STATE.TRAINING) {
+        opponent = (this === trainingPlayer) ? trainingDummy : trainingPlayer;
+      } else if (currentState === GAME_STATE.MATCH) {
+        opponent = (this === singlePlayer1) ? singlePlayer2 : singlePlayer1;
+      } else {
+        opponent = (this === player1) ? player2 : player1;
+      }
       
       let teleportX = opponent.facing === 1 ? 
         opponent.x - 150 : 
@@ -654,34 +671,25 @@ handleMovement(groundY) {
     }
   }
 
-  // ✅ FIX: Normal dash - add training check
-  if (!this.attacking && this.isGrounded) {
-    let buffer = (this === player1) ? p1Buffer : p2Buffer;
-    
-    // ✅ Add training mode check
-    if (currentState === GAME_STATE.TRAINING) {
-      buffer = (this === trainingPlayer) ? p1Buffer : null;
-    }
-    
-    if (buffer) {
-      if (buffer.checkDoubleTap("FW")) {
-        this.isDashing = true;
-        this.dashDirection = this.facing; 
-        this.dashTimer = 18;
-        this.dashMaxSpeed = 60;
-        
-        let dashSpeed = this.isInPoisonField ? 25 : 50;
-        this.velX = this.facing * dashSpeed;
-        
-      } else if (buffer.checkDoubleTap("BW")) {
-        this.isDashing = true;
-        this.dashDirection = -this.facing; 
-        this.dashTimer = 16;
-        this.dashMaxSpeed = 52;
-        
-        let dashSpeed = this.isInPoisonField ? 21 : 42;
-        this.velX = -this.facing * dashSpeed;
-      }
+  // ✅ UPDATED: Normal dash
+  if (!this.attacking && this.isGrounded && buffer) {
+    if (buffer.checkDoubleTap("FW")) {
+      this.isDashing = true;
+      this.dashDirection = this.facing; 
+      this.dashTimer = 18;
+      this.dashMaxSpeed = 60;
+      
+      let dashSpeed = this.isInPoisonField ? 25 : 50;
+      this.velX = this.facing * dashSpeed;
+      
+    } else if (buffer.checkDoubleTap("BW")) {
+      this.isDashing = true;
+      this.dashDirection = -this.facing; 
+      this.dashTimer = 16;
+      this.dashMaxSpeed = 52;
+      
+      let dashSpeed = this.isInPoisonField ? 21 : 42;
+      this.velX = -this.facing * dashSpeed;
     }
   }
 
@@ -1073,11 +1081,15 @@ executeCombo(comboData) {
   const getOpponent = () => {
     if (currentState === GAME_STATE.TRAINING) {
       return (this === trainingPlayer) ? trainingDummy : trainingPlayer;
+    } else if (currentState === GAME_STATE.MATCH) {
+      // ✅ Single player mode
+      return (this === singlePlayer1) ? singlePlayer2 : singlePlayer1;
     } else {
+      // ✅ Multiplayer mode
       return (this === player1) ? player2 : player1;
     }
   };
-  
+
   // Check if this is a movement combo FIRST
   if (comboData.type === "MOVEMENT") {
     this.attacking = null;
