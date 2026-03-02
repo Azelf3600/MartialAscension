@@ -70,7 +70,7 @@ class Projectile {
     }
     else if (type === "demonic_claw") {
       // ✅ UPDATED: Demonic Heaven's Claw - ground launcher with full animation
-      this.w = 40; // Width as specified
+      this.w = 150; // Width as specified
       this.h = 0; // Starts at 0, grows to player height
       this.maxH = 200; // Player height
       this.startX = x;
@@ -670,19 +670,18 @@ function applyProjectileDamage(target, projectile, attacker) {
   
   applyDamage(target, finalDmg, attacker, stunTime, knockback, ignoreBlock);
   
-  // ✅ NEW: Demonic Claw launcher effect
-  if (projectile.type === "demonic_claw" && !target.isBlocking) {
-    // Skip if Ocean Mending is active
-    if (target.isOceanMendingActive) {
-      console.log("Demonic Claw launch blocked by Ocean Mending Water!");
-    } else {
-      // Launch enemy upward (no stun)
-      target.velY = -target.jumpPower * 1.8; // Strong launch
-      target.isGrounded = false;
-      target.hitStun = 0; // No stun - can act immediately
-      console.log("Demonic Claw launched enemy!");
-    }
+// Demonic Claw launcher effect - always launches, even through block
+if (projectile.type === "demonic_claw") {
+  if (target.isOceanMendingActive) {
+    console.log("Demonic Claw launch blocked by Ocean Mending Water!");
+  } else {
+    target.velY = -target.jumpPower * 1.8;
+    target.isGrounded = false;
+    target.hitStun = 0;
+    target.isBlocking = false; // Force out of block state on launch
+    console.log("Demonic Claw launched enemy!");
   }
+}
 
   if (typeof spawnDamageIndicator === 'function') {
     spawnDamageIndicator(target.x + target.w/2, target.y, Math.floor(finalDmg), target.isBlocking);

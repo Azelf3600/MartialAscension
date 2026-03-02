@@ -53,6 +53,8 @@ function initMatchSingle() {
 
   projectiles = [];
   if (p1Buffer) p1Buffer.clear();
+  aiController = null;
+
 
   // Null checks
   if (typeof campaignPlayerChar === 'undefined') {
@@ -154,7 +156,7 @@ function drawMatch() {
   drawAzureDragonIndicators(singlePlayer1, singlePlayer2);
   updateSingleMatchDamageIndicators();
   drawSingleMatchDamageIndicators();
-
+  drawAIDebug(singlePlayer1);
   pop();
 
   drawSingleMatchUI();
@@ -494,6 +496,18 @@ function applySingleWorldBorders(fighter) {
 }
 
 function updateAIPhysicsOnly(ai, opponent, groundY) {
+  // ✅ Initialize AI on first call
+  if (!aiController) {
+    initAI(ai);
+  }
+  
+  // ✅ Update AI behavior
+  updateAI(opponent, groundY);
+  
+  // ══════════════════════════════════════════════════════
+  // HANDLE HITSTUN & RECOVERY
+  // ══════════════════════════════════════════════════════
+  
   if (ai.hitStun > 0) {
     ai.hitStun--;
     ai.isHit = true;
@@ -506,13 +520,379 @@ function updateAIPhysicsOnly(ai, opponent, groundY) {
     ai.recoveryTimer--;
   }
 
+  // ✅ CRITICAL: Call handleAttack() to decrement attackTimer
+  ai.handleAttack();
+
+  // ══════════════════════════════════════════════════════
+  // ✅ NEW: UPDATE ALL BUFF/DEBUFF TIMERS (from Character.update())
+  // ══════════════════════════════════════════════════════
+  
+  // Helper function to get opponent
+  const getOpponent = () => {
+    return (ai === singlePlayer1) ? singlePlayer2 : singlePlayer1;
+  };
+  
+  // Update cooldowns
   for (let comboName in ai.comboCooldowns) {
     if (ai.comboCooldowns[comboName] > 0) {
       ai.comboCooldowns[comboName]--;
     }
   }
+  
+  // Poison Hands duration and cooldown
+  if (ai.isPoisonHandsActive && ai.poisonHandsTimer > 0) {
+    ai.poisonHandsTimer--;
+    
+    if (ai.poisonHandsTimer <= 0) {
+      ai.isPoisonHandsActive = false;
+      
+      if (ai.poisonHandsCooldownPending) {
+        ai.comboCooldowns["Poison Hands"] = 120;
+        ai.poisonHandsCooldownPending = false;
+        console.log("AI Poison Hands ended. Cooldown started.");
+      }
+    }
+  }
 
+  // Azure Dragon Scales duration and cooldown
+  if (ai.isAzureScalesActive && ai.azureScalesTimer > 0) {
+    ai.azureScalesTimer--;
+    
+    if (ai.azureScalesTimer <= 0) {
+      ai.isAzureScalesActive = false;
+      
+      if (ai.azureScalesCooldownPending) {
+        ai.comboCooldowns["Azure Dragon Scales"] = 300;
+        ai.azureScalesCooldownPending = false;
+        console.log("AI Azure Dragon Scales ended. Cooldown started.");
+      }
+    }
+  }
+
+  // Undying Tortoise Body duration and cooldown
+  if (ai.isTortoiseBodyActive && ai.tortoiseBodyTimer > 0) {
+    ai.tortoiseBodyTimer--;
+    
+    if (ai.tortoiseBodyTimer <= 0) {
+      ai.isTortoiseBodyActive = false;
+      
+      if (ai.tortoiseBodyCooldownPending) {
+        ai.comboCooldowns["Undying Tortoise Body"] = 300;
+        ai.tortoiseBodyCooldownPending = false;
+        console.log("AI Undying Tortoise Body ended. Cooldown started.");
+      }
+    }
+  }
+
+  // Ocean Mending Water duration
+  if (ai.isOceanMendingActive && ai.oceanMendingTimer > 0) {
+    ai.oceanMendingTimer--;
+    
+    // Clear debuffs every frame while active
+    ai.isPoisoned = false;
+    ai.poisonDamage = 0;
+    ai.poisonTimer = 0;
+    ai.isInPoisonField = false;
+    
+    if (ai.oceanMendingTimer <= 0) {
+      ai.isOceanMendingActive = false;
+      console.log("AI Ocean Mending Water debuff immunity ended.");
+    }
+  }
+
+  // Demonic Heaven's Awakening duration and cooldown
+  if (ai.isDemonicAwakeningActive && ai.demonicAwakeningTimer > 0) {
+    ai.demonicAwakeningTimer--;
+    
+    if (ai.demonicAwakeningTimer <= 0) {
+      ai.isDemonicAwakeningActive = false;
+      
+      if (ai.demonicAwakeningCooldownPending) {
+        ai.comboCooldowns["Demonic Heavens Awakening"] = 180;
+        ai.demonicAwakeningCooldownPending = false;
+        console.log("AI Demonic Heaven's Awakening ended. Cooldown started.");
+      }
+    }
+  }
+
+  // Demonic Heaven's Abyss duration and effects
+  if (ai.isDemonicAbyssActive && ai.demonicAbyssTimer > 0) {
+    ai.demonicAbyssTimer--;
+    
+    let abyssOpponent = getOpponent();
+    
+    // Check if opponent is in range
+    let distanceToOpponent = abs(abyssOpponent.x - ai.x);
+    let isInRange = false;
+    
+    if (ai.facing === 1 && abyssOpponent.x > ai.x && distanceToOpponent <= ai.demonicAbyssRange) {
+      isInRange = true;
+    } else if (ai.facing === -1 && abyssOpponent.x < ai.x && distanceToOpponent <= ai.demonicAbyssRange) {
+      isInRange = true;
+    }
+    
+    if (isInRange) {
+      abyssOpponent.isInDemonicAbyss = true;
+      let pullStrength = 2;
+      let pullDirection = (abyssOpponent.x > ai.x) ? -pullStrength : pullStrength;
+      abyssOpponent.x += pullDirection;
+      
+      ai.demonicAbyssDmgTickTimer--;
+      if (ai.demonicAbyssDmgTickTimer <= 0) {
+        ai.demonicAbyssDmgTickTimer = 60;
+        
+        let abyssDmg = 10;
+        abyssOpponent.hp -= abyssDmg;
+        if (abyssOpponent.hp < 0) abyssOpponent.hp = 0;
+        
+        if (typeof spawnDamageIndicatorSingle === 'function') {
+          spawnDamageIndicatorSingle(
+            abyssOpponent.x + abyssOpponent.w / 2,
+            abyssOpponent.y - 20,
+            abyssDmg,
+            false
+          );
+        }
+        console.log(`AI Demonic Abyss damage: -${abyssDmg} HP to opponent`);
+      }
+    } else {
+      abyssOpponent.isInDemonicAbyss = false;
+    }
+    
+    // Duration Ended
+    if (ai.demonicAbyssTimer <= 0) {
+      ai.isDemonicAbyssActive = false;
+      ai.demonicClawOwnerLocked = false;
+      abyssOpponent.isInDemonicAbyss = false;
+
+      if (isInRange) {
+        abyssOpponent.hitStun = 60;
+        abyssOpponent.isHit = true;
+        
+        if (ai.isDemonicAwakeningActive) {
+          abyssOpponent.hitStun = 180;
+          console.log("AI Demonic Abyss explosion! Enemy stunned for 3 seconds!");
+        } else {
+          console.log("AI Demonic Abyss ended! Enemy stunned for 1 second!");
+        }
+      }
+      
+      if (ai.demonicAbyssCooldownPending) {
+        ai.comboCooldowns["Demonic Heavens Abyss"] = 300;
+        ai.demonicAbyssCooldownPending = false;
+        console.log("AI Demonic Heaven's Abyss cooldown started.");
+      }
+    }
+  }
+
+  // Clear Abyss debuff if caster's field is no longer active
+  if (ai.isInDemonicAbyss) {
+    let abyssCaster = getOpponent();
+    if (!abyssCaster.isDemonicAbyssActive) {
+      ai.isInDemonicAbyss = false;
+    }
+  }
+
+  // Demonic Heaven Annihilation mark countdown
+  if (ai.isAnnihilationMarked && ai.annihilationTimer > 0) {
+    ai.annihilationTimer--;
+    
+    if (ai.annihilationTimer <= 0) {
+      ai.annihilationExploding = true;
+      ai.annihilationExplosionTimer = 30;
+      
+      let explosionDamage = ai.annihilationCumulativeDamage;
+      ai.hp -= explosionDamage;
+      if (ai.hp < 0) ai.hp = 0;
+      
+      if (typeof spawnDamageIndicatorSingle === 'function') {
+        spawnDamageIndicatorSingle(
+          ai.x + ai.w / 2,
+          ai.y - 50,
+          Math.floor(explosionDamage),
+          false
+        );
+      }
+      
+      console.log(`AI ANNIHILATION EXPLOSION! ${Math.floor(explosionDamage)} damage dealt!`);
+      
+      ai.annihilationCumulativeDamage = 0;
+      ai.annihilationCaster = null;
+    }
+  }
+
+  // Explosion visual timer
+  if (ai.annihilationExploding && ai.annihilationExplosionTimer > 0) {
+    ai.annihilationExplosionTimer--;
+    
+    if (ai.annihilationExplosionTimer <= 0) {
+      ai.annihilationExploding = false;
+      ai.isAnnihilationMarked = false;
+      console.log("AI Annihilation mark cleared!");
+    }
+  }
+
+  // Poison DOT tick
+  if (ai.isPoisoned && ai.poisonTimer > 0) {
+    ai.poisonTimer--;
+    ai.poisonTickTimer--;
+    
+    if (ai.poisonTickTimer <= 0) {
+      ai.poisonTickTimer = ai.poisonTickInterval;
+      
+      ai.hp -= ai.poisonDamage;
+      if (ai.hp < 0) ai.hp = 0;
+      
+      if (typeof spawnDamageIndicatorSingle === 'function') {
+        spawnDamageIndicatorSingle(
+          ai.x + ai.w / 2,
+          ai.y - 20,
+          ai.poisonDamage,
+          false
+        );
+      }
+      
+      console.log(`AI Poison tick! ${ai.poisonDamage} damage. ${Math.ceil(ai.poisonTimer / 60)}s remaining`);
+    }
+    
+    if (ai.poisonTimer <= 0) {
+      ai.isPoisoned = false;
+      ai.poisonDamage = 0;
+      ai.poisonAttacker = null;
+      console.log("AI Poison expired!");
+    }
+  }
+
+  // Poison Flower Field - caster update
+  if (ai.isPoisonFieldActive && ai.poisonFieldTimer > 0) {
+    ai.poisonFieldTimer--;
+    
+    let fieldOpponent = getOpponent();
+    fieldOpponent.isInPoisonField = true;
+    
+    // Heal tick
+    ai.poisonFieldHealTickTimer--;
+    if (ai.poisonFieldHealTickTimer <= 0) {
+      ai.poisonFieldHealTickTimer = 60;
+      
+      let healAmount = 10;
+      ai.hp = min(ai.hp + healAmount, ai.maxHp);
+      
+      if (typeof spawnDamageIndicatorSingle === 'function') {
+        spawnDamageIndicatorSingle(
+          ai.x + ai.w / 2,
+          ai.y - 20,
+          healAmount,
+          false
+        );
+      }
+      console.log(`AI Poison Field heal: +${healAmount} HP`);
+    }
+    
+    // Damage tick
+    ai.poisonFieldDmgTickTimer--;
+    if (ai.poisonFieldDmgTickTimer <= 0) {
+      ai.poisonFieldDmgTickTimer = 60;
+      
+      if (fieldOpponent.isOceanMendingActive) {
+        console.log("Poison Field damage blocked by Ocean Mending Water!");
+      } else {
+        let fieldDmg = 10;
+        fieldOpponent.hp -= fieldDmg;
+        if (fieldOpponent.hp < 0) fieldOpponent.hp = 0;
+        
+        if (typeof spawnDamageIndicatorSingle === 'function') {
+          spawnDamageIndicatorSingle(
+            fieldOpponent.x + fieldOpponent.w / 2,
+            fieldOpponent.y - 20,
+            fieldDmg,
+            false
+          );
+        }
+        console.log(`AI Poison Field damage: -${fieldDmg} HP to opponent`);
+      }
+    }
+    
+    if (ai.poisonFieldTimer <= 0) {
+      ai.isPoisonFieldActive = false;
+      fieldOpponent.isInPoisonField = false;
+      ai.canPoisonFieldTeleport = false;
+      
+      if (ai.poisonFieldCooldownPending) {
+        ai.comboCooldowns["Poison Flower Field"] = 300;
+        ai.poisonFieldCooldownPending = false;
+        console.log("AI Poison Flower Field ended. Cooldown started.");
+      }
+    }
+  }
+
+  // Clear field debuff if caster's field is no longer active
+  if (ai.isInPoisonField) {
+    let fieldCaster = getOpponent();
+    if (!fieldCaster.isPoisonFieldActive) {
+      ai.isInPoisonField = false;
+    }
+  }
+
+  // Ten Thousand Poison Flower Rain - spawn raindrops
+  if (ai.isPoisonRainActive && ai.poisonRainTimer > 0) {
+    ai.poisonRainTimer--;
+    ai.poisonRainSpawnTimer--;
+    
+    if (ai.poisonRainSpawnTimer <= 0) {
+      ai.poisonRainSpawnTimer = 30;
+      
+      let rainTarget = getOpponent();
+      let spawnX = rainTarget.x + rainTarget.w / 2;
+      let spawnY = rainTarget.y - 300;
+      
+      spawnProjectile(spawnX, spawnY, 1, ai, "poison_rain");
+      
+      console.log(`AI Poison Rain drop spawned above enemy! ${Math.ceil(ai.poisonRainTimer / 60)}s remaining`);
+    }
+    
+    if (ai.poisonRainTimer <= 0) {
+      ai.isPoisonRainActive = false;
+      console.log("AI Ten Thousand Poison Flower Rain ended!");
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  // PHYSICS & MOVEMENT
+  // ══════════════════════════════════════════════════════
+
+  // Face opponent
   ai.facing = (ai.x < opponent.x) ? 1 : -1;
+  
+  // Apply dash momentum manually
+  if (ai.isDashing && ai.dashTimer > 0) {
+    ai.dashTimer--;
+    
+    let dashProgress = ai.dashTimer / (ai.dashDirection === ai.facing ? 18 : 16);
+    if (dashProgress > 0.25) {
+      let accel = (ai.dashDirection === ai.facing) ? 6.0 : 5.5;
+      ai.velX += ai.dashDirection * accel;
+      
+      let maxSpeed = (ai.dashDirection === ai.facing) ? ai.dashMaxSpeed : ai.dashMaxSpeed * 0.85;
+      if (Math.abs(ai.velX) > maxSpeed) {
+        ai.velX = ai.dashDirection * maxSpeed;
+      }
+    }
+    
+    ai.velX *= 0.70;
+    
+    if (ai.dashTimer <= 0) {
+      ai.isDashing = false;
+      ai.dashDirection = 0;
+    }
+  } else if (!ai.isDashing) {
+    ai.velX *= 0.82;
+  }
+  
+  // Apply velocity to position
+  ai.x += ai.velX;
+  
+  // Apply physics (gravity, special moves, etc.)
   ai.applyPhysics(groundY);
 }
 

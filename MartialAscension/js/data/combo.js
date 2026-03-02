@@ -285,7 +285,7 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "AOE",
     characterSpecific: "Damon Cheon",
-    cooldown: 300, // 5 seconds
+    cooldown: 600, // 5 seconds
     duration: 180, // 3 seconds
    hits: []
   },

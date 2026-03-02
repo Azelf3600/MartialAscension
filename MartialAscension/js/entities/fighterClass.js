@@ -177,7 +177,7 @@ class Character {
     this.demonicAbyssTimer = 0;
     this.demonicAbyssDuration = 180; // 5 seconds
     this.demonicAbyssCooldownPending = false;
-    this.demonicAbyssRange = 500; // 300px range
+    this.demonicAbyssRange = 300; // 300px range
     this.demonicAbyssDmgTickTimer = 0; // Damage tick timer
     this.isInDemonicAbyss = false; // ✅ NEW: Debuff flag for being pulled
     this.hasUsedAnnihilation = false; // Once per round flag
@@ -364,26 +364,31 @@ if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
     abyssOpponent.isInDemonicAbyss = false;
   }
   
-  // Duration ended
-  if (this.demonicAbyssTimer <= 0) {
-    this.isDemonicAbyssActive = false;
-    this.demonicClawOwnerLocked = false;
-    abyssOpponent.isInDemonicAbyss = false;
+// Duration Ended
+if (this.demonicAbyssTimer <= 0) {
+  this.isDemonicAbyssActive = false;
+  this.demonicClawOwnerLocked = false;
+  abyssOpponent.isInDemonicAbyss = false;
 
+  // ✅ UPDATED: Always apply 1 second stun when Abyss ends
+  if (isInRange) {
+    abyssOpponent.hitStun = 60; // 1 second stun
+    abyssOpponent.isHit = true;
     
-    // ✅ NEW: Explosion if cast during Awakening
-    if (this.isDemonicAwakeningActive && isInRange) {
-      // Apply explosion stun (3 seconds)
-      abyssOpponent.hitStun = 180; // 3 seconds
-      abyssOpponent.isHit = true;
+    // ✅ Explosion if cast during Awakening (3 seconds instead)
+    if (this.isDemonicAwakeningActive) {
+      abyssOpponent.hitStun = 180; // 3 seconds during Awakening
       console.log("Demonic Abyss explosion! Enemy stunned for 3 seconds!");
+    } else {
+      console.log("Demonic Abyss ended! Enemy stunned for 1 second!");
     }
-    
-    // Start cooldown
-    if (this.demonicAbyssCooldownPending) {
-      this.comboCooldowns["Demonic Heavens Abyss"] = 300; // 5 seconds
-      this.demonicAbyssCooldownPending = false;
-      console.log("Demonic Heaven's Abyss ended. Cooldown started.");
+  }
+  
+  // Start cooldown
+  if (this.demonicAbyssCooldownPending) {
+    this.comboCooldowns["Demonic Heavens Abyss"] = 300; // 5 seconds
+    this.demonicAbyssCooldownPending = false;
+    console.log("Demonic Heaven's Abyss cooldown started.");
     }
   }
 }
