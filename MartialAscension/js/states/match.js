@@ -9,7 +9,7 @@ let singleFightStarted = false;
 let singleShowFightText = false;
 let singleFightTextTimer = 60;
 
-// ✅ Round System (Best of 3)
+// Round System (Best of 3)
 let singleCurrentRound = 1;
 let singlePlayer1RoundsWon = 0;
 let singlePlayer2RoundsWon = 0;
@@ -18,7 +18,7 @@ let singleRoundOver = false;
 let singleShowRoundResult = false;
 let singleRoundResultTimer = 0;
 
-// ✅ Timer System
+// Timer System
 const SINGLE_ROUND_TIME = 99;
 let singleMatchTimer = SINGLE_ROUND_TIME;
 let singleMatchTimerFrames = 60;
@@ -40,11 +40,11 @@ function initMatchSingle() {
   singleShowFightText = false;
   singleFightTextTimer = 60;
 
-  // ✅ Timer reset
+  // Timer reset
   singleMatchTimer = SINGLE_ROUND_TIME;
   singleMatchTimerFrames = 60;
 
-  // ✅ Reset round wins only on first round
+  // Reset round wins only on first round
   if (singleCurrentRound === 1) {
     singlePlayer1RoundsWon = 0;
     singlePlayer2RoundsWon = 0;
@@ -56,7 +56,7 @@ function initMatchSingle() {
   aiController = null;
 
 
-  // Null checks
+  // Null checks (For Debugging)
   if (typeof campaignPlayerChar === 'undefined') {
     console.error("❌ campaignPlayerChar is undefined!");
     return;
@@ -88,7 +88,7 @@ function initMatchSingle() {
     playerData.archetype
   );
 
-  // Create opponent
+  // Create AI character
   let opponentIndex = campaignOpponents[campaignProgress];
   let opponentData = FIGHTERS[opponentIndex];
   
@@ -141,7 +141,7 @@ function drawMatch() {
   drawSingleWorldBorders();
   handleSingleCountdown();
 
-  // ✅ Update match logic
+  // Update match logic
   if (singleShowRoundResult) {
     handleSingleRoundResult();
   } else if (singleFightStarted && !singleRoundOver && !singleMatchOver) {
@@ -170,7 +170,6 @@ function drawMatch() {
   }
 }
 
-// ✅ NEW: Update match logic with timer
 function updateSingleMatchLogic() {
   if (!singleFightStarted) return;
 
@@ -210,39 +209,34 @@ function handleSingleRoundResult() {
   if (singleRoundResultTimer <= 0) {
     singleShowRoundResult = false;
     
-    // Check if game is over (someone won 2 rounds)
+    // Check win condition
     if (singlePlayer1RoundsWon >= 2 || singlePlayer2RoundsWon >= 2) {
       singleGameOver = true;
-      
-      // ✅ REMOVED setTimeout - transition immediately
       // PLAYER WON THE MATCH
       if (singlePlayer1RoundsWon >= 2) {
-        campaignProgress++; // Advance to next opponent
-        
-        // Check if campaign is complete (beat all 3 opponents)
+        campaignProgress++; 
+        // Check if campaign is complete 
         if (campaignProgress >= 3) {
-          // Campaign complete - go to final lore screen (chapter 4)
+          // Campaign complete - go to final lore screen 
           currentState = GAME_STATE.LORE_SCREEN;
         } else {
           // More opponents remain - go to next lore screen
-          singleCurrentRound = 1; // Reset rounds for next match
+          singleCurrentRound = 1;
           currentState = GAME_STATE.LORE_SCREEN;
         }
       } 
       // PLAYER LOST THE MATCH
       else {
-        // Go to defeat screen
         currentState = GAME_STATE.WIN_SCREEN;
       }
     } else {
-      // Start next round (same opponent)
       singleCurrentRound++;
       initMatchSingle();
     }
   }
 }
 
-// ✅ NEW: Check timer expired
+// Check timer expired
 function checkSingleTimeOver() {
   if (singleRoundOver) return;
   
@@ -320,7 +314,7 @@ function drawSingleMatchUI() {
   let barH = 30;
   let padding = 50;
 
-  // ✅ Timer (same as multiplayer)
+  // Timer
   textAlign(CENTER, TOP);
   textFont(metalFont);
   textSize(55);
@@ -328,14 +322,14 @@ function drawSingleMatchUI() {
   fill(singleMatchTimer <= 10 ? color(255, 0, 0) : 255);
   text(singleMatchTimer, width / 2, padding - 20);
 
-  // ✅ Round Indicators (same as multiplayer)
+  // Round Indicators
   let roundSize = 20;
   let roundSpacing = 5;
   let roundY = padding + 45;
 
   let maxDisplay = Math.max(2, Math.max(singlePlayer1RoundsWon, singlePlayer2RoundsWon));
   
-  // P1 Round Wins (Right to Left)
+  // P1 Round Wins 
   for (let i = 0; i < maxDisplay; i++) {
     let x = padding + barW - (i * (roundSize + roundSpacing));
     
@@ -348,7 +342,7 @@ function drawSingleMatchUI() {
     circle(x, roundY, roundSize);
   }
 
-  // P2 Round Wins (Left to Right)
+  // P2 Round Wins 
   for (let i = 0; i < maxDisplay; i++) {
     let x = (width - padding - barW) + (i * (roundSize + roundSpacing));
     
@@ -369,10 +363,7 @@ function drawSingleMatchUI() {
   noStroke();
   text("ROUND " + singleCurrentRound, width / 2, padding + 50);
 
-  // ══════════════════════════════════════════════════════
-  // PLAYER 1 (Left Side)
-  // ══════════════════════════════════════════════════════
-  
+  // PLAYER 1 
   fill(255);
   noStroke();
   textFont(metalFont);
@@ -385,10 +376,7 @@ function drawSingleMatchUI() {
   textSize(18);
   text(floor(singlePlayer1.hp) + " / " + singlePlayer1.maxHp, padding, padding + barH + 25);
 
-  // ══════════════════════════════════════════════════════
-  // PLAYER 2 (Right Side)
-  // ══════════════════════════════════════════════════════
-  
+  // AI 
   textAlign(RIGHT, BOTTOM);
   textSize(24);
   text(singlePlayer2.name.toUpperCase(), width - padding, padding - 5);
@@ -398,10 +386,7 @@ function drawSingleMatchUI() {
   textSize(18);
   text(floor(singlePlayer2.hp) + " / " + singlePlayer2.maxHp, width - padding, padding + barH + 25);
 
-  // ══════════════════════════════════════════════════════
-  // CONTROL INSTRUCTIONS (Bottom)
-  // ══════════════════════════════════════════════════════
-  
+  // CONTROL INSTRUCTIONS 
   textFont(metalFont);
   noStroke();
   
@@ -425,7 +410,7 @@ function drawSingleMatchUI() {
   pop();
 }
 
-// ✅ NEW: Draw round result screen
+// Draw round result screen
 function drawSingleRoundResultScreen() {
   push();
   rectMode(CORNER);
@@ -496,18 +481,14 @@ function applySingleWorldBorders(fighter) {
 }
 
 function updateAIPhysicsOnly(ai, opponent, groundY) {
-  // ✅ Initialize AI on first call
+  // Initialize AI on first call
   if (!aiController) {
     initAI(ai);
   }
   
-  // ✅ Update AI behavior
+  // Update AI behavior
   updateAI(opponent, groundY);
-  
-  // ══════════════════════════════════════════════════════
-  // HANDLE HITSTUN & RECOVERY
-  // ══════════════════════════════════════════════════════
-  
+   
   if (ai.hitStun > 0) {
     ai.hitStun--;
     ai.isHit = true;
@@ -520,14 +501,10 @@ function updateAIPhysicsOnly(ai, opponent, groundY) {
     ai.recoveryTimer--;
   }
 
-  // ✅ CRITICAL: Call handleAttack() to decrement attackTimer
+  // Call handleAttack() to decrement attackTimer
   ai.handleAttack();
 
-  // ══════════════════════════════════════════════════════
-  // ✅ NEW: UPDATE ALL BUFF/DEBUFF TIMERS (from Character.update())
-  // ══════════════════════════════════════════════════════
-  
-  // Helper function to get opponent
+  // UPDATE ALL BUFF/DEBUFF TIMERS   
   const getOpponent = () => {
     return (ai === singlePlayer1) ? singlePlayer2 : singlePlayer1;
   };
@@ -857,11 +834,7 @@ function updateAIPhysicsOnly(ai, opponent, groundY) {
     }
   }
 
-  // ══════════════════════════════════════════════════════
   // PHYSICS & MOVEMENT
-  // ══════════════════════════════════════════════════════
-
-  // Face opponent
   ai.facing = (ai.x < opponent.x) ? 1 : -1;
   
   // Apply dash momentum manually
@@ -985,7 +958,7 @@ function drawPoisonFieldEffectSingle(p1, p2) {
   }
 }
 
-// ✅ NEW: Update poison DOT for both players
+// Update poison DOT for both players
 function updateSinglePoisonEffects() {
   // Update P1 poison
   if (singlePlayer1.isPoisoned && singlePlayer1.poisonTimer > 0) {
@@ -1010,7 +983,7 @@ function updateSinglePoisonEffects() {
     }
   }
   
-  // Update P2 poison
+  // Update AI poison
   if (singlePlayer2.isPoisoned && singlePlayer2.poisonTimer > 0) {
     singlePlayer2.poisonTimer--;
     singlePlayer2.poisonTickTimer--;

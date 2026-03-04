@@ -1,4 +1,3 @@
-// Win Screen State (Single Player)
 let winScreenSingleSelection = 0;
 
 function drawWinScreen() {
@@ -22,7 +21,7 @@ function drawWinScreenSingleMenu() {
   let isVictory = (singleWinnerName === singlePlayer1.name);
   let isCampaignComplete = (campaignProgress >= 3);
   
-  // ✅ Title - Show "CAMPAIGN COMPLETE!" if finished
+  // Title - Show "CAMPAIGN COMPLETE!" if finished
   textAlign(CENTER, CENTER);
   
   if (isVictory && isCampaignComplete) {
@@ -33,7 +32,6 @@ function drawWinScreenSingleMenu() {
     drawTitle("DEFEAT", menuX, height * 0.20, width * 0.04);
   }
   
-  // ✅ FIXED: Always show same 3 options (no Continue button)
   let availableOptions = ["RESTART", "CHARACTER SELECT", "MAIN MENU"];
   
   for (let i = 0; i < availableOptions.length; i++) {
@@ -109,7 +107,7 @@ function drawWinnerDisplaySingle() {
 }
 
 function handleWinScreenSingleInput(key, keyCode) {
-  // ✅ FIXED: Always use same 3 options
+  // Always use same 3 options
   let availableOptions = ["RESTART", "CHARACTER SELECT", "MAIN MENU"];
   
   // Navigation
@@ -135,7 +133,7 @@ function executeWinScreenSingleChoice() {
   
   switch (selectedOption) {
     case "RESTART":
-      // ✅ Restart from first opponent
+      // Restart from first opponent
       campaignProgress = 0;
       singleCurrentRound = 1;
       singlePlayer1RoundsWon = 0;
@@ -145,7 +143,7 @@ function executeWinScreenSingleChoice() {
       break;
       
     case "CHARACTER SELECT":
-      // ✅ Go to character select
+      // Go to character select
       campaignProgress = 0;
       campaignPlayerChar = 0;
       singleCurrentRound = 1;
@@ -156,7 +154,7 @@ function executeWinScreenSingleChoice() {
       break;
       
     case "MAIN MENU":
-      // ✅ Go to main menu
+      // Go to main menu
       campaignProgress = 0;
       campaignPlayerChar = 0;
       singleCurrentRound = 1;

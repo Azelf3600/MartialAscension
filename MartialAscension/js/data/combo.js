@@ -5,9 +5,9 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "LAUNCH",
     hits: [
-      { attack: "DW", duration: 8 },   // Crouch startup
-      { attack: "FW", duration: 8 },   // Forward dash
-      { attack: "HP", duration: 22 }   // Heavy punch finisher
+      { attack: "DW", duration: 8 },   
+      { attack: "FW", duration: 8 },   
+      { attack: "HP", duration: 22 }  
     ]
   },
   { 
@@ -60,9 +60,9 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "DIVE",
     hits: [
-      { attack: "UP", duration: 8 },   // Jump startup
-      { attack: "FW", duration: 10 },  // Forward momentum
-      { attack: "HK", duration: 25 }   // Diving kick finisher
+      { attack: "UP", duration: 8 },   
+      { attack: "FW", duration: 10 },  
+      { attack: "HK", duration: 25 }   
     ]
   },
   //Ethan Li Unique combos
@@ -72,7 +72,7 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "PROJECTILE",
     characterSpecific: "Ethan Li",
-    cooldown: 120, // NEW: 120 frames = 2 seconds (60 fps)
+    cooldown: 120, 
     hits: [
       { attack: "PROJECTILE", duration: 30 }
     ]
@@ -83,21 +83,21 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "LUNGE_MELEE",
     characterSpecific: "Ethan Li",
-    cooldown: 60, // 1 second
-    requireStanding: true, // NEW: Must be standing (not crouching)
+    cooldown: 60, 
+    requireStanding: true, 
     hits: [
-      { attack: "HP", duration: 35 } // Total lunge duration (10 pullback + 25 burst)
+      { attack: "HP", duration: 35 } 
     ]
   },
   { 
     name: "Sword Qi Fly", 
     sequence: ["BW", "FW", "UP", "UP"], 
     damageMult: 0, 
-    type: "MOVEMENT", // NEW: Movement type
+    type: "MOVEMENT", 
     characterSpecific: "Ethan Li",
-    cooldown: 300, // 5 seconds
-    isFlightCondition: true, // NEW: This enables flight state
-    hits: [] // No damage hits
+    cooldown: 300, 
+    isFlightCondition: true, 
+    hits: [] 
   },
   { 
     name: "Sword God Slash", 
@@ -105,10 +105,10 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "AIR_SLASH",
     characterSpecific: "Ethan Li",
-    cooldown: 240, // 4 seconds
-    requireFlying: true, // NEW: Only works during Sword Qi Fly
+    cooldown: 240, 
+    requireFlying: true, 
     hits: [
-      { attack: "HK", duration: 40 } // Teleport + slash animation
+      { attack: "HK", duration: 40 } 
     ]
   },
   { 
@@ -117,9 +117,9 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "JUDGMENT",
     characterSpecific: "Ethan Li",
-    requireFlying: true, // Must be in Sword Qi Fly
-    requireLowHealth: true, // Must be 50% HP or below
-    requireJudgmentAvailable: true, // Once per round
+    requireFlying: true, 
+    requireLowHealth: true, 
+    requireJudgmentAvailable: true, 
     hits: [
       { attack: "PROJECTILE", duration: 60 }
     ]
@@ -131,8 +131,8 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Lucas Tang",
-    cooldown: 120, // 2 seconds
-    duration: 300, // 5 seconds
+    cooldown: 120, 
+    duration: 300, 
     hits: []
   },
   { 
@@ -141,8 +141,8 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "PROJECTILE",
     characterSpecific: "Lucas Tang",
-    cooldown: 180, // 3 seconds
-    requirePoisonHands: true, // Must have Poison Hands active
+    cooldown: 180, 
+    requirePoisonHands: true, 
     hits: [
       { attack: "PROJECTILE", duration: 30 }
     ]
@@ -153,7 +153,7 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "PROJECTILE",
     characterSpecific: "Lucas Tang",
-    cooldown: 120, // 3 seconds
+    cooldown: 120, 
     hits: [
       { attack: "PROJECTILE", duration: 30 }
     ]
@@ -164,8 +164,8 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "AOE",
     characterSpecific: "Lucas Tang",
-    cooldown: 300, // 5 seconds
-    duration: 360, // 5 seconds
+    cooldown: 300, 
+    duration: 360, 
     requirePoisonHands: true,
     hits: []
   },
@@ -175,10 +175,10 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "PROJECTILE",
     characterSpecific: "Lucas Tang",
-    requirePoisonField: true,    // Must have Poison Flower Field active
-    requireLowHealth: true,      // Must be 50% HP or below
-    requireRainAvailable: true,  // Once per round
-    hits: [{ attack: "PROJECTILE", duration: 300 }] // 5 second duration
+    requirePoisonField: true,    
+    requireLowHealth: true,      
+    requireRainAvailable: true,  
+    hits: [{ attack: "PROJECTILE", duration: 300 }] 
   },
   //Aaron Shu Unique Combo
   { 
@@ -187,8 +187,8 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
-    cooldown: 300, // 5 seconds
-    duration: 300, // 5 seconds
+    cooldown: 300, 
+    duration: 300,
     hits: []
   },
   { 
@@ -197,8 +197,8 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
-    cooldown: 300, // 5 seconds
-    duration: 300, // 5 seconds
+    cooldown: 300, 
+    duration: 300, 
     hits: []
   },
   { 
@@ -207,8 +207,8 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Aaron Shu",
-    cooldown: 300, // 3 seconds
-    requireAzureScalesOrTortoise: true, // Must have either buff active
+    cooldown: 300, 
+    requireAzureScalesOrTortoise: true, 
     hits: []
   },
   { 
@@ -217,10 +217,10 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "SEA_DRAGON_CHARGE",
     characterSpecific: "Aaron Shu",
-    cooldown: 300, // 5 seconds
-    requireAzureScalesOrTortoise: true, // Must have either buff active
+    cooldown: 300, 
+    requireAzureScalesOrTortoise: true,
     hits: [
-      { attack: "CHARGE", duration: 60 } // ~1 second charge duration
+      { attack: "CHARGE", duration: 60 } 
     ]
   },
   { 
@@ -229,11 +229,11 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "AZURE_DRAGON_LAUNCHER",
     characterSpecific: "Aaron Shu",
-    requireAzureScalesOrTortoise: true, // Must have either buff active
-    requireLowHealth: true, // Must be 50% HP or below
-    requireAzureDragonAvailable: true, // Once per round
+    requireAzureScalesOrTortoise: true, 
+    requireLowHealth: true, 
+    requireAzureDragonAvailable: true, 
     hits: [
-      { attack: "DRAGON_LAUNCH", duration: 90 } // 2 seconds total (1s indicator + 1s emerge)
+      { attack: "DRAGON_LAUNCH", duration: 90 } 
     ]
   },
   //Damon Cheon Unique Combos
@@ -243,9 +243,9 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "POWERUP",
     characterSpecific: "Damon Cheon",
-    cooldown: 300, // 5 seconds
-    duration: 300, // 5 seconds
-    hpCost: 100, // NEW: HP cost to activate
+    cooldown: 300,
+    duration: 300,
+    hpCost: 100, 
     hits: []
   },
   { 
@@ -254,9 +254,9 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "MOVEMENT",
     characterSpecific: "Damon Cheon",
-    cooldown: 300, // 5 seconds
-    isDemonicSteps: true, // NEW: Flag for special behavior
-    stepsDirection: "forward", // NEW: Which direction
+    cooldown: 300, 
+    isDemonicSteps: true, 
+    stepsDirection: "forward", 
     hits: []
   },
   { 
@@ -265,9 +265,9 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "MOVEMENT",
     characterSpecific: "Damon Cheon",
-    cooldown: 300, // 5 seconds
-    isDemonicSteps: true, // NEW: Flag for special behavior
-    stepsDirection: "backward", // NEW: Which direction
+    cooldown: 300, 
+    isDemonicSteps: true, 
+    stepsDirection: "backward",
     hits: []
   },
   { 
@@ -276,8 +276,8 @@ const STANDARD_COMBOS = [
     damageMult: 1.0, 
     type: "PROJECTILE",
     characterSpecific: "Damon Cheon",
-    cooldown: 300, // 5 seconds
-    hits: [{ attack: "PROJECTILE", duration: 90 }] // 1.5 seconds total (indicator + emerge)
+    cooldown: 300,
+    hits: [{ attack: "PROJECTILE", duration: 90 }] 
   },
   { 
     name: "Demonic Heavens Abyss", 
@@ -285,8 +285,8 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "AOE",
     characterSpecific: "Damon Cheon",
-    cooldown: 600, // 5 seconds
-    duration: 180, // 3 seconds
+    cooldown: 600, 
+    duration: 180, 
    hits: []
   },
   { 
@@ -295,9 +295,9 @@ const STANDARD_COMBOS = [
     damageMult: 0, 
     type: "DAMAGE",
     characterSpecific: "Damon Cheon",
-    duration: 480, // 8 seconds
-    requireLowHealth: true, // 50% HP or below
-    requireAnnihilationAvailable: true, // Once per round
+    duration: 480, 
+    requireLowHealth: true, 
+    requireAnnihilationAvailable: true,
     hits: []
   }
 ];

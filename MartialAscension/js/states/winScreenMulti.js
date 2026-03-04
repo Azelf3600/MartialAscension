@@ -1,5 +1,4 @@
-// Win Screen State
-let winScreenSelection = 0; // 0 = Rematch, 1 = Character Select, 2 = Main Menu
+let winScreenSelection = 0; 
 const WIN_SCREEN_OPTIONS = ["REMATCH", "CHARACTER SELECT", "MAIN MENU"];
 
 function drawWinScreenMulti() {
@@ -10,10 +9,7 @@ function drawWinScreenMulti() {
   rect(0, 0, width, height);
   pop();
   
-  // Left Side - Menu Options
   drawWinScreenMenu();
-  
-  // Right Side - Winner Display
   drawWinnerDisplay();
 }
 
@@ -46,18 +42,18 @@ function drawWinScreenMenu() {
       strokeWeight(4);
       textSize(width * 0.025);
     } else {
-      // Unselected options - NOW WHITE (was gray)
-      fill(255); // Changed from 200 to 255
+      // Unselected options 
+      fill(255); 
       noStroke();
       textSize(width * 0.022);
       text(WIN_SCREEN_OPTIONS[i], menuX, y);
     }
   }
   
-  // Controls hint at bottom - NOW WHITE (was gray)
+  // Controls hint at bottom
   textAlign(CENTER, TOP);
   textFont(metalFont);
-  fill(255); // Changed from 150 to 255
+  fill(255); 
   noStroke();
   textSize(width * 0.012);
   text("W/S OR ARROWS TO NAVIGATE", menuX, height * 0.80);
@@ -69,25 +65,22 @@ function drawWinScreenMenu() {
 function drawWinnerDisplay() {
   push();
   
-  // POSITIONING VARIABLES (customize these)
-  let displayX = width * 0.75;      // Horizontal center for text
-  let nameY = height * 0.75;        // Name position (top)
-  let winsY = height * 0.85;        // "WINS!" position
-  let imageX = width * 0.75;        // Image horizontal position
-  
-  // Get winner data
+  let displayX = width * 0.75;  
+  let nameY = height * 0.75;      
+  let winsY = height * 0.85;      
+  let imageX = width * 0.75;   
   let winnerIndex = (winnerName === player1.name) ? p1Selected : p2Selected;
   let winnerData = FIGHTERS[winnerIndex];
   let isP1 = (winnerName === player1.name);
   
-  // Winner preview image (LARGE - same size as loading screen)
+  // Winner preview image 
   if (winnerData.previewImg) {
     push();
     imageMode(CENTER);
-    let imgH = floor(height * 1.0); // Full height
+    let imgH = floor(height * 1.0); 
     let imgW = floor((winnerData.previewImg.width / winnerData.previewImg.height) * imgH);
     
-    // Position image (customize imageX above to move left/right)
+    // Position image 
     let imgXPos = floor(width - (imgW * 0.10) - (width * 0.2));
     
     // Glow effect
@@ -96,16 +89,13 @@ function drawWinnerDisplay() {
       'rgba(0, 150, 255, 0.8)' : 'rgba(255, 50, 50, 0.8)';
     
     translate(imgXPos, height / 2);
-    scale(-1, 1); // FLIP the image (mirror)
+    scale(-1, 1); 
     image(winnerData.previewImg, 0, 0, imgW, imgH);
     pop();
   }
   
-  // Winner name - using drawTitle style (white with red stroke)
   textAlign(CENTER, CENTER);
   drawTitle(winnerName.toUpperCase(), displayX, nameY, width * 0.045);
-  
-  // "WINS!" text - using drawTitle style (same as name)
   drawTitle("WINS!", displayX, winsY, width * 0.035);
   
   pop();
@@ -131,17 +121,17 @@ function handleWinScreenInput(key, keyCode) {
 
 function executeWinScreenChoice() {
   switch (winScreenSelection) {
-    case 0: // Rematch
+    case 0:
       // Reset round system and restart match
       currentRound = 1;
       p1RoundsWon = 0;
       p2RoundsWon = 0;
       gameOver = false;
       currentState = GAME_STATE.LOADING_MATCH_MULTI;
-      winScreenSelection = 0; // Reset selection
+      winScreenSelection = 0; 
       break;
       
-    case 1: // Character Select
+    case 1: 
       // Reset character selections and go to character select
       p1Selected = 0;
       p2Selected = 1;
@@ -152,10 +142,10 @@ function executeWinScreenChoice() {
       p2RoundsWon = 0;
       gameOver = false;
       currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
-      winScreenSelection = 0; // Reset selection
+      winScreenSelection = 0; 
       break;
       
-    case 2: // Main Menu
+    case 2: 
       // Reset everything and go to main menu
       p1Selected = 0;
       p2Selected = 1;
@@ -166,7 +156,7 @@ function executeWinScreenChoice() {
       p2RoundsWon = 0;
       gameOver = false;
       currentState = GAME_STATE.MENU;
-      winScreenSelection = 0; // Reset selection
+      winScreenSelection = 0; 
       break;
   }
 }

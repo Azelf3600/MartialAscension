@@ -1,7 +1,7 @@
 let loadingTimerTraining = 0;
 const LOADING_DURATION_TRAINING = 300;
 let loadingInitializedTraining = false;
-let randomDummyIndex = -1; // ✅ Store random dummy selection
+let randomDummyIndex = -1; 
 
 function drawLoadingMatchTraining() {
   background(0);
@@ -10,8 +10,6 @@ function drawLoadingMatchTraining() {
   if (!loadingInitializedTraining) {
     loadingTimerTraining = 0;
     loadingInitializedTraining = true;
-    
-    // ✅ Pick random dummy character (can be same as player)
     randomDummyIndex = floor(random(FIGHTERS.length));
   }
   
@@ -21,7 +19,6 @@ function drawLoadingMatchTraining() {
     loadingTimerTraining = 0;
     loadingInitializedTraining = false;
     
-    // ✅ Initialize training mode with selected characters
     initTraining();
     
     currentState = GAME_STATE.TRAINING;
@@ -33,15 +30,15 @@ function drawLoadingMatchTraining() {
   let animProgress = constrain((loadingTimerTraining - 40) / 60, 0, 1);
   let slideOffset = lerp(width, 0, animProgress);
 
-  // ✅ Player character (from selection)
+  // Player character (from selection)
   let playerData = FIGHTERS[selectedTrainingChar];
   
-  // ✅ Random dummy character
+  // Random dummy character
   let dummyData = FIGHTERS[randomDummyIndex];
 
   // Draw Players
-  drawLoadingTrainingSide(-slideOffset, playerData, 1, false); // Player
-  drawLoadingTrainingSide(slideOffset, dummyData, 2, true);     // Dummy
+  drawLoadingTrainingSide(-slideOffset, playerData, 1, false); 
+  drawLoadingTrainingSide(slideOffset, dummyData, 2, true);     
 
   // VS Title
   push();
@@ -75,7 +72,6 @@ function drawLoadingTrainingSide(slideX, data, playerNum, isDummy) {
   let textBaseY = height * 0.75; 
   textAlign(CENTER, CENTER);
 
-  // ✅ Add "DUMMY" prefix to name if it's the dummy
   let displayName = isDummy ? 
     "DUMMY " + data.name.toUpperCase() : 
     data.name.toUpperCase();

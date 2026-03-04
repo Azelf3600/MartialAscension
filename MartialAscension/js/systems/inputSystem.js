@@ -4,9 +4,8 @@ class InputBuffer {
     this.bufferWindow = 60; 
   }
 
-  // ✅ FIXED: Clear the correct property
   clear() {
-    this.history = []; // Clear history, not buffer
+    this.history = []; 
   }
 
   recordInput(inputLabel) {

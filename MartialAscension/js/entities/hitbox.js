@@ -1,8 +1,3 @@
-/**
- * Main hitbox dispatcher
- * @param {Character} character - The attacking character
- * @returns {Object} - { shapes: [], col: color() }
- */
 function getHitboxData(character) {
   if (!character.attacking) return { shapes: [], col: color(0, 0) };
   
@@ -33,7 +28,7 @@ function getHitboxData(character) {
   } else if (character.attacking === "Sword Qi Lunge" && actualAttack === "HP") {
     return getSwordQiLungeHitbox(character);
   } else if (character.attacking === "Sword God Slash" && actualAttack === "HK") {
-    // NEW: Sword God Slash hitbox
+    // Sword God Slash hitbox
     return getSwordGodSlashHitbox(character);
   } else {
     return getStandardHitbox(character, actualAttack);
@@ -60,19 +55,11 @@ function getSwordGodSlashHitbox(character) {
   // Slash dimensions
   let slashLength = 200;
   let slashThickness = 40;
-  
-  // Slash rotation over time - angles are mirrored for left/right
   let currentAngle;
   
   if (character.facing === 1) {
-    // Facing right: 1 o'clock to 5 o'clock
-    // -30° to 60°
     currentAngle = map(slashProgress, 0, 1, -20, 60);
   } else {
-    // Facing left: 11 o'clock to 7 o'clock
-    // We need to mirror: 180° - angle
-    // Right -30° becomes Left -150° (180 - 30 = 150, then negative)
-    // Right 60° becomes Left 120° (180 - 60 = 120)
     currentAngle = map(slashProgress, 0, 1, 210, 120);
   }
   
@@ -82,7 +69,7 @@ function getSwordGodSlashHitbox(character) {
   let numSegments = 5;
   
   for (let i = 0; i < numSegments; i++) {
-    // Distance from anchor along slash (from 0 to slashLength)
+    // Distance from anchor along slash
     let distance = (i / numSegments) * slashLength;
     
     // Calculate position using angle
@@ -104,13 +91,11 @@ function getSwordGodSlashHitbox(character) {
 // NEW: Sword Qi Lunge Hitbox (same as HK)
 function getSwordQiLungeHitbox(character) {
   let shapes = [];
-  let col = color(255, 100, 100, 180); // Red/white for sword energy
+  let col = color(255, 100, 100, 180); 
   let innerOverlap = 10;
-  
-  // Same dimensions and position as HK
   let atkW = 200;
   let atkH = 40;
-  let offY = 30; // Same as HK offset
+  let offY = 30; 
   
   let atkX = (character.facing === 1) ? 
     (character.x + character.w - innerOverlap) : 
@@ -132,12 +117,12 @@ function getSeaDragonHitbox(character) {
   }
   
   // Vertical wall hitbox (like block indicator)
-  let wallW = 10; // Thin vertical line
-  let wallH = character.h; // Full character height
+  let wallW = 10; 
+  let wallH = character.h; 
   
   let wallX = (character.facing === 1) ? 
-    (character.x + character.w) : // Right side if facing right
-    (character.x - wallW); // Left side if facing left
+    (character.x + character.w) :
+    (character.x - wallW); 
   
   let wallY = character.y;
   
@@ -157,11 +142,11 @@ function getAzureDragonHitbox(character) {
   }
   
   // Rising pillar hitbox (covers character + upward area)
-  let pillW = character.w * 1.2; // Slightly wider than character
-  let pillH = character.h * 1.5; // Extends above character
+  let pillW = character.w * 1.2; 
+  let pillH = character.h * 1.5; 
   
-  let pillX = character.x - (pillW - character.w) / 2; // Center on character
-  let pillY = character.y - (pillH - character.h); // Extends upward
+  let pillX = character.x - (pillW - character.w) / 2; 
+  let pillY = character.y - (pillH - character.h);
   
   shapes.push({ x: pillX, y: pillY, w: pillW, h: pillH });
   
@@ -169,7 +154,6 @@ function getAzureDragonHitbox(character) {
 }
 
 // LAUNCHER COMBO HITBOX (L-SHAPE)
-// ========================================
 function getLauncherHitbox(character) {
   let shapes = [];
   let col = color(255, 165, 0, 150);
@@ -202,7 +186,7 @@ function getDivingKickHitbox(character) {
   let boxW = 60;
   let boxH = 70;
   let dirX = character.facing === 1 ? 1 : -1;
-  let startOffsetY = character.h * 0.4; // Start at hip level
+  let startOffsetY = character.h * 0.4; 
   
   // Box 1: Top (chest/hip area)
   let box1X = character.facing === 1 ? 

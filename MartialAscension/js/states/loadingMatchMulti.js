@@ -1,6 +1,6 @@
-let loadingTimerMulti = 0; // Changed from loadingTimer
-const LOADING_DURATION_MULTI = 300; // Changed from LOADING_DURATION
-let loadingInitializedMulti = false; // Changed from loadingInitialized
+let loadingTimerMulti = 0; 
+const LOADING_DURATION_MULTI = 300;
+let loadingInitializedMulti = false; 
 
 function drawLoadingMatchMulti() {
   background(0);
@@ -43,7 +43,6 @@ function drawLoadingMatchMulti() {
   pop();
 }
 
-// Keep this function name - it's local to this file
 function drawLoadingSide(slideX, data, playerNum) {
   let isP1 = (playerNum === 1);
   

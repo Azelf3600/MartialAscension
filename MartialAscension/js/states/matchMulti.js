@@ -1,4 +1,3 @@
-// Global instances for the match
 let player1, player2;
 let groundY;
 let damageIndicators = [];
@@ -7,8 +6,8 @@ let winnerName = "";
 
 let leftBorder = -9800;
 let rightBorder = 9800;
-const STAGE_WIDTH = 20000; // Total stage width
-const STAGE_START_X = -10000; // Left edge of stage
+const STAGE_WIDTH = 20000; 
+const STAGE_START_X = -10000; 
 
 // Countdown Variables
 let countdown = 3;
@@ -24,13 +23,13 @@ let matchTimerFrames = 60;
 
 // Round System Variables - FIRST TO 3 WINS
 let currentRound = 1;
-const WINS_NEEDED = 3; // Changed from MAX_ROUNDS
+const WINS_NEEDED = 3; 
 let p1RoundsWon = 0;
 let p2RoundsWon = 0;
 let roundOver = false;
 let roundWinner = "";
 let showRoundResult = false;
-let roundResultTimer = 180; // 3 seconds (180 frames)
+let roundResultTimer = 180;
 let gameOver = false;
 
 function initMatch() {
@@ -63,7 +62,6 @@ function initMatch() {
   if (p1Buffer) p1Buffer.clear();
   if (p2Buffer) p2Buffer.clear();
 
-  // ── Create players FIRST ──────────────────────────────
   let charH = height * 0.5;
   let p1Data = FIGHTERS[p1Selected];
   player1 = new Character(
@@ -91,7 +89,7 @@ function initMatch() {
     p2Data.archetype
   );
 
-    // Reset attack states
+  // Reset attack states
   player1.attacking = null;
   player1.attackTimer = 0;
   player1.isPerformingCombo = false;
@@ -159,8 +157,8 @@ function initMatch() {
   player2.isPoisonRainActive = false;
   player1.poisonRainTimer = 0;
   player2.poisonRainTimer = 0;
-  player1.canPoisonFieldTeleport = false; // ✅ NEW
-  player2.canPoisonFieldTeleport = false; // ✅ NEW
+  player1.canPoisonFieldTeleport = false; 
+  player2.canPoisonFieldTeleport = false; 
   
   // Reset Aaron Shu power-ups
   player1.isAzureScalesActive = false;
@@ -210,7 +208,7 @@ function initMatch() {
   player2.poisonTimer = 0;
   player2.poisonDamage = 0;
 
-  // ── Camera reset ──────────────────────────────────────
+  // Camera reset
   if (gameCamera) {
     gameCamera.pos = createVector(width/2, height/2);
   }
@@ -229,7 +227,7 @@ function drawMatchMulti() {
   push();
     gameCamera.apply();
 
-    // NEW: Draw Poison Flower Field ground effect
+    // Draw Poison Flower Field ground effect
 if (player1 && player2) {
   let fieldCaster = null;
   if (player1.isPoisonFieldActive) fieldCaster = player1;
@@ -271,12 +269,12 @@ if (player1 && player2) {
     noStroke();
     textAlign(CENTER, BOTTOM);
     textSize(20);
-    text(`☠ POISON FIELD: ${timeLeft}s ☠`, 0, groundY - 10);
+    text(` POISON FIELD: ${timeLeft}s ☠`, 0, groundY - 10);
     
     pop();
   }
 
-  // ✅ NEW: Draw Demonic Heaven's Abyss ground effect
+  // Draw Demonic Heaven's Abyss ground effect
   let abyssCaster = null;
   if (player1.isDemonicAbyssActive) abyssCaster = player1;
   else if (player2.isDemonicAbyssActive) abyssCaster = player2;
@@ -325,7 +323,7 @@ if (player1 && player2) {
     noStroke();
     textAlign(CENTER, BOTTOM);
     textSize(20);
-    text(`⚫ DEMONIC ABYSS: ${timeLeft}s ⚫`, (lineStartX + lineEndX) / 2, groundY - 10);
+    text(` DEMONIC ABYSS: ${timeLeft}s `, (lineStartX + lineEndX) / 2, groundY - 10);
     
     pop();
   }
@@ -365,11 +363,11 @@ if (player1 && player2) {
   }
 }
 
-// NEW: Draw visible border walls
+// Draw visible border walls
 function drawWorldBorders() {
   push();
   rectMode(CORNER);
-  fill(100, 100, 120); // Gray-blue wall color
+  fill(100, 100, 120); 
   noStroke();
   
   // Left wall
@@ -379,7 +377,7 @@ function drawWorldBorders() {
   // Right wall
   rect(rightBorder, groundY - height, wallWidth, height);
   
-  // Optional: Add border line on ground
+  // Border line on ground
   stroke(150, 150, 170);
   strokeWeight(3);
   line(leftBorder, groundY, leftBorder, groundY - 200);
@@ -418,7 +416,7 @@ function handleRoundResult() {
       gameOver = true;
       winnerName = (p1RoundsWon >= WINS_NEEDED) ? player1.name : player2.name;
       
-      // NEW: Go to win screen instead of showing overlay
+      // Go to win screen instead of showing overlay
       currentState = GAME_STATE.WIN_SCREEN_MULTI;
     } else {
       // Start next round
@@ -466,8 +464,8 @@ function drawInterface() {
     // Start from right side of P1's health bar
     let x = padding + barW - (i * (roundSize + roundSpacing));
   
-    // FIXED: Fill from right properly
-    if (i < p1RoundsWon) { // Changed from (maxDisplay - 1 - i) < p1RoundsWon
+    // Fill from right properly
+    if (i < p1RoundsWon) { 
       fill(0, 150, 255); // Blue (won)
     } else {
       fill(50); // Dark gray (not won)
@@ -524,12 +522,11 @@ function drawInterface() {
   text(floor(player2.hp) + " / " + player2.maxHp, width - padding, padding + barH + 25);
   pop();
 
-  // Control Instructions (RESPONSIVE)
+  // Control Instructions 
   push();
   textFont(metalFont);
   noStroke();
   
-  // Responsive sizing and positioning
   let controlTextSize = width * 0.011;
   let controlDetailSize = width * 0.009;
   let bottomY = height * 0.85;
@@ -602,7 +599,7 @@ function drawRoundResultScreen() {
   let header = (matchTimer <= 0 && roundWinner === "DRAW") ? "TIME'S UP" : "K.O.";
   drawTitle(header, width / 2, height * 0.35, width * 0.1);
   
-  // Round Winner - Better spacing
+  // Round Winner 
   let msg;
   if (roundWinner === "DRAW") {
     msg = "DRAW!";
@@ -611,7 +608,7 @@ function drawRoundResultScreen() {
   }
   drawTitle(msg, width / 2, height * 0.52, width * 0.05);
   
-  // Round score - Using metalFont, better positioning
+  // Round score 
   fill(255);
   noStroke();
   textFont(metalFont);
@@ -626,10 +623,10 @@ function spawnDamageIndicator(x, y, amount, isBlocked) {
   if (currentState === GAME_STATE.TRAINING) {
     spawnTrainingDamageIndicator(x, y, amount, isBlocked);
   } else if (currentState === GAME_STATE.MATCH) {
-    // ✅ Single player mode
+    // Single player mode
     spawnDamageIndicatorSingle(x, y, amount, isBlocked);
   } else {
-    // ✅ Multiplayer mode
+    // Multiplayer mode
     damageIndicators.push({
       x: x,
       y: y,
@@ -681,10 +678,10 @@ function drawDamageIndicators() {
   player1.update(player2, groundY);
   player2.update(player1, groundY);
   
-  // NEW: Update projectiles
+  // Update projectiles
   updateProjectiles();
   
-  // NEW: Check projectile collisions
+  // Check projectile collisions
   checkProjectileCollisions(player1, player2);
   
   applyWorldBorders(player1);
@@ -720,7 +717,7 @@ function drawWorldBorders() {
   
   // Wall appearance
   let wallWidth = 100;
-  let wallHeight = height * 2; // Tall enough to be visible
+  let wallHeight = height * 2; 
   
   // Left wall (gray-blue)
   fill(80, 90, 100);
@@ -731,7 +728,7 @@ function drawWorldBorders() {
   fill(80, 90, 100);
   rect(rightBorder, groundY - wallHeight, wallWidth, wallHeight);
   
-  // Border indicators on ground (optional - shows exact boundary)
+  // Border indicators on ground
   stroke(200, 200, 220, 150);
   strokeWeight(5);
   line(leftBorder, groundY, leftBorder, groundY - 300);

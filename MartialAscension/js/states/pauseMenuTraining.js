@@ -1,15 +1,14 @@
-// Pause Menu Training State
-let pauseMenuTrainingState = "MAIN"; // "MAIN", "CONFIRM", "COMBO_LIST_VIEW"
-let pauseMenuTrainingSelection = 0; // Current selection (0-4)
-let pauseTrainingConfirmSelection = 0; // Confirm selection (0 = Yes, 1 = No)
-let selectedTrainingComboIndex = 0; // Track selected combo in list
-let pendingTrainingAction = ""; // What action is waiting for confirmation
+let pauseMenuTrainingState = "MAIN"; 
+let pauseMenuTrainingSelection = 0; 
+let pauseTrainingConfirmSelection = 0; 
+let selectedTrainingComboIndex = 0;
+let pendingTrainingAction = ""; 
 
 const PAUSE_MENU_TRAINING_OPTIONS = [
   "RESUME",
   "RESTART",
   "CHARACTER SELECT",
-  "COMBO LIST", // ✅ Added
+  "COMBO LIST", 
   "MAIN MENU"
 ];
 
@@ -28,10 +27,10 @@ function drawPauseMenuTraining() {
   if (pauseMenuTrainingState === "MAIN") {
     drawPauseTrainingMainMenu();
   } else if (pauseMenuTrainingState === "CONFIRM") {
-    drawPauseTrainingMainMenu(); // Still show main menu dimmed
+    drawPauseTrainingMainMenu(); 
     drawPauseTrainingConfirmPrompt();
   } else if (pauseMenuTrainingState === "COMBO_LIST_VIEW") {
-    drawPauseTrainingMainMenu(); // Still show main menu dimmed
+    drawPauseTrainingMainMenu();
     drawTrainingComboListView();
   }
 }
@@ -146,10 +145,6 @@ function drawPauseTrainingConfirmPrompt() {
 function drawTrainingComboListView() {
   push();
   
-  // ════════════════════════════════════════════════════════════════
-  // MASTER SPACING VARIABLES
-  // ════════════════════════════════════════════════════════════════
-  
   let listX = width * 0.38;
   let listY = height * 0.05;
   let listW = width * 0.60;
@@ -178,9 +173,7 @@ function drawTrainingComboListView() {
   
   let hintTextSize = width * 0.012;
   let hintBottomPadding = height * 0.01;
-  
-  // ════════════════════════════════════════════════════════════════
-  
+    
   // Background box
   fill(20, 240);
   stroke(255, 0, 0);
@@ -188,7 +181,7 @@ function drawTrainingComboListView() {
   rectMode(CORNER);
   rect(listX, listY, listW, listH, 10);
   
-  // Get selected character data (training character)
+  // Get selected character data 
   let selectedCharName = FIGHTERS[selectedTrainingChar].name;
   
   // Build combo list
@@ -201,10 +194,6 @@ function drawTrainingComboListView() {
   
   textAlign(LEFT, TOP);
   
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 1: CONTROL LEGEND
-  // ════════════════════════════════════════════════════════════════
-  
   fill(255);
   noStroke();
   textFont(metalFont);
@@ -216,11 +205,6 @@ function drawTrainingComboListView() {
   text("LP(Y)=Light Punch  HP(U)=Heavy Punch  LK(H)=Light Kick  HK(J)=Heavy Kick", contentX, contentY);
   
   contentY += controlAfterSpacing;
-  
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 2: SCROLLABLE COMBO LIST
-  // ════════════════════════════════════════════════════════════════
-  
   let comboStartY = contentY;
   let lastComboY = comboStartY;
   
@@ -246,20 +230,12 @@ function drawTrainingComboListView() {
     lastComboY = y;
   }
   
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 3: SEPARATOR LINE
-  // ════════════════════════════════════════════════════════════════
-  
   let separatorY = lastComboY + comboLineHeight + separatorPadding;
   
   stroke(255, 0, 0);
   strokeWeight(2);
   line(listX + contentPaddingX, separatorY, 
        listX + listW - contentPaddingX, separatorY);
-  
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 4: SELECTED COMBO DETAILS
-  // ════════════════════════════════════════════════════════════════
   
   let detailsY = separatorY + separatorPadding;
   let selectedCombo = comboList[selectedTrainingComboIndex] || comboList[0];
@@ -319,10 +295,6 @@ function drawTrainingComboListView() {
   if (currentLine.trim().length > 0) {
     text(currentLine.trim(), contentX + detailsIndent, detailsY);
   }
-  
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 5: CONTROLS HINT
-  // ════════════════════════════════════════════════════════════════
   
   fill(255);
   noStroke();

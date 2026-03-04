@@ -2,9 +2,7 @@ class AIController {
   constructor(character) {
     this.character = character;
     
-    // ═══════════════════════════════════════════════════════════
     // MOVEMENT SYSTEM
-    // ═══════════════════════════════════════════════════════════
     this.movementThinkTimer = 0;
     this.movementThinkInterval = 120;
     
@@ -21,31 +19,28 @@ class AIController {
     this.jumpChance = 0.15;
     this.crouchChance = 0.15;
     
-    // ═══════════════════════════════════════════════════════════
     // ATTACK SYSTEM
-    // ═══════════════════════════════════════════════════════════
     this.shouldAttack = false;
     this.attackCheckTimer = 0;
     this.attackCheckInterval = 15;
     this.lastAttackAttempt = 0;
     
-    // ✅ UPDATED: Attack type weights (combos have priority)
+    // Attack type chances
     this.comboChance = 0.60;   // 60% try combo
-    this.lpChance = 0.20;       // 20%
+    this.lpChance = 0.15;       // 15%
     this.hpChance = 0.15;       // 15%
     this.lkChance = 0.15;       // 15%
-    this.hkChance = 0.15;       // 10%
+    this.hkChance = 0.15;       // 15%
     
-    // ✅ NEW: Available combos for this character
+    // Available combos for this character
     this.availableCombos = [];
     this.initializeCombos();
-    
     this.showDebug = false;
   }
   
-  // ✅ NEW: Initialize character-specific combos
+  // Initialize character-specific combos
   initializeCombos() {
-    // Get standard combos (available to all)
+    // Get standard combos
     let standardCombos = STANDARD_COMBOS.filter(combo => 
       !combo.characterSpecific && 
       combo.type !== "MOVEMENT" && 
@@ -54,8 +49,7 @@ class AIController {
     
     // Get character-specific combos
     let specificCombos = STANDARD_COMBOS.filter(combo => 
-      combo.characterSpecific === this.character.name &&
-      combo.type !== "MOVEMENT" // AI doesn't use movement combos yet
+      combo.characterSpecific === this.character.name    
     );
     
     this.availableCombos = [...standardCombos, ...specificCombos];
@@ -63,7 +57,6 @@ class AIController {
     console.log(`AI ${this.character.name} has ${this.availableCombos.length} combos available`);
   }
   
-  // ✅ NEW: Check if combo can be used
   canUseCombo(combo, opponent) {
     // Cooldown check
     if (combo.cooldown) {
@@ -135,7 +128,7 @@ class AIController {
     return true;
   }
   
-  // ✅ NEW: Try to execute a combo
+  // Try to execute a combo
   tryCombo(opponent) {
     // Filter usable combos
     let usableCombos = this.availableCombos.filter(combo => 
@@ -154,7 +147,6 @@ class AIController {
   }
   
   update(opponent, groundY) {
-    // Don't act if stunned
     if (this.character.hitStun > 0 || 
         this.character.demonicClawOwnerLocked || 
         this.character.isInDemonicAbyss) {
@@ -162,9 +154,7 @@ class AIController {
       return;
     }
     
-    // ═══════════════════════════════════════════════════════════
     // MOVEMENT
-    // ═══════════════════════════════════════════════════════════
     if (this.movementThinkTimer > 0) this.movementThinkTimer--;
     if (this.movementTimer > 0) this.movementTimer--;
     
@@ -181,14 +171,11 @@ class AIController {
       this.movementThinkTimer = this.movementThinkInterval;
     }
     
-    // ═══════════════════════════════════════════════════════════
     // ATTACKS
-    // ═══════════════════════════════════════════════════════════
     if (this.attackCheckTimer > 0) this.attackCheckTimer--;
     
     let distance = Math.abs(this.character.x - opponent.x);
     
-    // Reset shouldAttack flag if conditions no longer met
     if (this.shouldAttack) {
       if (distance > 300 || 
           !this.character.isGrounded || 
@@ -198,7 +185,6 @@ class AIController {
       }
     }
     
-    // Check if should attack
     if (this.attackCheckTimer <= 0) {
       if (distance < 300 && 
           this.character.isGrounded && 
@@ -213,7 +199,6 @@ class AIController {
       this.attackCheckTimer = this.attackCheckInterval;
     }
     
-    // Execute attack if flag is set
     if (this.shouldAttack) {
       if (this.character.attackTimer <= 2 && 
           this.character.recoveryTimer <= 0 &&
@@ -268,7 +253,7 @@ class AIController {
       }
     }
     
-    // DEFAULT: WALK
+    // WALK
     if (distance > 450) {
       this.currentMovement = "WALK_FORWARD";
       this.movementTimer = random(90, 150);
@@ -331,7 +316,7 @@ class AIController {
     this.character.velX = -this.character.facing * 42;
   }
   
-  // ✅ UPDATED: Attack execution with combo support
+  // Attack execution with combo support
   executeAttack(opponent) {
     if (this.character.attackTimer > 0 || this.character.recoveryTimer > 0) {
       return;
@@ -339,16 +324,14 @@ class AIController {
     
     let roll = random();
     
-    // ✅ Try combo first (40% chance)
+    // Try combo first (60% chance)
     if (roll < this.comboChance) {
       if (this.tryCombo(opponent)) {
         console.log("✅ AI executed combo!");
-        return; // Combo successful
+        return; 
       }
-      // If combo fails, fall through to basic attacks
     }
     
-    // ✅ Basic attacks
     let totalChance = this.lpChance + this.hpChance + this.lkChance + this.hkChance;
     let normalizedRoll = (roll - this.comboChance) / (1 - this.comboChance);
     
@@ -368,7 +351,7 @@ class AIController {
       attackType = "HK";
     }
     
-    console.log(`👊 AI basic attack: ${attackType}`);
+    console.log(` AI basic attack: ${attackType}`);
     this.character.startAttack(attackType);
   }
   
@@ -386,7 +369,6 @@ class AIController {
     text(`Movement: ${this.currentMovement}`, this.character.x + this.character.w/2, this.character.y - 135);
     text(`Timer: ${Math.ceil(this.movementTimer / 60)}s`, this.character.x + this.character.w/2, this.character.y - 120);
     
-    // ✅ NEW: Show combo count
     let usableComboCount = this.availableCombos.filter(c => this.canUseCombo(c, opponent)).length;
     fill(150, 255, 150);
     text(`Combos: ${usableComboCount}/${this.availableCombos.length}`, this.character.x + this.character.w/2, this.character.y - 105);
@@ -430,12 +412,11 @@ class AIController {
   }
 }
 
-// Keep existing global functions
 let aiController = null;
 
 function initAI(character) {
   aiController = new AIController(character);
-  console.log(`🤖 AI initialized for ${character.name}`);
+  console.log(`AI initialized for ${character.name}`);
 }
 
 function updateAI(opponent, groundY) {

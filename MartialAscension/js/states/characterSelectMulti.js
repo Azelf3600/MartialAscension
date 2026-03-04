@@ -114,9 +114,6 @@ function drawCharacterSelectMulti() {
 function drawMultiplayerPreview(edgeX, index, isReady, playerNum) {
   let fighter = FIGHTERS[index];
   let isP1 = (playerNum === 1);
-  
-  // ADJUSTED: Moved P1 further right and P2 further left to center the text block 
-  // under the characters properly.
   let drawCenterX = isP1 ? width * 0.17 : width * 0.83; 
   
   push();
@@ -139,7 +136,7 @@ function drawMultiplayerPreview(edgeX, index, isReady, playerNum) {
 
   // Text Stack - Anchored for centering
   let textBaseY = height * 0.75; 
-  textAlign(CENTER, CENTER); // Force centering for the stack
+  textAlign(CENTER, CENTER); 
 
   if (isReady) {
     drawTitle("READY", drawCenterX, textBaseY, width * 0.03);

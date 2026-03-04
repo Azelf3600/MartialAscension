@@ -1,11 +1,8 @@
-// Training Mode - Single player practice with dummy
 let trainingPlayer, trainingDummy;
 let trainingGroundY;
 let trainingDamageIndicators = [];
-
-// Training UI State
-let showInputHistory = false; // Toggle with T
-let inputHistoryBuffer = []; // Last 10 inputs
+let showInputHistory = false; 
+let inputHistoryBuffer = []; 
 const MAX_INPUT_HISTORY = 10;
 
 function initTraining() {
@@ -17,7 +14,7 @@ function initTraining() {
   projectiles = [];
   if (p1Buffer) p1Buffer.clear();
 
-  // Create player character (from selection)
+  // Create player character 
   let charH = height * 0.5;
   let playerData = FIGHTERS[selectedTrainingChar];
   trainingPlayer = new Character(
@@ -32,15 +29,15 @@ function initTraining() {
     playerData.archetype
   );
 
-  // Create dummy character (random)
+  // Create dummy character
   let dummyData = FIGHTERS[randomDummyIndex];
   trainingDummy = new Character(
     width * 0.7, 
     trainingGroundY - charH, 
     width * 0.08, 
     charH, 
-    color(200, 200, 200), // Gray color for dummy
-    PLAYER_CONTROLS.P2, // Dummy doesn't use controls
+    color(200, 200, 200), 
+    PLAYER_CONTROLS.P2,
     dummyData.name, 
     -1,
     dummyData.archetype
@@ -75,7 +72,7 @@ function drawTraining() {
 
   gameCamera.update(trainingPlayer, trainingDummy);
 
-  // ✅ Update input buffer (required for dash detection)
+  // Input buffer (required for dash detection)
   if (p1Buffer) p1Buffer.update();
 
   push();
@@ -89,10 +86,10 @@ function drawTraining() {
 
   drawWorldBorders();
 
-  // ✅ FIXED: Update player normally, but manually handle dummy physics
+  // Update player normally, but manually handle dummy physics
   trainingPlayer.update(trainingDummy, trainingGroundY);
   
-  // ✅ Dummy: Only update status effects and physics, NO movement
+  // Only update status effects and physics, NO movement
   updateDummyPhysicsOnly(trainingDummy, trainingPlayer, trainingGroundY);
 
   updateProjectiles();
@@ -111,7 +108,7 @@ function drawTraining() {
   trainingDummy.draw();
 
   drawProjectiles();
-  drawPoisonFieldEffect(trainingPlayer, trainingDummy); // ✅ NEW
+  drawPoisonFieldEffect(trainingPlayer, trainingDummy); 
   drawAzureDragonIndicators(trainingPlayer, trainingDummy);
   updateTrainingDamageIndicators();
   drawTrainingDamageIndicators();
@@ -124,10 +121,6 @@ function drawTraining() {
 
 function drawTrainingInterface() {
   push();
-  
-  // ═══════════════════════════════════════════════════════════
-  // PLAYER INFO (Top Left)
-  // ═══════════════════════════════════════════════════════════
   
   let padding = 50;
   let barW = width * 0.4;
@@ -148,10 +141,6 @@ function drawTrainingInterface() {
   textSize(18);
   text(floor(trainingPlayer.hp) + " / " + trainingPlayer.maxHp, padding, padding + barH + 25);
 
-  // ═══════════════════════════════════════════════════════════
-  // DUMMY INFO (Top Right)
-  // ═══════════════════════════════════════════════════════════
-
   fill(255);
   textAlign(RIGHT, BOTTOM);
   textSize(24);
@@ -163,10 +152,6 @@ function drawTrainingInterface() {
   // HP numeric
   textSize(18);
   text(floor(trainingDummy.hp) + " / " + trainingDummy.maxHp, width - padding, padding + barH + 25);
-
-  // ═══════════════════════════════════════════════════════════
-  // TRAINING CONTROLS (Bottom Left)
-  // ═══════════════════════════════════════════════════════════
 
   let controlX = padding;
   let controlY = height - 120;
@@ -188,16 +173,11 @@ function drawTrainingInterface() {
   text("T - Toggle Input History", controlX, controlY);
   controlY += lineSpacing;
 
-  // ═══════════════════════════════════════════════════════════
-  // INPUT HISTORY (Bottom Right) - Toggle with T
-  // ═══════════════════════════════════════════════════════════
-
 if (showInputHistory) {
-  // ✅ NEW: Position at bottom center, above controls
-  let historyW = width * 0.6; // Wide horizontal box
-  let historyH = 80; // Shorter height
-  let historyX = width / 2 - 200; // Center horizontally
-  let historyY = height - 120; // Above player controls
+  let historyW = width * 0.6; 
+  let historyH = 80; 
+  let historyX = width / 2 - 200;
+  let historyY = height - 120;
 
   // Background box
   fill(20, 220);
@@ -212,8 +192,6 @@ if (showInputHistory) {
   textAlign(LEFT, TOP);
   textSize(16);
   text("INPUT HISTORY:", historyX + 10, historyY + 10);
-
-  // ✅ NEW: Display last 10 inputs HORIZONTALLY (newest at right)
   fill(255);
   textSize(14);
   textAlign(LEFT, TOP);
@@ -221,13 +199,10 @@ if (showInputHistory) {
   // Get last 10 inputs
   let displayStart = Math.max(0, inputHistoryBuffer.length - 14);
   let displayInputs = inputHistoryBuffer.slice(displayStart);
-  
-  // Calculate spacing for horizontal layout
-  let inputSpacing = 60; // Space between each input
+  let inputSpacing = 60; 
   let startX = historyX + 10;
   let inputY = historyY + 40;
   
-  // Draw each input horizontally with arrow between them
   for (let i = 0; i < displayInputs.length; i++) {
     let inputX = startX + (i * inputSpacing);
     
@@ -235,19 +210,14 @@ if (showInputHistory) {
     fill(255);
     text(displayInputs[i], inputX, inputY);
     
-    // Draw arrow between inputs (except after last one)
     if (i < displayInputs.length - 1) {
       fill(200, 200, 200);
       textSize(12);
       text("→", inputX + 30, inputY + 2);
-      textSize(14); // Reset size
+      textSize(14); 
     }
   }
 }
-
-  // ═══════════════════════════════════════════════════════════
-  // PLAYER CONTROLS (Bottom Center)
-  // ═══════════════════════════════════════════════════════════
 
   let p1ControlX = width / 2 - 400;
   let p1ControlY = height - 120;
@@ -267,10 +237,10 @@ if (showInputHistory) {
 }
 
 function handleTrainingInput(key, keyCode) {
-  // ✅ NEW: ESC to pause
+  // NEW: ESC to pause
   if (keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU_TRAINING;
-    return; // Don't process other inputs
+    return; 
   }
 
   // Reset Position (R)
@@ -311,16 +281,14 @@ function handleTrainingInput(key, keyCode) {
 }
 
 function recordTrainingInput(move) {
-  // Add to history buffer
   inputHistoryBuffer.push(move);
   
-  // Keep only last 20 inputs
   if (inputHistoryBuffer.length > 20) {
     inputHistoryBuffer.shift();
   }
 }
 
-// Training damage indicators (same as match)
+// Training damage indicators 
 function spawnTrainingDamageIndicator(x, y, amount, isBlocked) {
   trainingDamageIndicators.push({
     x: x,
@@ -405,7 +373,7 @@ function drawPoisonFieldEffect(p1, p2) {
 
 // Update dummy physics without allowing movement
 function updateDummyPhysicsOnly(dummy, opponent, groundY) {
-  // ✅ Handle hitstun countdown
+  // Handle hitstun countdown
   if (dummy.hitStun > 0) {
     dummy.hitStun--;
     dummy.isHit = true;
@@ -414,19 +382,19 @@ function updateDummyPhysicsOnly(dummy, opponent, groundY) {
     dummy.isHit = false;
   }
 
-  // ✅ Handle recovery timer
+  // Handle recovery timer
   if (dummy.recoveryTimer > 0) {
     dummy.recoveryTimer--;
   }
 
-  // ✅ Update cooldowns
+  // Update cooldowns
   for (let comboName in dummy.comboCooldowns) {
     if (dummy.comboCooldowns[comboName] > 0) {
       dummy.comboCooldowns[comboName]--;
     }
   }
 
-  // ✅ Update all status effects (poison, buffs, etc.)
+  // Update all status effects (poison, buffs, etc.)
   // Poison Hands
   if (dummy.isPoisonHandsActive && dummy.poisonHandsTimer > 0) {
     dummy.poisonHandsTimer--;
@@ -473,8 +441,8 @@ function updateDummyPhysicsOnly(dummy, opponent, groundY) {
       dummy.hp -= dummy.poisonDamage;
       if (dummy.hp < 0) dummy.hp = 0;
       
-      if (typeof spawnDamageIndicator === 'function') {
-        spawnDamageIndicator(dummy.x + dummy.w / 2, dummy.y - 20, dummy.poisonDamage, false);
+      if (typeof spawnTrainingDamageIndicator === 'function') {
+        spawnTrainingDamageIndicator(dummy.x + dummy.w / 2, dummy.y - 20, dummy.poisonDamage, false);
       }
     }
     
@@ -484,12 +452,43 @@ function updateDummyPhysicsOnly(dummy, opponent, groundY) {
     }
   }
 
-  // ✅ Face opponent (only visual, no movement)
-  dummy.facing = (dummy.x < opponent.x) ? 1 : -1;
+  // ✅ FIXED: Annihilation mark countdown
+  if (dummy.isAnnihilationMarked && dummy.annihilationTimer > 0) {
+    dummy.annihilationTimer--;
 
-  // ✅ Apply physics (gravity, falling)
+    if (dummy.annihilationTimer <= 0) {
+      dummy.annihilationExploding = true;
+      dummy.annihilationExplosionTimer = 30;
+
+      let explosionDamage = dummy.annihilationCumulativeDamage;
+      dummy.hp -= explosionDamage;
+      if (dummy.hp < 0) dummy.hp = 0;
+
+      if (typeof spawnTrainingDamageIndicator === 'function') {
+        spawnTrainingDamageIndicator(
+          dummy.x + dummy.w / 2,
+          dummy.y - 50,
+          Math.floor(explosionDamage),
+          false
+        );
+      }
+
+      console.log(`ANNIHILATION EXPLOSION! ${Math.floor(explosionDamage)} damage dealt to dummy!`);
+      dummy.annihilationCumulativeDamage = 0;
+      dummy.annihilationCaster = null;
+    }
+  }
+
+  // Annihilation explosion visual
+  if (dummy.annihilationExploding && dummy.annihilationExplosionTimer > 0) {
+    dummy.annihilationExplosionTimer--;
+    if (dummy.annihilationExplosionTimer <= 0) {
+      dummy.annihilationExploding = false;
+      dummy.isAnnihilationMarked = false;
+      console.log("Dummy Annihilation mark cleared!");
+    }
+  }
+
+  dummy.facing = (dummy.x < opponent.x) ? 1 : -1;
   dummy.applyPhysics(groundY);
-  
-  // ✅ NO handleMovement() - dummy stays stationary
-  // ✅ NO handleAttack() - dummy doesn't attack
 }

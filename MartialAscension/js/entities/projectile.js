@@ -1,4 +1,3 @@
-// Global projectile array
 let projectiles = [];
 
 class Projectile {
@@ -14,83 +13,83 @@ class Projectile {
     // Set dimensions based on type
     if (type === "judgment") {
       // Sword God Judgment - wide vertical beam
-      this.w = 300; // Very wide
-      this.h = 100; // Thick beam
+      this.w = 300;
+      this.h = 100; 
       this.startX = x;
       this.startY = y;
       this.distanceTraveled = 0;
-      this.maxDistance = 2000; // Travel until ground
+      this.maxDistance = 2000; 
       
-      // NEW: Slow phase like Sword Qi Strike
-      this.slowPhaseDistance = 100; // First 100px slow
+      // Slow phase like Sword Qi Strike
+      this.slowPhaseDistance = 100; 
       this.currentSpeed = 0;
-      this.slowSpeed = 5; // Slow descent speed
-      this.burstSpeed = 35; // Fast descent speed after 300px
+      this.slowSpeed = 5; 
+      this.burstSpeed = 35; 
       
-      // NEW: Linger after hit
+      // Linger after hit
       this.lingerTimer = 0;
       this.isLingering = false;
     } 
     else if (type === "poison_qi") {
-      // NEW: Poison Qi Palm - green projectile
-      this.w = 80;  // Width - ADJUSTABLE
-      this.h = 80;  // Height - ADJUSTABLE
+      // Poison Qi Palm - green projectile
+      this.w = 80;  
+      this.h = 80; 
       this.startX = x;
       this.distanceTraveled = 0;
-      this.maxDistance = 1000; // Same as Sword Qi Strike
-      this.slowPhaseDistance = 100; // Same as Sword Qi Strike
+      this.maxDistance = 1000; 
+      this.slowPhaseDistance = 100; 
       this.currentSpeed = 0;
-      this.slowSpeed = 3; // Same as Sword Qi Strike
-      this.burstSpeed = 25; // Same as Sword Qi Strike
+      this.slowSpeed = 3;
+      this.burstSpeed = 25;
     }
     else if (type === "flame_needle") {
-      // NEW: Flame Poison Needle
-      this.w = 100;  // Same as Sword Qi Strike width
-      this.h = 20;   // Same as Sword Qi Strike height
+      // Flame Poison Needle
+      this.w = 100;  
+      this.h = 20; 
       this.startX = x;
       this.distanceTraveled = 0;
-      this.maxDistance = 1000;      // Same as Sword Qi Strike
-      this.slowPhaseDistance = 100; // Same as Sword Qi Strike
+      this.maxDistance = 1000;      
+      this.slowPhaseDistance = 100;
       this.currentSpeed = 0;
-      this.slowSpeed = 3;           // Same as Sword Qi Strike
-      this.burstSpeed = 25;         // Same as Sword Qi Strike
+      this.slowSpeed = 3;           
+      this.burstSpeed = 25;        
     }
     else if (type === "poison_rain") {
       // Ten Thousand Poison Flower Rain - vertical raindrop
-      this.w = 40;    // Width (as specified)
-      this.h = 100;   // Height (as specified)
+      this.w = 40;    
+      this.h = 100; 
       this.startX = x;
       this.startY = y;
       this.distanceTraveled = 0;
-      this.maxDistance = 2000;       // Travel until ground
-      this.slowPhaseDistance = 150;  // Slow for first 100px like judgment
+      this.maxDistance = 2000;      
+      this.slowPhaseDistance = 150; 
       this.currentSpeed = 0;
-      this.slowSpeed = 5;            // Slow phase speed
-      this.burstSpeed = 35;          // Burst phase speed
+      this.slowSpeed = 5;            
+      this.burstSpeed = 35;         
     }
     else if (type === "demonic_claw") {
-      // ✅ UPDATED: Demonic Heaven's Claw - ground launcher with full animation
-      this.w = 150; // Width as specified
-      this.h = 0; // Starts at 0, grows to player height
-      this.maxH = 200; // Player height
+      // Demonic Heaven's Claw - ground launcher with full animation
+      this.w = 150; 
+      this.h = 0; 
+      this.maxH = 200; 
       this.startX = x;
-      this.startY = y; // Ground position
+      this.startY = y;
       this.distanceTraveled = 0;
-      this.maxDistance = 200; // Travel distance = character height
+      this.maxDistance = 200; 
   
-      // ✅ NEW: Phase timings with animation
-      this.indicatorTimer = 60; // 1 second indicator
-      this.riseTimer = 15; // 0.25 seconds to rise (fast)
-      this.lingerTimer = 30; // 0.5 second linger at top
-      this.descendTimer = 15; // 0.25 seconds to descend (fast)
-      this.phase = "indicator"; // "indicator", "rise", "linger", "descend"
+      // Phase timings with animation
+      this.indicatorTimer = 60;
+      this.riseTimer = 15; 
+      this.lingerTimer = 30; 
+      this.descendTimer = 15; 
+      this.phase = "indicator"; 
   
       // Lock owner if not awakened
       if (owner && !owner.isDemonicAwakeningActive) {
           owner.demonicClawOwnerLocked = true;
       }
     }   
-    else { // Sword Qi Strike - horizontal projectile
+    else { // Sword Qi Strike
       this.w = 100;
       this.h = 20;
       this.startX = x;
@@ -101,8 +100,6 @@ class Projectile {
       this.slowSpeed = 3;
       this.burstSpeed = 25;
     }
-    
-    // Visual
     this.alpha = 255;
     this.trailPoints = [];
   }
@@ -139,7 +136,7 @@ update() {
       this.active = false;
     }
   } else if (this.type === "poison_rain") {
-    // NEW: Vertical raindrop logic (like judgment but NOT a laser)
+    // Vertical raindrop logic
     this.distanceTraveled = abs(this.y - this.startY);
     
     if (this.distanceTraveled < this.slowPhaseDistance) {
@@ -148,7 +145,7 @@ update() {
       this.currentSpeed = this.burstSpeed;
     }
     
-    this.y += this.currentSpeed; // Move downward
+    this.y += this.currentSpeed; 
     
     // Trail points
     this.trailPoints.push({ x: this.x, y: this.y, alpha: 200 });
@@ -161,7 +158,7 @@ update() {
     }
   }
 else if (this.type === "demonic_claw") {
-  // ✅ UPDATED: Demonic Claw phases with full animation
+  // Demonic Claw phases with full animation
   
   // Phase 1: Indicator (1 second)
   if (this.phase === "indicator") {
@@ -173,27 +170,25 @@ else if (this.type === "demonic_claw") {
     }
   }
   
-  // Phase 2: Rise (0.25 seconds - fast upward)
+  // Phase 2: Rise (0.25 seconds)
   else if (this.phase === "rise") {
     this.riseTimer--;
     
     // Grow hitbox upward smoothly
-    let riseProgress = (15 - this.riseTimer) / 15; // 0 to 1
+    let riseProgress = (15 - this.riseTimer) / 15; 
     this.h = this.maxH * riseProgress;
     this.distanceTraveled = this.h;
     
     if (this.riseTimer <= 0) {
       this.phase = "linger";
-      this.h = this.maxH; // Ensure full height
+      this.h = this.maxH; 
       console.log("Demonic Claw lingering at top!");
     }
   }
   
-  // Phase 3: Linger (0.5 seconds - stays at full height)
+  // Phase 3: Linger (0.5 seconds)
   else if (this.phase === "linger") {
     this.lingerTimer--;
-    
-    // Maintain full height
     this.h = this.maxH;
     
     if (this.lingerTimer <= 0) {
@@ -202,19 +197,17 @@ else if (this.type === "demonic_claw") {
     }
   }
   
-  // Phase 4: Descend (0.25 seconds - fast downward)
+  // Phase 4: Descend (0.25 seconds)
   else if (this.phase === "descend") {
     this.descendTimer--;
     
     // Shrink hitbox downward smoothly
-    let descendProgress = this.descendTimer / 15; // 1 to 0
+    let descendProgress = this.descendTimer / 15;
     this.h = this.maxH * descendProgress;
     
     if (this.descendTimer <= 0) {
       this.phase = "disappear";
-      
-      // Release owner lock if they were locked
-      if (this.owner && this.owner.demonicClawOwnerLocked) {
+        if (this.owner && this.owner.demonicClawOwnerLocked) {
         this.owner.attacking = null;
         this.owner.attackTimer = 0;
         this.owner.isPerformingCombo = false;
@@ -227,7 +220,7 @@ else if (this.type === "demonic_claw") {
   }
 }
   else {
-    // ALL other projectiles use horizontal logic
+    // All other projectiles use horizontal logic
     this.distanceTraveled = abs(this.x - this.startX);
     
     if (this.distanceTraveled < this.slowPhaseDistance) {
@@ -413,9 +406,9 @@ draw() {
   }
   
   else if (this.type === "demonic_claw") {
-  // ✅ UPDATED: Demonic Heaven's Claw visual with all phases
+  // Demonic Heaven's Claw visual with all phases
   
-  // Indicator phase - warning on ground
+  // Indicator phase 
   if (this.phase === "indicator") {
     let pulseAlpha = 150 + sin(frameCount * 0.4) * 100;
     
@@ -439,19 +432,19 @@ draw() {
     ellipse(this.x, this.startY, 10, 5);
   }
   
-  // Rise, Linger, and Descend phases - show the claw pillar
+  // Rise, Linger, and Descend phases 
   else if (this.phase === "rise" || this.phase === "linger" || this.phase === "descend") {
     rectMode(CORNER);
     
     drawingContext.shadowBlur = 35;
     drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
     
-    // Demonic claw energy (dark purple/red)
+    // Demonic claw energy 
     fill(150, 0, 150, 200);
     noStroke();
     rect(this.x - this.w/2, this.startY - this.h, this.w, this.h, 5);
     
-    // Claw edges (darker red)
+    // Claw edges
     stroke(200, 0, 100, 255);
     strokeWeight(3);
     noFill();
@@ -466,7 +459,7 @@ draw() {
       ellipse(particleX, particleY, random(4, 10), random(4, 10));
     }
     
-    // Claw marks (vertical slashes)
+    // Claw marks 
     for (let i = 0; i < 3; i++) {
       let slashX = this.x - this.w/2 + (i * this.w/3) + this.w/6;
       stroke(255, 0, 150, 200);
@@ -474,7 +467,7 @@ draw() {
       line(slashX, this.startY - this.h, slashX, this.startY);
     }
     
-    // ✅ NEW: Extra visual feedback during linger
+    // Extra visual feedback during linger
     if (this.phase === "linger") {
       // Pulsing intensity during linger
       let lingerPulse = 150 + sin(frameCount * 0.5) * 100;
@@ -524,18 +517,14 @@ checkCollision(target) {
     this.y - this.h/2 < target.y + target.h &&
     this.y + this.h/2 > target.y) {
 
-    // ✅ NEW: Demonic Claw doesn't set hasHit, so it can hit multiple times
     if (this.type === "demonic_claw") {
-      // Don't set hasHit - claw stays active through all phases
       return true;
     }
     
     this.hasHit = true;
     
       if (this.type === "judgment") {
-        // Judgment lingers - handled in checkProjectileCollisions
       } else {
-        // All others (including poison_rain) disappear on hit
         this.active = false;
       }
     
@@ -591,11 +580,11 @@ function checkProjectileCollisions(player1, player2) {
         proj.y = groundY - proj.h/2;
       }
     }
-    // NEW: Ground collision for poison rain - just disappear
+    // Ground collision for poison rain
     if (proj.type === "poison_rain" && proj.active) {
       let groundY = height - 100;
       if (proj.y + proj.h/2 >= groundY) {
-        proj.active = false; // Just disappear on ground hit
+        proj.active = false;
       }
     }
     if (proj.type === "demonic_claw" && (proj.phase === "rise" || proj.phase === "linger")) {
@@ -644,20 +633,20 @@ function applyProjectileDamage(target, projectile, attacker) {
     }
   }
   else if (projectile.type === "poison_rain") {
-    // NEW: Ten Thousand Poison Flower Rain - each drop
-    baseDmg = 500 / 10; // 350 total / 5 drops = 70 per drop
+    // Ten Thousand Poison Flower Rain - each drop
+    baseDmg = 500 / 10; 
     stunTime = 30;
     knockback = 20;
-    ignoreModifiers = false; // Uses archetype modifiers
+    ignoreModifiers = false;
     ignoreBlock = true;
   }
   else if (projectile.type === "demonic_claw") {
-    // ✅ NEW: Demonic Heaven's Claw
+    // Demonic Heaven's Claw
     baseDmg = 30;
-    stunTime = 0; // No stun (can act immediately after launch)
-    knockback = 0; // No horizontal knockback (launcher handles this)
-    ignoreModifiers = false; // Uses archetype modifiers
-    ignoreBlock = false; // Can be blocked
+    stunTime = 0; 
+    knockback = 0; 
+    ignoreModifiers = false; 
+    ignoreBlock = false; 
     }
 
   
@@ -670,7 +659,7 @@ function applyProjectileDamage(target, projectile, attacker) {
   
   applyDamage(target, finalDmg, attacker, stunTime, knockback, ignoreBlock);
   
-// Demonic Claw launcher effect - always launches, even through block
+// Demonic Claw launcher effect 
 if (projectile.type === "demonic_claw") {
   if (target.isOceanMendingActive) {
     console.log("Demonic Claw launch blocked by Ocean Mending Water!");
@@ -678,7 +667,7 @@ if (projectile.type === "demonic_claw") {
     target.velY = -target.jumpPower * 1.8;
     target.isGrounded = false;
     target.hitStun = 0;
-    target.isBlocking = false; // Force out of block state on launch
+    target.isBlocking = false;
     console.log("Demonic Claw launched enemy!");
   }
 }

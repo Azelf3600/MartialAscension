@@ -1,5 +1,5 @@
 let metalFont;
-let singleBtn, multiBtn, trainingBtn; // ✅ Added trainingBtn
+let singleBtn, multiBtn, trainingBtn; 
 
 //preload font and images to avoid lag
 function preloadMainMenu() {
@@ -13,7 +13,7 @@ function preloadMainMenu() {
       fighter.previewImg = loadImage(fighter.previewPath);
     }
     
-    // ✅ NEW: Load lore chapter images
+    // Load lore chapter images
     if (fighter.loreChapters) {
       fighter.loreChapters.forEach(chapter => {
         if (chapter.path) {
@@ -23,7 +23,7 @@ function preloadMainMenu() {
     }
   });
 
-  // for stage images 
+  // For stage images 
   STAGES.forEach(stage => {
     stage.img = loadImage(stage.path);
   });
@@ -33,25 +33,21 @@ function setupMenuLayout() {
   let centerX = width / 2;
   let centerY = height / 2;
 
-  // ✅ UPDATED: Repositioned buttons to accommodate 3 options
   singleBtn = {
     x: centerX,
-    y: centerY + height * 0.02, // Moved up slightly
+    y: centerY + height * 0.02, 
     w: width * 0.4, 
     h: height * 0.1 
   };
-
   multiBtn = {
     x: centerX,
-    y: centerY + height * 0.12, // Spaced evenly
+    y: centerY + height * 0.12, 
     w: width * 0.4,
     h: height * 0.1
   };
-
-  // ✅ NEW: Training button
   trainingBtn = {
     x: centerX,
-    y: centerY + height * 0.22, // Below multiplayer
+    y: centerY + height * 0.22, 
     w: width * 0.4,
     h: height * 0.1
   };
@@ -60,24 +56,22 @@ function setupMenuLayout() {
 function drawMenu() {
   background(20); 
   push();
-  textAlign(CENTER, CENTER); // Force alignment for the menu specifically
+  textAlign(CENTER, CENTER); 
   
   let centerX = width / 2;
   let centerY = height / 2;
 
   drawTitle("Martial Ascension", centerX, centerY - height * 0.25, width * 0.1);
   drawText("Click to proceed", centerX, centerY - height * 0.03, width * 0.015);
-
-  // ✅ Draw all three buttons
   drawButton("Campaign", singleBtn);
   drawButton("Multiplayer", multiBtn);
-  drawButton("Training", trainingBtn); // ✅ NEW
+  drawButton("Training", trainingBtn);
 
   drawText("Starloom 2025", centerX, height - height * 0.05, width * 0.015);
   pop();
 }
 
-//Delay when clicked 
+// Delay when clicked 
 function handleMenuClick() {
   if (isHovering(singleBtn)) {
     setTimeout(() => {
@@ -91,7 +85,7 @@ function handleMenuClick() {
     }, 500);
   }
 
-  // ✅ NEW: Training button click
+  // Training button click
   if (isHovering(trainingBtn)) {
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT_TRAINING;
@@ -99,7 +93,7 @@ function handleMenuClick() {
   }
 }
 
-//Main Title - Martial Ascension
+// Main Title - Martial Ascension
 function drawTitle(content, x, y, size) {
   push();
   textFont(metalFont);
@@ -115,7 +109,7 @@ function drawButton(label, btn) {
   push();
   textFont(metalFont);
   
-  //Size and stroke based on hover
+  // Size and stroke based on hover
   if (isHovering(btn)) {
     textSize(width * 0.045); 
     stroke(180, 0, 0);       

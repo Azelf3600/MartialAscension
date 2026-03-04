@@ -1,8 +1,7 @@
-// Lore Screen State
 let loreText = "";
 let loreTextFull = "";
 let loreTextIndex = 0;
-let loreTypeSpeed = 2; // Characters per frame (adjust for speed)
+let loreTypeSpeed = 2; 
 let loreTypingComplete = false;
 let loreSkipPromptAlpha = 0;
 
@@ -54,10 +53,7 @@ const LORE_TEXTS = {
 };
 
 function initLoreScreen() {
-  // Get the full text for this chapter
   loreTextFull = LORE_TEXTS[campaignPlayerChar][campaignProgress];
-  
-  // Reset typewriter state
   loreText = "";
   loreTextIndex = 0;
   loreTypingComplete = false;
@@ -68,11 +64,6 @@ function initLoreScreen() {
 
 function drawLoreScreen() {
   background(0);
-  
-  // ══════════════════════════════════════════════════════
-  // BACKGROUND IMAGE (scaled to fit)
-  // ══════════════════════════════════════════════════════
-  
   let playerData = FIGHTERS[campaignPlayerChar];
   let chapterImg = playerData.loreChapters[campaignProgress].img;
   
@@ -87,11 +78,7 @@ function drawLoreScreen() {
     image(chapterImg, width / 2, height / 2, imgW, imgH);
     pop();
   }
-  
-  // ══════════════════════════════════════════════════════
-  // TYPEWRITER EFFECT UPDATE
-  // ══════════════════════════════════════════════════════
-  
+  // TYPEWRITER EFFECT UPDATE  
   if (!loreTypingComplete && loreTextIndex < loreTextFull.length) {
     // Add characters per frame (speed control)
     for (let i = 0; i < loreTypeSpeed; i++) {
@@ -100,17 +87,11 @@ function drawLoreScreen() {
         loreTextIndex++;
       }
     }
-    
-    // Check if typing finished
     if (loreTextIndex >= loreTextFull.length) {
       loreTypingComplete = true;
     }
   }
-  
-  // ══════════════════════════════════════════════════════
-  // TEXTBOX BACKGROUND (Bottom third of screen)
-  // ══════════════════════════════════════════════════════
-  
+  // TEXTBOX BACKGROUND (Bottom third of screen)  
   push();
   
   let boxX = width * 0.05;
@@ -125,47 +106,37 @@ function drawLoreScreen() {
   rectMode(CORNER);
   rect(boxX, boxY, boxW, boxH, 10);
   
-  // Inner border (ornamental)
+  // Inner border
   noFill();
   stroke(200, 200, 220, 100);
   strokeWeight(1);
   rect(boxX + 10, boxY + 10, boxW - 20, boxH - 20, 5);
   
   pop();
-  
-  // ══════════════════════════════════════════════════════
-  // CHAPTER TITLE (Above textbox)
-  // ══════════════════════════════════════════════════════
-  
+  // CHAPTER TITLE
   push();
   textAlign(LEFT, BOTTOM);
   textFont(metalFont);
-  fill(255, 215, 0); // Gold color
+  fill(255, 215, 0); 
   noStroke();
   textSize(width * 0.025);
   text(`CHAPTER ${campaignProgress + 1}`, boxX + 20, boxY - 10);
   pop();
-  
-  // ══════════════════════════════════════════════════════
-  // LORE TEXT (Inside textbox with word wrap)
-  // ══════════════════════════════════════════════════════
-  
+  // LORE TEXT (Inside textbox with word wrap)  
   push();
   textAlign(LEFT, TOP);
   textFont(metalFont);
   fill(255);
   noStroke();
-  textSize(width * 0.0165); // Readable size
+  textSize(width * 0.0165); 
   
   let textX = boxX + 30;
   let textY = boxY + 25;
   let textMaxW = boxW - 60;
-  
-  // Word wrap the typed text
   let words = loreText.split(' ');
   let line = '';
   let lineY = textY;
-  let lineHeight = width * 0.022; // Line spacing
+  let lineHeight = width * 0.022; 
   
   for (let i = 0; i < words.length; i++) {
     let testLine = line + words[i] + ' ';
@@ -193,10 +164,7 @@ function drawLoreScreen() {
   
   pop();
   
-  // ══════════════════════════════════════════════════════
-  // PROMPT (Bottom right of textbox)
-  // ══════════════════════════════════════════════════════
-  
+  // PROMPT  
   push();
   textAlign(RIGHT, BOTTOM);
   textFont(metalFont);
@@ -218,10 +186,7 @@ function drawLoreScreen() {
   
   pop();
   
-  // ══════════════════════════════════════════════════════
   // ESC TO MENU (Top left corner for testing)
-  // ══════════════════════════════════════════════════════
-  
   push();
   textAlign(LEFT, TOP);
   textFont(metalFont);
@@ -233,19 +198,15 @@ function drawLoreScreen() {
 }
 
 function handleLoreScreenInput(key, keyCode) {
-  // ══════════════════════════════════════════════════════
-  // SPACE - Skip typing OR continue to next screen
-  // ══════════════════════════════════════════════════════
-  
   if (key === ' ' || keyCode === ENTER) {
     if (!loreTypingComplete) {
-      // ✅ SKIP - Complete typing instantly
+      // Skip - Complete typing instantly
       loreText = loreTextFull;
       loreTextIndex = loreTextFull.length;
       loreTypingComplete = true;
       console.log("Lore text skipped!");
     } else {
-      // ✅ CONTINUE - Go to next screen
+      // CONTINUE - Go to next screen
       if (campaignProgress >= 3) {
         // Final chapter - go to victory screen
         console.log("Campaign complete! Going to WIN_SCREEN");
@@ -258,10 +219,7 @@ function handleLoreScreenInput(key, keyCode) {
     }
   }
   
-  // ══════════════════════════════════════════════════════
-  // ESC - Return to menu (testing)
-  // ══════════════════════════════════════════════════════
-  
+  // ESC - Return to menu (testing)  
   if (keyCode === ESCAPE) {
     currentState = GAME_STATE.MENU;
     campaignProgress = 0;

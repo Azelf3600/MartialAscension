@@ -1,14 +1,13 @@
-// Pause Menu State (Single Player)
-let pauseMenuState = "MAIN"; // "MAIN", "CONFIRM", "COMBO_LIST_VIEW"
-let pauseMenuSelection = 0; // Current selection (0-3)
-let pauseConfirmSelection = 0; // Confirm selection (0 = Yes, 1 = No)
-let selectedComboIndex = 0; // Track selected combo in list
-let pendingAction = ""; // What action is waiting for confirmation
+let pauseMenuState = "MAIN"; 
+let pauseMenuSelection = 0; 
+let pauseConfirmSelection = 0; 
+let selectedComboIndex = 0; 
+let pendingAction = ""; 
 
 const PAUSE_MENU_OPTIONS = [
   "RESUME",
   "RESTART",
-  "CHARACTER SELECT", // ✅ Added
+  "CHARACTER SELECT", 
   "COMBO LIST",
   "MAIN MENU"
 ];
@@ -28,10 +27,10 @@ function drawPauseMenu() {
   if (pauseMenuState === "MAIN") {
     drawPauseMainMenu();
   } else if (pauseMenuState === "CONFIRM") {
-    drawPauseMainMenu(); // Still show main menu dimmed
+    drawPauseMainMenu(); 
     drawPauseConfirmPrompt();
   } else if (pauseMenuState === "COMBO_LIST_VIEW") {
-    drawPauseMainMenu(); // Still show main menu dimmed
+    drawPauseMainMenu(); 
     drawComboListView();
   }
 }
@@ -42,8 +41,6 @@ function drawPauseMainMenu() {
   let menuX = width * 0.25;
   let menuY = height * 0.30;
   let optionSpacing = height * 0.10;
-  
-  // Dim if in confirm state
   let dimAlpha = (pauseMenuState !== "MAIN") ? 100 : 255;
   
   // Title
@@ -146,7 +143,6 @@ function drawPauseConfirmPrompt() {
 function drawComboListView() {
   push();
   
-  // Same spacing variables as training
   let listX = width * 0.38;
   let listY = height * 0.05;
   let listW = width * 0.60;
@@ -309,7 +305,8 @@ function drawComboListView() {
   pop();
 }
 
-function handlePauseMenuInput(key, keyCode) {
+// ✅ FIXED: Renamed to avoid conflict with multiplayer version
+function handlePauseMenuInputSingle(key, keyCode) {
   if (pauseMenuState === "MAIN") {
     handleMainMenuInput(key, keyCode);
   } else if (pauseMenuState === "CONFIRM") {
@@ -336,7 +333,7 @@ function handleMainMenuInput(key, keyCode) {
     let selectedOption = PAUSE_MENU_OPTIONS[pauseMenuSelection];
     
     if (selectedOption === "RESUME") {
-      // Resume immediately
+      // ✅ FIXED: Resume to MATCH (campaign mode), not MATCH_MULTI
       currentState = GAME_STATE.MATCH;
       pauseMenuState = "MAIN";
       pauseMenuSelection = 0;
@@ -345,7 +342,6 @@ function handleMainMenuInput(key, keyCode) {
       pauseMenuState = "COMBO_LIST_VIEW";
       selectedComboIndex = 0;
     } else {
-      // Other options need confirmation
       pendingAction = selectedOption;
       pauseMenuState = "CONFIRM";
       pauseConfirmSelection = 0;
@@ -412,7 +408,6 @@ function handleComboListViewInput(key, keyCode) {
   }
 }
 
-// ✅ Add this function to pauseMenu.js (after handleComboListViewInput function)
 function buildComboList(characterName) {
   let combos = [];
   
@@ -489,7 +484,7 @@ function buildComboList(characterName) {
 function executePauseAction(action) {
   switch (action) {
     case "RESTART":
-      // Restart current match (reset rounds)
+      // Restart current match 
       singleCurrentRound = 1;
       singlePlayer1RoundsWon = 0;
       singlePlayer2RoundsWon = 0;
@@ -498,8 +493,8 @@ function executePauseAction(action) {
       resetPauseMenu();
       break;
       
-    case "CHARACTER SELECT": // ✅ NEW
-      // Go back to character select (lose campaign progress)
+    case "CHARACTER SELECT": 
+      // Go back to character select 
       campaignProgress = 0;
       campaignPlayerChar = 0;
       singleCurrentRound = 1;
@@ -510,7 +505,7 @@ function executePauseAction(action) {
       break;
       
     case "MAIN MENU":
-      // Go to main menu (lose campaign progress)
+      // Go to main menu 
       campaignProgress = 0;
       campaignPlayerChar = 0;
       singleCurrentRound = 1;

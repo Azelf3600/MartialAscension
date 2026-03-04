@@ -68,7 +68,7 @@ function drawStageSelectMulti() {
   // Instructions
   push();
   textAlign(CENTER, CENTER);
-  textFont(metalFont); // Using your metal font for consistency
+  textFont(metalFont); 
   fill(255);
   textSize(width * 0.015);
   text("PRESS SPACE TO START MATCH", width / 2, height * 0.94);

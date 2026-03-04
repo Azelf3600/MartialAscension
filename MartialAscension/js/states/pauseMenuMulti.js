@@ -1,10 +1,9 @@
-// Pause Menu State (Multiplayer) - ✅ Renamed to avoid conflicts
-let pauseMenuStateMulti = "MAIN"; // "MAIN", "CONFIRM", "COMBO_LIST_SELECT", "COMBO_LIST_VIEW"
-let pauseMenuSelectionMulti = 0; // Current selection (0-4)
-let pauseConfirmSelectionMulti = 0; // Confirm selection (0 = Yes, 1 = No)
-let comboListSelectionMulti = 0; // Character selection in combo list (0 = P1, 1 = P2)
-let selectedComboIndexMulti = 0; // Track selected combo in list
-let pendingActionMulti = ""; // What action is waiting for confirmation
+let pauseMenuStateMulti = "MAIN"; 
+let pauseMenuSelectionMulti = 0; 
+let pauseConfirmSelectionMulti = 0; 
+let comboListSelectionMulti = 0;  
+let selectedComboIndexMulti = 0; 
+let pendingActionMulti = ""; 
 
 const PAUSE_MENU_OPTIONS_MULTI = [
   "RESUME",
@@ -29,13 +28,13 @@ function drawPauseMenuMulti() {
   if (pauseMenuStateMulti === "MAIN") {
     drawPauseMainMenuMulti();
   } else if (pauseMenuStateMulti === "CONFIRM") {
-    drawPauseMainMenuMulti(); // Still show main menu dimmed
+    drawPauseMainMenuMulti(); 
     drawPauseConfirmPromptMulti();
   } else if (pauseMenuStateMulti === "COMBO_LIST_SELECT") {
-    drawPauseMainMenuMulti(); // Still show main menu dimmed
+    drawPauseMainMenuMulti(); 
     drawComboListCharacterSelectMulti();
   } else if (pauseMenuStateMulti === "COMBO_LIST_VIEW") {
-    drawPauseMainMenuMulti(); // Still show main menu dimmed
+    drawPauseMainMenuMulti();
     drawComboListViewMulti();
   }
 }
@@ -46,8 +45,6 @@ function drawPauseMainMenuMulti() {
   let menuX = width * 0.25;
   let menuY = height * 0.30;
   let optionSpacing = height * 0.10;
-  
-  // Dim if in confirm state
   let dimAlpha = (pauseMenuStateMulti !== "MAIN") ? 100 : 255;
   
   // Title

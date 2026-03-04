@@ -18,7 +18,7 @@ function drawLoadingMatch() {
     
     console.log("⏰ Loading complete! Calling initMatchSingle()...");
     
-    // ✅ Call initMatchSingle (renamed function)
+    // Call initMatchSingle 
     if (typeof initMatchSingle === 'function') {
       initMatchSingle();
       console.log("✅ initMatchSingle() called successfully");

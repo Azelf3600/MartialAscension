@@ -118,14 +118,12 @@ function drawBackButton() {
     h: btnH 
   };
 
-  // ✅ Check hover state
   let isHovering = mouseX > backBtn.x - btnW/2 && mouseX < backBtn.x + btnW/2 && mouseY > backBtn.y - btnH/2 && mouseY < backBtn.y + btnH/2;
 
   push();
   textAlign(LEFT, CENTER);
   textFont(metalFont);
   
-  // ✅ Red stroke when hovering
   if (isHovering) {
     stroke(255, 0, 0);
     strokeWeight(3);
@@ -133,7 +131,7 @@ function drawBackButton() {
     noStroke();
   }
   
-  fill(255); // Always white text
+  fill(255);
   textSize(width * 0.015);
   text("< BACK", backBtn.x, backBtn.y);
   pop();

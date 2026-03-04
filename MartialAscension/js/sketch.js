@@ -22,10 +22,7 @@ let currentState = GAME_STATE.MENU;
 let previousState = GAME_STATE.MENU;
 let p1Buffer;
 let p2Buffer;
-let gameCamera; // Declare it here
-
-
-// Single Player Campaign Variables
+let gameCamera; 
 let campaignProgress = 0; 
 let campaignOpponents = []; 
 let campaignStages = []; 
@@ -33,18 +30,15 @@ let campaignPlayerChar = 0;
 let singleDamageIndicators = [];
 
 function preload() {
-  // Preload fonts and images (found in mainMenu.js)
   preloadMainMenu();
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-
-  // ADD THESE TWO LINES:
   rectMode(CENTER); 
   imageMode(CENTER);
   
-  gameCamera = new CameraSystem(); // Initialize it here
+  gameCamera = new CameraSystem(); 
   gameCamera.pos = createVector(width/2, height/2);
   
   p1Buffer = new InputBuffer();
@@ -60,7 +54,7 @@ function draw() {
 
   if (currentState !== previousState) {
     if (currentState === GAME_STATE.LORE_SCREEN) {
-      initLoreScreen(); // Reinit every time we enter lore screen
+      initLoreScreen(); 
     }
     previousState = currentState;
   }
@@ -91,7 +85,6 @@ function draw() {
       break;
 
     case GAME_STATE.MATCH:
-      // ✅ Force initialization if needed
       if (!singlePlayer1 || !singlePlayer2) {
         console.log("⚠️ Force calling initMatchSingle() from sketch.js");
         if (typeof initMatchSingle === 'function') {
@@ -142,7 +135,7 @@ function draw() {
       break;
 
     case GAME_STATE.LORE_SCREEN:
-      drawLoreScreen(); // ✅ No init check needed - handled above
+      drawLoreScreen(); 
       break;
     }
 
@@ -182,19 +175,19 @@ function windowResized() {
 }
 
 function keyPressed() {
-  // ✅ Pause Menu Toggle (ESC during single player match)
+  // Pause Menu Toggle (ESC during single player match)
   if (currentState === GAME_STATE.MATCH && keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU;
     return;
   }
   
-  // ✅ Pause Menu Input Handling (Single Player)
+  // ✅ FIXED: Pause Menu Input Handling (Single Player - Campaign Mode)
   if (currentState === GAME_STATE.PAUSE_MENU) {
-    handlePauseMenuInput(key, keyCode);
+    handlePauseMenuInputSingle(key, keyCode); // Use the correct function!
     return;
   }
 
-  // ✅ Win Screen Input (Single Player)
+  // Win Screen Input (Single Player)
   if (currentState === GAME_STATE.WIN_SCREEN) {
     handleWinScreenSingleInput(key, keyCode);
     return;
@@ -204,25 +197,25 @@ function keyPressed() {
     handleLoreScreenInput(key, keyCode);
   }
 
-  // ✅ Pause Menu Toggle (ESC during match)
+  // Pause Menu Toggle (ESC during match)
   if (currentState === GAME_STATE.MATCH_MULTI && keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU_MULTI;
     return;
   }
   
-  // ✅ Pause Menu Input Handling
+  // Pause Menu Input Handling (Multiplayer)
   if (currentState === GAME_STATE.PAUSE_MENU_MULTI) {
     handlePauseMenuInput(key, keyCode);
     return;
   }
 
-    // ✅ NEW: Pause Menu Input Handling (Training)
+    // Pause Menu Input Handling (Training)
   if (currentState === GAME_STATE.PAUSE_MENU_TRAINING) {
     handlePauseMenuTrainingInput(key, keyCode);
     return;
   }
 
-// ✅ SINGLE PLAYER CHARACTER SELECTION CONTROLS
+// SINGLE PLAYER CHARACTER SELECTION CONTROLS
 if (currentState === GAME_STATE.CHARACTER_SELECT) {
   // Navigate with A/D
   if (key === 'd' || key === 'D') {
@@ -232,7 +225,7 @@ if (currentState === GAME_STATE.CHARACTER_SELECT) {
     selectedChar = (selectedChar - 1 + FIGHTERS.length) % FIGHTERS.length;
   }
   
-  // ✅ UPDATED: Confirm with Space - setup campaign and go to lore screen
+  // Confirm with Space - setup campaign and go to lore screen
   if (key === ' ') {
     setTimeout(() => {
       setupCampaign(selectedChar);
@@ -246,7 +239,7 @@ if (currentState === GAME_STATE.CHARACTER_SELECT) {
   }
 }
 
-// ✅ TRAINING CHARACTER SELECTION CONTROLS
+// TRAINING CHARACTER SELECTION CONTROLS
 if (currentState === GAME_STATE.CHARACTER_SELECT_TRAINING) {
   // Navigate with A/D
   if (key === 'd' || key === 'D') {
@@ -264,13 +257,13 @@ if (currentState === GAME_STATE.CHARACTER_SELECT_TRAINING) {
     }, 500);
   }
   
-  // ✅ UPDATED: Back to menu with ESC (was Q)
+  // Back to menu with ESC 
   if (keyCode === ESCAPE) {
     currentState = GAME_STATE.MENU;
   }
 }
 
-// ✅ NEW: TRAINING MODE CONTROLS
+// TRAINING MODE CONTROLS
 if (currentState === GAME_STATE.TRAINING) {
   handleTrainingInput(key, keyCode);
 }
@@ -304,7 +297,7 @@ if (currentState === GAME_STATE.TRAINING) {
       p2Ready = false;
     }
 
-      // ✅ UPDATED: Back to menu with ESC (was Q)
+      // Back to menu with ESC
     if (keyCode === ESCAPE) {
       currentState = GAME_STATE.MENU;
     }
@@ -341,26 +334,26 @@ if (currentState === GAME_STATE.TRAINING) {
 
   // MATCH INPUT RECORDING (COMBO SYSTEM)
   if (currentState === GAME_STATE.MATCH) {
-    // ✅ Single player uses singlePlayer1
+    // Single player uses singlePlayer1
     if (typeof singlePlayer1 !== 'undefined') handleRecording(singlePlayer1, p1Buffer, keyCode);
   } else if (currentState === GAME_STATE.MATCH_MULTI) {
-    // ✅ Multiplayer uses player1 and player2
+    // Multiplayer uses player1 and player2
     if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
     if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
   }
 }
 
 function handleRecording(char, buffer, code) {
-  // ✅ FIXED: Check correct fightStarted flag based on game mode
+  //  Check correct fightStarted flag based on game mode
   if (currentState === GAME_STATE.TRAINING) {
     // Training mode - no restrictions
   } else if (currentState === GAME_STATE.MATCH) {
-    // ✅ Single player - check singleFightStarted
+    // Single player - check singleFightStarted
     if (!singleFightStarted || singleMatchOver) {
       return;
     }
   } else if (currentState === GAME_STATE.MATCH_MULTI) {
-    // ✅ Multiplayer - check fightStarted, roundOver, showRoundResult
+    // Multiplayer - check fightStarted, roundOver, showRoundResult
     if (!fightStarted || roundOver || showRoundResult) {
       return;
     }
@@ -423,7 +416,7 @@ function handleRecording(char, buffer, code) {
         }
       }
       
-      // ✅ UPDATED: Low health requirement check (bypass in training)
+      // Low health requirement check 
       if (result.requireLowHealth) {
         if (currentState !== GAME_STATE.TRAINING) {
           let healthPercent = char.hp / char.maxHp;
@@ -436,7 +429,7 @@ function handleRecording(char, buffer, code) {
         }
       }
       
-      // ✅ UPDATED: Judgment available check (bypass in training)
+      // Judgment available check 
       if (result.requireJudgmentAvailable) {
         if (currentState !== GAME_STATE.TRAINING) {
           if (char.hasUsedJudgment) {
@@ -464,7 +457,7 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // ✅ UPDATED: Poison Rain available check (bypass in training)
+      // Poison Rain available check 
       if (result.requireRainAvailable) {
         if (currentState !== GAME_STATE.TRAINING) {
           if (char.hasUsedPoisonRain) {
@@ -489,7 +482,7 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // ✅ UPDATED: Azure Dragon available check (bypass in training)
+      // Azure Dragon available check 
       if (result.requireAzureDragonAvailable) {
         if (currentState !== GAME_STATE.TRAINING) {
           if (char.hasUsedAzureDragon) {
@@ -501,7 +494,7 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // ✅ UPDATED: Annihilation available check (bypass in training)
+      // Annihilation available check 
       if (result.requireAnnihilationAvailable) {
         if (currentState !== GAME_STATE.TRAINING) {
           if (char.hasUsedAnnihilation) {
@@ -513,7 +506,7 @@ function handleRecording(char, buffer, code) {
         }
       }
 
-      // HP cost check (for Demonic Heaven's Awakening)
+      // HP cost check 
       if (result.hpCost) {
         if (char.hp <= result.hpCost) {
           console.log(`${result.name} requires ${result.hpCost} HP! Current: ${Math.floor(char.hp)} HP`);
@@ -521,7 +514,7 @@ function handleRecording(char, buffer, code) {
         }
       }
       
-      // Handle movement combos differently
+      // Handle movement combos 
       if (result.type === "MOVEMENT") {
         char.executeCombo(result);
         return;
@@ -560,7 +553,7 @@ function handleRecording(char, buffer, code) {
 }
 
 function mouseReleased() {
-  // ✅ EXPANDED: Back Button Click Logic for all selection screens
+  // Back Button Click Logic for all selection screens
   if (currentState === GAME_STATE.CHARACTER_SELECT || 
       currentState === GAME_STATE.CHARACTER_SELECT_MULTI||
       currentState === GAME_STATE.CHARACTER_SELECT_TRAINING ||
@@ -612,27 +605,26 @@ function handleStageSelection(nextState) {
   });
 }
 
-// ✅ NEW: Setup campaign based on selected character
+//  Setup campaign based on selected character
 function setupCampaign(playerCharIndex) {
   campaignPlayerChar = playerCharIndex;
-  campaignProgress = 0; // Start at chapter 1
+  campaignProgress = 0; 
   
-  // Define opponents and stages based on player character
   if (playerCharIndex === 0) { // Ethan Li
     campaignOpponents = [1, 2, 3]; // Lucas Tang, Aaron Shu, Damon Cheon
     campaignStages = [1, 2, 3]; // Sword God Arena, Black Forest, Ancient Immortal Battlefield
   } 
   else if (playerCharIndex === 1) { // Lucas Tang
     campaignOpponents = [2, 0, 3]; // Aaron Shu, Ethan Li, Damon Cheon
-    campaignStages = [0, 1, 3]; // TBD later
+    campaignStages = [2, 1, 3]; // Black Forest, Sword God Arena, Ancient Immortal Battlefield 
   } 
   else if (playerCharIndex === 2) { // Aaron Shu
     campaignOpponents = [1, 0, 3]; // Lucas Tang, Ethan Li, Damon Cheon
-    campaignStages = [0, 1, 3]; // TBD later
+    campaignStages = [2, 2, 3]; // Black Forest, Black Forest, Ancinet Immortal Battlefield
   } 
   else if (playerCharIndex === 3) { // Damon Cheon
     campaignOpponents = [2, 1, 0]; // Aaron Shu, Lucas Tang, Ethan Li
-    campaignStages = [0, 1, 2]; // TBD later
+    campaignStages = [3, 3, 3]; // Ancinet Immortal Battlefield, Ancinet Immortal Battlefield, Ancinet Immortal Battlefield
   }
   
   console.log(`Campaign started: ${FIGHTERS[playerCharIndex].name}`);

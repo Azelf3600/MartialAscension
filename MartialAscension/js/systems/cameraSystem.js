@@ -1,6 +1,5 @@
 class CameraSystem {
   constructor() {
-    // We use a simple object first; p5 will make it a Vector in setup()
     this.pos = { x: 0, y: 0 }; 
     this.zoom = 1;
     this.minZoom = 0.5; 

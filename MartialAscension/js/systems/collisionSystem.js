@@ -13,7 +13,6 @@ function checkHit(attacker, defender) {
     
     let data = attacker.getHitboxData();
     
-    // Loop through all shapes in the hitbox (supports L-shape, diagonal, etc.)
     for (let box of data.shapes) {
       if (box.x < defender.x + defender.w &&
           box.x + box.w > defender.x &&
@@ -68,16 +67,16 @@ function checkHit(attacker, defender) {
           knockback = 30;
           stunTime = 30;
         } else if (isSwordQiLunge) {
-          // NEW: Sword Qi Lunge knockback
-          knockback = 40; // Heavy knockback
-          stunTime = 35;  // Long stun
+          // Sword Qi Lunge knockback
+          knockback = 40; 
+          stunTime = 35;  
         } else if (isSwordGodSlash) {
-          // NEW: Sword God Slash knockback
-          knockback = 60; // Massive knockback
-          stunTime = 50;  // Very long stun
+          // Sword God Slash knockback
+          knockback = 60; 
+          stunTime = 50;  
         } else if (attacker.attacking === "Unstoppable Sea Dragon") {
-          knockback = 0; // Enemy is dragged, not knocked back
-          stunTime = 999; // Locked during drag (released in applyPhysics)
+          knockback = 0; 
+          stunTime = 999; 
         } else if (attacker.attacking === "Azure Flowing Dragon") {
           knockback = 50;
           stunTime = 40;
@@ -89,26 +88,24 @@ function checkHit(attacker, defender) {
         } else {
           let poisonBonus = 1.0;
   
-        // Poison Hands bonus (+50%)
+        // Poison Hands bonus
         if (attacker.isPoisonHandsActive && !attacker.isPerformingCombo) {
           poisonBonus = 1.5;
         }
-        // NEW: Poison Flower Field bonus (+30%) - stacks check (field takes priority if both somehow active)
+        // Poison Flower Field bonus
         else if (attacker.isPoisonFieldActive && !attacker.isPerformingCombo) {
           poisonBonus = 1.3;
         }
 
-        // NEW: Apply archetype modifier first, THEN apply Tortoise Body override
+        // Apply archetype modifier first
         let effectiveDmgMod = attacker.dmgMod;
-  
-        // Undying Tortoise Body: Override dmgMod to 1.2 for Defensive archetype
         let wasTortoiseActive = false;
         if (attacker.attacking === "Unstoppable Sea Dragon") {
         if (attacker.archetype === "Defensive") {
           wasTortoiseActive = true;
-          effectiveDmgMod = 1.0; // Boost from 0.8 to 1.2 (60 damage)
+          effectiveDmgMod = 1.0; 
         } else {
-          effectiveDmgMod = 0.6; // Keep base (40 damage with Azure Scales consumption)
+          effectiveDmgMod = 0.6; 
         }
       }  
           // Normal Tortoise Body check
@@ -116,9 +113,9 @@ function checkHit(attacker, defender) {
             effectiveDmgMod = 1.0; // Boost from 0.8 to 1.2
           }
 
-          // ✅ NEW: Demonic Heaven's Awakening - 1.4x damage (40% boost)
+          // Demonic Heaven's Awakening - 1.4x damage 
           if (attacker.isDemonicAwakeningActive && attacker.archetype === "Offensive") {
-            effectiveDmgMod = 1.4; // Boost from 1.2 to 1.4 (40% increase)
+            effectiveDmgMod = 1.4; 
           }
   
           finalCalculatedDmg = baseDmg * effectiveDmgMod * attacker.comboDamageMod * poisonBonus;
@@ -130,20 +127,17 @@ function checkHit(attacker, defender) {
         attacker.hasHit = true;
         attacker.lastHitIndex = currentHitIndex;
 
-        // ✅ NEW: Diving Kick special effect
+        // Diving Kick special effect
         if (attacker.attacking === "Diving Kick" && !defender.isBlocking) {
-          // Push defender down slightly (anti-crouch punish)
-          defender.velY = 8; // Downward push
-          defender.isGrounded = false; // Pop them up briefly
-          
-          // Strong horizontal knockback
+          defender.velY = 8; 
+          defender.isGrounded = false; 
           let diveDir = (defender.x > attacker.x) ? 40 : -40;
           defender.velX = diveDir;
         }
 
         // Launcher combo air juggle logic
         if (attacker.attacking === "Launcher" && !defender.isBlocking) {
-        // NEW: Skip launcher if Ocean Mending is active
+        // Skip launcher if Ocean Mending is active
         if (defender.isOceanMendingActive) {
           console.log("Launcher blocked by Ocean Mending Water!");
         } else {
@@ -167,7 +161,7 @@ function checkHit(attacker, defender) {
     }
   }
 
-  // ✅ NEW: Azure Flowing Dragon - launcher juggle effect
+  // Azure Flowing Dragon - launcher juggle effect
 if (attacker.attacking === "Azure Flowing Dragon") {
   // Skip if Ocean Mending is active
   if (defender.isOceanMendingActive) {
@@ -176,12 +170,12 @@ if (attacker.attacking === "Azure Flowing Dragon") {
     // First hit - big launch
     if (defender.isGrounded) {
       defender.consecutiveAirHits = 1;
-      defender.velY = -defender.jumpPower * 2.0; // Even bigger than normal launcher
+      defender.velY = -defender.jumpPower * 2.0; 
       defender.isGrounded = false;
-      defender.hitStun = 45; // Longer stun
+      defender.hitStun = 45;
       console.log("Azure Flowing Dragon launched enemy!");
     } 
-    // Already airborne - juggle
+    // Already airborne juggle
     else {
       defender.consecutiveAirHits++;
       
@@ -208,16 +202,16 @@ function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock =
   let damageToApply = Number(amount);
   target.hitStun = target.isBlocking ? target.blockStun : stunTime;
 
-    // NEW: Block hitstun if Ocean Mending is active
+    // Block hitstun if Ocean Mending is active
   if (target.isOceanMendingActive) {
-    target.hitStun = 0; // Ignore stun completely
+    target.hitStun = 0; 
   } else {
     target.hitStun = target.isBlocking ? target.blockStun : stunTime;
   }
 
-    // NEW: Undying Tortoise Body - 20% damage reduction (applied BEFORE block)
+    // Undying Tortoise Body - 
   if (target.isTortoiseBodyActive) {
-    damageToApply = damageToApply * 0.8; // Reduce by 20%
+    damageToApply = damageToApply * 0.8; 
   }
 
   // Apply block reduction unless ignored
@@ -225,7 +219,7 @@ function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock =
     damageToApply = damageToApply * (1 - target.blockMod);
   }
 
-  // NEW: Azure Dragon Scales - Reflect 50% damage back to attacker
+  // Azure Dragon Scales 
   if (target.isAzureScalesActive) {
     let reflectedDmg = damageToApply * 0.5;
     
@@ -247,7 +241,7 @@ function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock =
   }
 
 if (target.isAnnihilationMarked && target.annihilationCaster === attacker) {
-  let trackedDamage = damageToApply * 0.5; // ✅ Only track 50% of damage dealt
+  let trackedDamage = damageToApply * 0.5; 
   target.annihilationCumulativeDamage += trackedDamage;
   console.log(`Annihilation tracking: ${Math.floor(trackedDamage)} damage (Total: ${Math.floor(target.annihilationCumulativeDamage)})`);
 }
@@ -256,11 +250,11 @@ if (target.isAnnihilationMarked && target.annihilationCaster === attacker) {
   if (target.hp < 0) target.hp = 0;
   target.isHit = !target.isBlocking;
 
-  // ✅ NEW: Demonic Heaven's Awakening - 40% lifesteal
+  // Demonic Heaven's Awakening 
 if (attacker.isDemonicAwakeningActive) {
-  let lifestealAmount = damageToApply * 0.4; // 40% of damage dealt
+  let lifestealAmount = damageToApply * 0.4;
   
-  // Heal attacker (cap at maxHp)
+  // Heal attacker
   attacker.hp = Math.min(attacker.hp + lifestealAmount, attacker.maxHp);
   
   // Show lifesteal indicator on attacker
@@ -276,9 +270,9 @@ if (attacker.isDemonicAwakeningActive) {
   console.log(`Demonic Awakening lifesteal: +${Math.floor(lifestealAmount)} HP`);
 }
 
-// NEW: Block isHit flag if Ocean Mending is active
+// Block isHit flag if Ocean Mending is active
 if (target.isOceanMendingActive) {
-  target.isHit = false; // No hit reaction
+  target.isHit = false; 
 } else {
   target.isHit = !target.isBlocking;
 }
@@ -288,9 +282,9 @@ if (typeof spawnDamageIndicator === "function") {
   spawnDamageIndicator(target.x + target.w / 2, target.y, displayVal, target.isBlocking);
 }
 
-  // NEW: Block isHit flag if Ocean Mending is active
+  // Block isHit flag if Ocean Mending is active
   if (target.isOceanMendingActive) {
-    target.isHit = false; // No hit reaction
+    target.isHit = false; 
   } else {
     target.isHit = !target.isBlocking;
   }
