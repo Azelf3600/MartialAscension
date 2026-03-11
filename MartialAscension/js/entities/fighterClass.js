@@ -215,6 +215,25 @@ class Character {
     this.annihilationCaster = null;
     this.annihilationExploding = false;
     this.annihilationExplosionTimer = 0;
+
+    // Animation system
+    this.animations = {}; 
+    this.currentAnimation = "idle";
+    this.currentFrame = 0;
+    this.frameTimer = 0;
+    this.frameDelay = 5; 
+    this.isWalking = false;
+
+    // Sprite rendering properties
+    this.spriteOffsetX = 0;      // Horizontal offset from hurtbox center
+    this.spriteOffsetY = -60;      // Vertical offset from hurtbox center  
+    this.spriteScale = 1.5;      // Size multiplier (2.5 = 2.5x hurtbox height)
+
+    // Hurtbox properties (separate from w/h for flexibility)
+    this.hurtboxOffsetX = 0;     // Offset from x position
+    this.hurtboxOffsetY = -60;     // Offset from y position
+    this.hurtboxWidth = w;       // Hurtbox width (default = character w)
+    this.hurtboxHeight = h + 60;      // Hurtbox height (default = character h)
   }
 
   // Main update loop
@@ -526,6 +545,9 @@ class Character {
     }
 
     this.applyPhysics(groundY);
+    if (typeof animationSystem !== 'undefined') {
+    animationSystem.updateAnimation(this); 
+    }
   }
 
   // Handle movement
@@ -642,20 +664,26 @@ class Character {
       }
     }
 
-    // Walking
-    if (!this.attacking) {
-      if (keyIsDown(this.controls.left)) this.x -= this.speed;
-      if (keyIsDown(this.controls.right)) this.x += this.speed;
-    }
+// Walking
+this.isWalking = false;
+if (!this.attacking && !this.isDashing) {  // ✅ ADD THIS CHECK
+  if (keyIsDown(this.controls.left)) {
+    this.x -= this.speed;
+    this.isWalking = true;
+  }
+  if (keyIsDown(this.controls.right)) {
+    this.x += this.speed;
+    this.isWalking = true;
+  }
+}
+// ✅ ADD THESE LINES BACK:
+this.x += this.velX;
 
-    this.x += this.velX;
-
-    if (this.isDashing) {
-      this.velX *= 0.70;
-    } else {
-      this.velX *= 0.82;
-    }
-
+if (this.isDashing) {
+  this.velX *= 0.70;
+} else {
+  this.velX *= 0.82;
+}
     // Crouch
     if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       if (this.h !== this.crouchH) {
@@ -972,15 +1000,16 @@ class Character {
       if (comboData.isDemonicSteps) {
         let opponent = getOpponent();
 
-        if (comboData.stepsDirection === "forward") {
-          this.demonicStepsTargetX = this.x + (this.facing * 500);
-          this.demonicStepsDirection = 1;
-          console.log("Demonic Heaven's Steps FORWARD!");
-        } else {
-          this.demonicStepsTargetX = this.x + (this.facing * -500);
-          this.demonicStepsDirection = -1;
-          console.log("Demonic Heaven's Steps BACKWARD!");
-        }
+  if (comboData.stepsDirection === "forward") {
+    // ✅ Dash toward opponent instead of fixed 500px
+    this.demonicStepsTargetX = opponent.x + (opponent.facing === 1 ? -50 : opponent.w + 50);
+    this.demonicStepsDirection = 1;
+    console.log("Demonic Heaven's Steps FORWARD toward enemy!");
+  } else {
+    this.demonicStepsTargetX = this.x + (this.facing * -500);
+    this.demonicStepsDirection = -1;
+    console.log("Demonic Heaven's Steps BACKWARD!");
+  }
 
         this.isDemonicStepsActive = true;
         this.demonicStepsTimer = 15;
@@ -1429,58 +1458,63 @@ class Character {
     push();
 
     // Dash trail
-    if (this.isDashing && this.dashTimer > 0) {
-      for (let i = 1; i <= 3; i++) {
-        let trailX = this.x - (this.velX * i * 0.3);
-        let alpha = 100 - (i * 25);
+if (this.isDashing && this.dashTimer > 0) {
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  
+  for (let i = 1; i <= 3; i++) {
+    let trailX = this.x + this.hurtboxOffsetX - (this.velX * i * 0.3);
+    let alpha = 100 - (i * 25);
 
-        push();
-        fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], alpha);
-        noStroke();
-        rect(trailX, this.y, this.w, this.h, 5);
-        pop();
-      }
+    push();
+    fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], alpha);
+    noStroke();
+    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+    pop();
+  }
 
       drawingContext.shadowBlur = 15;
       drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
     }
 
     // Launcher slide trail
-    if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
-      for (let i = 1; i <= 4; i++) {
-        let trailX = this.x - (this.launcherSlideSpeed * i * 0.25);
-        let alpha = 120 - (i * 30);
+if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  
+  for (let i = 1; i <= 4; i++) {
+    let trailX = this.x + this.hurtboxOffsetX - (this.launcherSlideSpeed * i * 0.25);
+    let alpha = 120 - (i * 30);
 
-        push();
-        fill(255, 165, 0, alpha);
-        noStroke();
-        rect(trailX, this.y, this.w, this.h, 5);
-        pop();
-      }
+    push();
+    fill(255, 165, 0, alpha);
+    noStroke();
+    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+    pop();
+  }
 
       drawingContext.shadowBlur = 20;
       drawingContext.shadowColor = 'rgba(255, 165, 0, 0.9)';
     }
 
     // Lunge trail
-    if (this.isLunging && this.lungeTimer > 0) {
-      let trailCount = this.lungePhase === "burst" ? 5 : 2;
+if (this.isLunging && this.lungeTimer > 0) {
+  let trailCount = this.lungePhase === "burst" ? 5 : 2;
+  let hurtboxY = this.y + this.hurtboxOffsetY;
 
-      for (let i = 1; i <= trailCount; i++) {
-        let trailX = this.lungePhase === "burst" ?
-          this.x - (this.lungeDirection * i * 30) :
-          this.x + (this.lungeDirection * i * 15);
+  for (let i = 1; i <= trailCount; i++) {
+    let trailX = this.lungePhase === "burst" ?
+      this.x + this.hurtboxOffsetX - (this.lungeDirection * i * 30) :
+      this.x + this.hurtboxOffsetX + (this.lungeDirection * i * 15);
 
-        let alpha = this.lungePhase === "burst" ?
-          150 - (i * 30) :
-          100 - (i * 40);
+    let alpha = this.lungePhase === "burst" ?
+      150 - (i * 30) :
+      100 - (i * 40);
 
-        push();
-        fill(255, 200, 200, alpha);
-        noStroke();
-        rect(trailX, this.y, this.w, this.h, 5);
-        pop();
-      }
+    push();
+    fill(255, 200, 200, alpha);
+    noStroke();
+    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+    pop();
+  }
 
       if (this.lungePhase === "burst") {
         drawingContext.shadowBlur = 25;
@@ -1490,18 +1524,24 @@ class Character {
 
     // Flight effects
     if (this.isFlying && !this.isGrounded) {
-      if (this.slowFallActive) {
-        push();
-        noFill();
-        stroke(100, 150, 255, 150);
-        strokeWeight(3);
+if (this.slowFallActive) {
+  push();
+  noFill();
+  stroke(100, 150, 255, 150);
+  strokeWeight(3);
 
-        let pulseSize = sin(frameCount * 0.2) * 10;
-        rect(this.x, this.y, this.w + pulseSize, this.h + pulseSize, 5);
+  let hurtboxX = this.x + this.hurtboxOffsetX;
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  let pulseSize = sin(frameCount * 0.2) * 10;
+  
+  rect(hurtboxX, hurtboxY, this.hurtboxWidth + pulseSize, this.hurtboxHeight + pulseSize, 5);
 
-        for (let i = 0; i < 3; i++) {
-          let particleX = this.x + this.w / 2 + random(-20, 20);
-          let particleY = this.y + this.h + random(0, 20);
+for (let i = 0; i < 3; i++) {
+  let hurtboxCenterX = this.x + this.hurtboxOffsetX + this.hurtboxWidth / 2;
+  let hurtboxBottomY = this.y + this.hurtboxOffsetY + this.hurtboxHeight;
+  
+  let particleX = hurtboxCenterX + random(-20, 20);
+  let particleY = hurtboxBottomY + random(0, 20);
           fill(150, 200, 255, 100);
           noStroke();
           ellipse(particleX, particleY, 5, 5);
@@ -1509,16 +1549,18 @@ class Character {
         pop();
       }
 
-      if (this.isAirDashing) {
-        push();
-        for (let i = 1; i <= 3; i++) {
-          let trailX = this.x - (this.airDashSpeed * i * 2);
-          let alpha = 150 - (i * 50);
+if (this.isAirDashing) {
+  push();
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  
+  for (let i = 1; i <= 3; i++) {
+    let trailX = this.x + this.hurtboxOffsetX - (this.airDashSpeed * i * 2);
+    let alpha = 150 - (i * 50);
 
-          fill(255, 255, 255, alpha);
-          noStroke();
-          rect(trailX, this.y, this.w, this.h, 5);
-        }
+    fill(255, 255, 255, alpha);
+    noStroke();
+    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+  }
 
         drawingContext.shadowBlur = 30;
         drawingContext.shadowColor = 'rgba(255, 255, 255, 1.0)';
@@ -1529,21 +1571,24 @@ class Character {
       if (this.isDemonicStepsActive && this.demonicStepsTimer > 0) {
         push();
 
+          let hurtboxX = this.x + this.hurtboxOffsetX;
+          let hurtboxY = this.y + this.hurtboxOffsetY;
+
         drawingContext.shadowBlur = 35;
         drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
 
-        for (let i = 1; i <= 3; i++) {
-          let trailX = this.x - (this.demonicStepsSpeed * i * 2);
-          let alpha = 180 - (i * 60);
+  for (let i = 1; i <= 3; i++) {
+    let trailX = hurtboxX - (this.demonicStepsSpeed * i * 2);
+    let alpha = 180 - (i * 60);
 
-          fill(150, 0, 150, alpha);
-          noStroke();
-          rect(trailX, this.y, this.w, this.h, 5);
-        }
+    fill(150, 0, 150, alpha);
+    noStroke();
+    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+  }
 
-        for (let i = 0; i < 5; i++) {
-          let particleX = this.x + random(-30, 30);
-          let particleY = this.y + random(0, this.h);
+  for (let i = 0; i < 5; i++) {
+    let particleX = hurtboxX + random(-30, 30);
+    let particleY = hurtboxY + random(0, this.hurtboxHeight);
           fill(200, 0, 150, random(150, 255));
           noStroke();
           ellipse(particleX, particleY, random(5, 12), random(5, 12));
@@ -1561,6 +1606,8 @@ class Character {
     // God Slash effect
     if (this.isGodSlashing && this.godSlashTimer > 0) {
       if (this.godSlashPhase === "teleport") {
+          let hurtboxCenterX = this.x + this.hurtboxOffsetX + this.hurtboxWidth / 2;
+          let hurtboxCenterY = this.y + this.hurtboxOffsetY + this.hurtboxHeight / 2;
         push();
         drawingContext.shadowBlur = 50;
         drawingContext.shadowColor = 'rgba(255, 255, 255, 1.0)';
@@ -1570,23 +1617,25 @@ class Character {
           noFill();
           stroke(255, 255, 255, 200 - (i * 60));
           strokeWeight(5);
-          ellipse(this.x + this.w / 2, this.y + this.h / 2, ringSize, ringSize);
+          ellipse(hurtboxCenterX, hurtboxCenterY, ringSize, ringSize);
         }
         pop();
       } else if (this.godSlashPhase === "slash") {
         push();
 
-        let slashProgress = map(this.godSlashTimer, 30, 0, 0, 1);
-        let angle;
-        if (this.facing === 1) {
-          angle = map(slashProgress, 0, 1, -20, 60);
-        } else {
-          angle = map(slashProgress, 0, 1, 210, 120);
-        }
+  let slashProgress = map(this.godSlashTimer, 30, 0, 0, 1);
+  let angle;
+  if (this.facing === 1) {
+    angle = map(slashProgress, 0, 1, -20, 60);
+  } else {
+    angle = map(slashProgress, 0, 1, 210, 120);
+  }
 
-        let angleRad = radians(angle);
-        let anchorX = this.x + this.w / 2;
-        let anchorY = this.y + this.h / 2;
+  let angleRad = radians(angle);
+  let hurtboxCenterX = this.x + this.hurtboxOffsetX + this.hurtboxWidth / 2;
+  let hurtboxCenterY = this.y + this.hurtboxOffsetY + this.hurtboxHeight / 2;
+  let anchorX = hurtboxCenterX;
+  let anchorY = hurtboxCenterY;
 
         drawingContext.shadowBlur = 30;
         drawingContext.shadowColor = 'rgba(255, 0, 0, 1.0)';
@@ -1618,6 +1667,11 @@ class Character {
     if (this.isSeaDragonCharging && this.seaDragonTimer > 0) {
       push();
 
+      let hurtboxX = this.x + this.hurtboxOffsetX;
+      let hurtboxY = this.y + this.hurtboxOffsetY;
+      let hurtboxCenterX = hurtboxX + this.hurtboxWidth / 2;
+      let hurtboxCenterY = hurtboxY + this.hurtboxHeight / 2;
+
       if (this.seaDragonPhase === "charge") {
         drawingContext.shadowBlur = 25;
         drawingContext.shadowColor = 'rgba(0, 150, 255, 0.9)';
@@ -1626,11 +1680,11 @@ class Character {
         noFill();
         stroke(0, 180, 255, chargePulse);
         strokeWeight(6);
-        rect(this.x, this.y, this.w, this.h, 5);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
 
-        for (let i = 0; i < 5; i++) {
-          let particleX = this.x + this.w / 2 + random(-40, 40);
-          let particleY = this.y + this.h / 2 + random(-40, 40);
+    for (let i = 0; i < 5; i++) {
+      let particleX = hurtboxCenterX + random(-40, 40);
+      let particleY = hurtboxCenterY + random(-40, 40);
           fill(0, 180, 255, random(150, 255));
           noStroke();
           ellipse(particleX, particleY, random(8, 15), random(8, 15));
@@ -1639,20 +1693,20 @@ class Character {
         drawingContext.shadowBlur = 40;
         drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
 
-        for (let i = 1; i <= 5; i++) {
-          let trailX = this.x - (this.seaDragonSpeed * i * 2);
-          let alpha = 200 - (i * 40);
+    for (let i = 1; i <= 5; i++) {
+      let trailX = hurtboxX - (this.seaDragonSpeed * i * 2);
+      let alpha = 200 - (i * 40);
 
-          fill(0, 200, 255, alpha);
-          noStroke();
-          rect(trailX, this.y, this.w, this.h, 5);
-        }
+      fill(0, 200, 255, alpha);
+      noStroke();
+      rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+    }
 
-        stroke(100, 230, 255, 200);
-        strokeWeight(8);
-        noFill();
-        rect(this.x - 5, this.y - 5, this.w + 10, this.h + 10, 5);
-      }
+    stroke(100, 230, 255, 200);
+    strokeWeight(8);
+    noFill();
+    rect(hurtboxX - 5, hurtboxY - 5, this.hurtboxWidth + 10, this.hurtboxHeight + 10, 5);
+  }
 
       pop();
     }
@@ -1660,6 +1714,11 @@ class Character {
     // Azure Flowing Dragon effect
     if (this.isAzureDragonActive && this.azureDragonTimer > 0) {
       push();
+
+        let hurtboxX = this.x + this.hurtboxOffsetX;
+        let hurtboxY = this.y + this.hurtboxOffsetY;
+        let hurtboxCenterX = hurtboxX + this.hurtboxWidth / 2;
+        let hurtboxBottomY = hurtboxY + this.hurtboxHeight;
 
       if (this.azureDragonPhase === "submerge") {
         drawingContext.shadowBlur = 30;
@@ -1670,12 +1729,12 @@ class Character {
           noFill();
           stroke(0, 180, 255, 200 - (i * 60));
           strokeWeight(4);
-          ellipse(this.x + this.w / 2, this.y + this.h, rippleSize, rippleSize * 0.3);
+    ellipse(hurtboxCenterX, hurtboxBottomY, rippleSize, rippleSize * 0.3);
         }
-
-        for (let i = 0; i < 8; i++) {
-          let particleX = this.x + random(0, this.w);
-          let particleY = this.y + this.h + random(-20, 10);
+    
+    for (let i = 0; i < 8; i++) {
+      let particleX = hurtboxX + random(0, this.hurtboxWidth);
+      let particleY = hurtboxBottomY + random(-20, 10);
           fill(0, 180, 255, random(150, 255));
           noStroke();
           ellipse(particleX, particleY, random(5, 12), random(5, 12));
@@ -1684,23 +1743,23 @@ class Character {
         drawingContext.shadowBlur = 50;
         drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
 
-        for (let i = 1; i <= 5; i++) {
-          let trailY = this.y + (i * 20);
-          let alpha = 200 - (i * 40);
+    for (let i = 1; i <= 5; i++) {
+      let trailY = hurtboxY + (i * 20);
+      let alpha = 200 - (i * 40);
 
-          fill(0, 200, 255, alpha);
-          noStroke();
-          rect(this.x, trailY, this.w, this.h, 5);
-        }
+      fill(0, 200, 255, alpha);
+      noStroke();
+      rect(hurtboxX, trailY, this.hurtboxWidth, this.hurtboxHeight, 5);
+    }
 
-        noFill();
-        stroke(100, 230, 255, 255);
-        strokeWeight(8);
-        rect(this.x - 10, this.y - 10, this.w + 20, this.h + 20, 5);
+    noFill();
+    stroke(100, 230, 255, 255);
+    strokeWeight(8);
+    rect(hurtboxX - 10, hurtboxY - 10, this.hurtboxWidth + 20, this.hurtboxHeight + 20, 5);
 
-        for (let i = 0; i < 10; i++) {
-          let particleX = this.x + random(0, this.w);
-          let particleY = this.y + this.h + random(0, 40);
+    for (let i = 0; i < 10; i++) {
+      let particleX = hurtboxX + random(0, this.hurtboxWidth);
+      let particleY = hurtboxBottomY + random(0, 40);
           fill(0, 220, 255, random(180, 255));
           noStroke();
           ellipse(particleX, particleY, random(6, 14), random(6, 14));
@@ -1727,21 +1786,64 @@ class Character {
     else if (this.isPoisonHandsActive) stroke(0, 255, 0, 200);
     else stroke(0);
 
-    // Character body
-    fill(this.color);
-    if (this.hp <= 0) {
-      rect(this.x, this.y + this.h - 5, this.w, 5, 2);
-    } else {
-      if (this.isAzureDragonActive &&
-        (this.azureDragonPhase === "submerge" || this.azureDragonPhase === "indicator")) {
-        // Hidden underground
-      } else {
-        rect(this.x, this.y, this.w, this.h, 5);
-        fill(0);
-        let eyeX = (this.facing === 1) ? (this.x + this.w - 15) : (this.x + 5);
-        rect(eyeX, this.y + 10, 10, 10);
-      }
+// ✅ UPDATED: Character body - sprite + adjustable debug hurtbox
+if (this.hp <= 0) {
+  // ✅ Dead - just show a flat bar using hurtbox dimensions
+  let hurtboxX = this.x + this.hurtboxOffsetX;
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  
+  fill(this.color);
+  rect(hurtboxX, hurtboxY + this.hurtboxHeight - 5, this.hurtboxWidth, 5, 2);
+} else {
+  // ✅ Hide during underground phases
+  if (this.isAzureDragonActive && 
+      (this.azureDragonPhase === "submerge" || this.azureDragonPhase === "indicator")) {
+    // Don't draw character - they're underground
+  } else {
+    // ✅ Draw sprite (if available)
+    if (animationSystem && animationSystem.getAnimation(this.name, this.currentAnimation).length > 0) {
+      animationSystem.drawAnimation(this);
+} else {
+  // ✅ Fallback to colored rectangle (old system) - use hurtbox dimensions
+  let hurtboxX = this.x + this.hurtboxOffsetX;
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  
+  fill(this.color);
+  rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+  
+  // Eye
+  fill(0);
+  let eyeX = (this.facing === 1) ? 
+    (hurtboxX + this.hurtboxWidth - 15) : 
+    (hurtboxX + 5);
+  rect(eyeX, hurtboxY + 10, 10, 10);
+}
+    
+    // ✅ NEW: Debug hurtbox overlay using adjustable properties
+    if (showHurtboxes) {
+      push();
+      noFill();
+      stroke(0, 255, 0); // Green outline
+      strokeWeight(2);
+      
+      // ✅ Draw hurtbox at offset position with custom size
+      let hurtboxX = this.x + this.hurtboxOffsetX;
+      let hurtboxY = this.y + this.hurtboxOffsetY;
+      
+      rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+      
+      // ✅ Draw crosshair at hurtbox center for alignment reference
+      stroke(255, 0, 0); // Red crosshair
+      strokeWeight(1);
+      let centerX = hurtboxX + this.hurtboxWidth/2;
+      let centerY = hurtboxY + this.hurtboxHeight/2;
+      line(centerX - 10, centerY, centerX + 10, centerY); // Horizontal
+      line(centerX, centerY - 10, centerX, centerY + 10); // Vertical
+      
+      pop();
     }
+  }
+}
 
     // Hitbox and block
     if (this.hp > 0) {
@@ -1749,12 +1851,19 @@ class Character {
         this.drawHitbox();
       }
 
-      if (this.isBlocking) {
-        noFill();
-        stroke(0, 200, 255, 200);
-        strokeWeight(6);
-        let shieldX = (this.facing === 1) ? this.x + this.w : this.x;
-        line(shieldX, this.y, shieldX, this.y + this.h);
+if (this.isBlocking) {
+  noFill();
+  stroke(0, 200, 255, 200);
+  strokeWeight(6);
+  
+    // ✅ Use hurtbox properties for shield position
+      let hurtboxX = this.x + this.hurtboxOffsetX;
+      let hurtboxY = this.y + this.hurtboxOffsetY;
+      let shieldX = (this.facing === 1) ? 
+      hurtboxX + this.hurtboxWidth : 
+      hurtboxX;
+  
+      line(shieldX, hurtboxY, shieldX, hurtboxY + this.hurtboxHeight);
       }
     }
 
@@ -1764,429 +1873,435 @@ class Character {
     this.drawStatusEffects();
   }
 
-  // Draw status effect indicators
-  drawStatusEffects() {
-    push();
+ // Draw status effect indicators
+drawStatusEffects() {
+  push();
 
-    // Poison Hands
-    if (this.isPoisonHandsActive && this.poisonHandsTimer > 0) {
-      drawingContext.shadowBlur = 25;
-      drawingContext.shadowColor = 'rgba(0, 255, 0, 0.8)';
+  // ✅ Calculate hurtbox position ONCE at the top
+  let hurtboxX = this.x + this.hurtboxOffsetX;
+  let hurtboxY = this.y + this.hurtboxOffsetY;
+  let hurtboxCenterX = hurtboxX + this.hurtboxWidth / 2;
+  let hurtboxCenterY = hurtboxY + this.hurtboxHeight / 2;
 
-      let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
-      noFill();
-      stroke(0, 255, 0, pulseAlpha);
-      strokeWeight(4);
-      rect(this.x, this.y, this.w, this.h, 5);
+  // Poison Hands
+  if (this.isPoisonHandsActive && this.poisonHandsTimer > 0) {
+    drawingContext.shadowBlur = 25;
+    drawingContext.shadowColor = 'rgba(0, 255, 0, 0.8)';
 
-      for (let i = 0; i < 3; i++) {
-        let handX = (this.facing === 1) ?
-          this.x + this.w + random(-10, 10) :
-          this.x + random(-10, 10);
-        let handY = this.y + this.h * 0.4 + random(-20, 20);
+    let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
+    noFill();
+    stroke(0, 255, 0, pulseAlpha);
+    strokeWeight(4);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
 
-        fill(0, 255, 0, random(100, 200));
-        noStroke();
-        ellipse(handX, handY, random(5, 12), random(5, 12));
-      }
+    for (let i = 0; i < 3; i++) {
+      let handX = (this.facing === 1) ?
+        hurtboxX + this.hurtboxWidth + random(-10, 10) :
+        hurtboxX + random(-10, 10);
+      let handY = hurtboxY + this.hurtboxHeight * 0.4 + random(-20, 20);
 
-      let timeLeft = Math.ceil(this.poisonHandsTimer / 60);
-      fill(0, 255, 0, 200);
+      fill(0, 255, 0, random(100, 200));
       noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`POISON HANDS: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
+      ellipse(handX, handY, random(5, 12), random(5, 12));
     }
 
-    // Poison DOT
-    if (this.isPoisoned && this.poisonTimer > 0) {
-      drawingContext.shadowBlur = 20;
-      drawingContext.shadowColor = 'rgba(255, 80, 0, 0.8)';
+    let timeLeft = Math.ceil(this.poisonHandsTimer / 60);
+    fill(0, 255, 0, 200);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`POISON HANDS: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
+  }
 
-      let pulseAlpha = 120 + sin(frameCount * 0.3) * 100;
-      noFill();
-      stroke(255, 80, 0, pulseAlpha);
+  // Poison DOT
+  if (this.isPoisoned && this.poisonTimer > 0) {
+    drawingContext.shadowBlur = 20;
+    drawingContext.shadowColor = 'rgba(255, 80, 0, 0.8)';
+
+    let pulseAlpha = 120 + sin(frameCount * 0.3) * 100;
+    noFill();
+    stroke(255, 80, 0, pulseAlpha);
+    strokeWeight(3);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+
+    for (let i = 0; i < 4; i++) {
+      let particleX = hurtboxX + random(0, this.hurtboxWidth);
+      let particleY = hurtboxY + random(0, this.hurtboxHeight);
+      fill(255, random(50, 150), 0, random(100, 200));
+      noStroke();
+      ellipse(particleX, particleY, random(4, 10), random(4, 10));
+    }
+
+    let timeLeft = Math.ceil(this.poisonTimer / 60);
+    fill(255, 100, 0, 200);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`POISONED: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 25);
+  }
+
+  // Poison Field (caster)
+  if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
+    drawingContext.shadowBlur = 35;
+    drawingContext.shadowColor = 'rgba(0, 200, 50, 1.0)';
+
+    let pulse1 = 150 + sin(frameCount * 0.15) * 100;
+    let pulse2 = 150 + sin(frameCount * 0.15 + PI) * 100;
+
+    noFill();
+    stroke(0, 255, 80, pulse1);
+    strokeWeight(5);
+    rect(hurtboxX - 3, hurtboxY - 3, this.hurtboxWidth + 6, this.hurtboxHeight + 6, 5);
+
+    stroke(100, 255, 150, pulse2);
+    strokeWeight(3);
+    rect(hurtboxX - 6, hurtboxY - 6, this.hurtboxWidth + 12, this.hurtboxHeight + 12, 5);
+
+    for (let i = 0; i < 5; i++) {
+      let particleX = hurtboxX + random(0, this.hurtboxWidth);
+      let particleY = hurtboxY + random(0, this.hurtboxHeight);
+      fill(0, 255, 100, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(4, 10), random(4, 10));
+    }
+
+    let timeLeft = Math.ceil(this.poisonFieldTimer / 60);
+    fill(0, 255, 80, 220);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`FIELD: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 30);
+  }
+
+  // Poison Field (debuffed)
+  if (this.isInPoisonField) {
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = 'rgba(0, 180, 0, 0.6)';
+
+    let debuffAlpha = 80 + sin(frameCount * 0.1) * 60;
+    noFill();
+    stroke(0, 200, 0, debuffAlpha);
+    strokeWeight(3);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+
+    for (let i = 0; i < 3; i++) {
+      let particleX = hurtboxX + random(0, this.hurtboxWidth);
+      let particleY = hurtboxY + random(0, this.hurtboxHeight * 0.5);
+      fill(0, 180, 0, random(80, 150));
+      noStroke();
+      ellipse(particleX, particleY, random(3, 7), random(3, 7));
+    }
+  }
+
+  // Azure Scales
+  if (this.isAzureScalesActive && this.azureScalesTimer > 0) {
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = 'rgba(0, 100, 200, 1.0)';
+
+    let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
+    noFill();
+    stroke(0, 150, 255, pulseAlpha);
+    strokeWeight(4);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+
+    stroke(50, 200, 255, pulseAlpha * 0.6);
+    strokeWeight(2);
+    rect(hurtboxX - 2, hurtboxY - 2, this.hurtboxWidth + 4, this.hurtboxHeight + 4, 5);
+
+    for (let i = 0; i < 4; i++) {
+      let scaleX = hurtboxX + random(0, this.hurtboxWidth);
+      let scaleY = hurtboxY + random(0, this.hurtboxHeight);
+      fill(0, 150, 255, random(120, 220));
+      noStroke();
+      push();
+      translate(scaleX, scaleY);
+      rotate(random(TWO_PI));
+      rect(0, 0, random(4, 8), random(4, 8));
+      pop();
+    }
+
+    let timeLeft = Math.ceil(this.azureScalesTimer / 60);
+    fill(0, 180, 255, 220);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`DRAGON SCALES: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
+  }
+
+  // Tortoise Body
+  if (this.isTortoiseBodyActive && this.tortoiseBodyTimer > 0) {
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = 'rgba(255, 215, 0, 1.0)';
+
+    let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
+    noFill();
+    stroke(255, 215, 0, pulseAlpha);
+    strokeWeight(4);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+
+    stroke(255, 235, 100, pulseAlpha * 0.6);
+    strokeWeight(2);
+    rect(hurtboxX - 2, hurtboxY - 2, this.hurtboxWidth + 4, this.hurtboxHeight + 4, 5);
+
+    for (let i = 0; i < 4; i++) {
+      let shieldX = hurtboxX + random(0, this.hurtboxWidth);
+      let shieldY = hurtboxY + random(0, this.hurtboxHeight);
+      fill(255, 215, 0, random(120, 220));
+      noStroke();
+      push();
+      translate(shieldX, shieldY);
+      rotate(random(TWO_PI));
+      ellipse(0, 0, random(5, 10), random(5, 10));
+      pop();
+    }
+
+    let timeLeft = Math.ceil(this.tortoiseBodyTimer / 60);
+    fill(255, 215, 0, 220);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`TORTOISE BODY: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
+  }
+
+  // Ocean Mending
+  if (this.isOceanMendingActive && this.oceanMendingTimer > 0) {
+    drawingContext.shadowBlur = 35;
+    drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
+
+    let pulseAlpha = 180 + sin(frameCount * 0.25) * 75;
+    noFill();
+    stroke(0, 220, 255, pulseAlpha);
+    strokeWeight(5);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+
+    stroke(100, 240, 255, pulseAlpha * 0.7);
+    strokeWeight(3);
+    rect(hurtboxX - 3, hurtboxY - 3, this.hurtboxWidth + 6, this.hurtboxHeight + 6, 5);
+
+    for (let i = 0; i < 6; i++) {
+      let dropX = hurtboxX + random(0, this.hurtboxWidth);
+      let dropY = hurtboxY + random(0, this.hurtboxHeight);
+      fill(0, 220, 255, random(150, 255));
+      noStroke();
+      ellipse(dropX, dropY, random(4, 10), random(6, 12));
+    }
+
+    for (let i = 0; i < 3; i++) {
+      let bubbleX = hurtboxX + random(0, this.hurtboxWidth);
+      let bubbleY = hurtboxY + this.hurtboxHeight - (frameCount % 60) * 2 + (i * 20);
+      fill(100, 240, 255, random(80, 150));
+      noStroke();
+      ellipse(bubbleX, bubbleY, random(6, 12), random(6, 12));
+    }
+
+    let timeLeft = Math.ceil(this.oceanMendingTimer / 60);
+    fill(0, 220, 255, 255);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`OCEAN MENDING: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
+  }
+
+  // Demonic Awakening
+  if (this.isDemonicAwakeningActive && this.demonicAwakeningTimer > 0) {
+    drawingContext.shadowBlur = 40;
+    drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
+
+    let pulseAlpha = 180 + sin(frameCount * 0.3) * 75;
+    noFill();
+    stroke(200, 0, 100, pulseAlpha);
+    strokeWeight(5);
+    rect(hurtboxX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
+
+    stroke(150, 0, 150, pulseAlpha * 0.7);
+    strokeWeight(3);
+    rect(hurtboxX - 3, hurtboxY - 3, this.hurtboxWidth + 6, this.hurtboxHeight + 6, 5);
+
+    for (let i = 0; i < 8; i++) {
+      let particleX = hurtboxX + random(0, this.hurtboxWidth);
+      let particleY = hurtboxY + random(0, this.hurtboxHeight);
+      fill(random(150, 200), 0, random(100, 150), random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(4, 10), random(4, 10));
+    }
+
+    for (let i = 0; i < 4; i++) {
+      let flameX = hurtboxX + random(0, this.hurtboxWidth);
+      let flameY = hurtboxY + this.hurtboxHeight - (frameCount % 60) * 2 + (i * 20);
+      fill(150, 0, 100, random(100, 200));
+      noStroke();
+      ellipse(flameX, flameY, random(6, 14), random(10, 18));
+    }
+
+    let timeLeft = Math.ceil(this.demonicAwakeningTimer / 60);
+    fill(200, 0, 150, 255);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`DEMONIC AWAKENING: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
+  }
+
+  // Demonic Abyss
+  if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
+    let zoneX = this.facing === 1 ? hurtboxX + this.hurtboxWidth : hurtboxX - this.demonicAbyssRange;
+    let zoneW = this.demonicAbyssRange;
+    let zoneY = hurtboxY;
+    let zoneH = this.hurtboxHeight;
+
+    drawingContext.shadowBlur = 40;
+    drawingContext.shadowColor = 'rgba(150, 0, 100, 0.8)';
+
+    let abyssPulse = 80 + sin(frameCount * 0.15) * 40;
+    fill(150, 0, 100, abyssPulse);
+    noStroke();
+
+    if (this.facing === 1) {
+      rect(hurtboxX + this.hurtboxWidth, zoneY, zoneW, zoneH, 5);
+    } else {
+      rect(hurtboxX - this.demonicAbyssRange, zoneY, zoneW, zoneH, 5);
+    }
+
+    for (let i = 0; i < 8; i++) {
+      let lineProgress = (frameCount * 0.05 + i * 0.3) % 1;
+      let lineX = this.facing === 1 ?
+        hurtboxX + this.hurtboxWidth + (this.demonicAbyssRange * (1 - lineProgress)) :
+        hurtboxX - (this.demonicAbyssRange * (1 - lineProgress));
+
+      stroke(200, 0, 150, 150 * lineProgress);
       strokeWeight(3);
-      rect(this.x, this.y, this.w, this.h, 5);
-
-      for (let i = 0; i < 4; i++) {
-        let particleX = this.x + random(0, this.w);
-        let particleY = this.y + random(0, this.h);
-        fill(255, random(50, 150), 0, random(100, 200));
-        noStroke();
-        ellipse(particleX, particleY, random(4, 10), random(4, 10));
-      }
-
-      let timeLeft = Math.ceil(this.poisonTimer / 60);
-      fill(255, 100, 0, 200);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`POISONED: ${timeLeft}s`, this.x + this.w / 2, this.y - 25);
-    }
-
-    // Poison Field (caster)
-    if (this.isPoisonFieldActive && this.poisonFieldTimer > 0) {
-      drawingContext.shadowBlur = 35;
-      drawingContext.shadowColor = 'rgba(0, 200, 50, 1.0)';
-
-      let pulse1 = 150 + sin(frameCount * 0.15) * 100;
-      let pulse2 = 150 + sin(frameCount * 0.15 + PI) * 100;
-
-      noFill();
-      stroke(0, 255, 80, pulse1);
-      strokeWeight(5);
-      rect(this.x - 3, this.y - 3, this.w + 6, this.h + 6, 5);
-
-      stroke(100, 255, 150, pulse2);
-      strokeWeight(3);
-      rect(this.x - 6, this.y - 6, this.w + 12, this.h + 12, 5);
-
-      for (let i = 0; i < 5; i++) {
-        let particleX = this.x + random(0, this.w);
-        let particleY = this.y + random(0, this.h);
-        fill(0, 255, 100, random(150, 255));
-        noStroke();
-        ellipse(particleX, particleY, random(4, 10), random(4, 10));
-      }
-
-      let timeLeft = Math.ceil(this.poisonFieldTimer / 60);
-      fill(0, 255, 80, 220);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`FIELD: ${timeLeft}s`, this.x + this.w / 2, this.y - 30);
-    }
-
-    // Poison Field (debuffed)
-    if (this.isInPoisonField) {
-      drawingContext.shadowBlur = 15;
-      drawingContext.shadowColor = 'rgba(0, 180, 0, 0.6)';
-
-      let debuffAlpha = 80 + sin(frameCount * 0.1) * 60;
-      noFill();
-      stroke(0, 200, 0, debuffAlpha);
-      strokeWeight(3);
-      rect(this.x, this.y, this.w, this.h, 5);
-
-      for (let i = 0; i < 3; i++) {
-        let particleX = this.x + random(0, this.w);
-        let particleY = this.y + random(0, this.h * 0.5);
-        fill(0, 180, 0, random(80, 150));
-        noStroke();
-        ellipse(particleX, particleY, random(3, 7), random(3, 7));
-      }
-    }
-
-    // Azure Scales
-    if (this.isAzureScalesActive && this.azureScalesTimer > 0) {
-      drawingContext.shadowBlur = 30;
-      drawingContext.shadowColor = 'rgba(0, 100, 200, 1.0)';
-
-      let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
-      noFill();
-      stroke(0, 150, 255, pulseAlpha);
-      strokeWeight(4);
-      rect(this.x, this.y, this.w, this.h, 5);
-
-      stroke(50, 200, 255, pulseAlpha * 0.6);
-      strokeWeight(2);
-      rect(this.x - 2, this.y - 2, this.w + 4, this.h + 4, 5);
-
-      for (let i = 0; i < 4; i++) {
-        let scaleX = this.x + random(0, this.w);
-        let scaleY = this.y + random(0, this.h);
-        fill(0, 150, 255, random(120, 220));
-        noStroke();
-        push();
-        translate(scaleX, scaleY);
-        rotate(random(TWO_PI));
-        rect(0, 0, random(4, 8), random(4, 8));
-        pop();
-      }
-
-      let timeLeft = Math.ceil(this.azureScalesTimer / 60);
-      fill(0, 180, 255, 220);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`DRAGON SCALES: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
-    }
-
-    // Tortoise Body
-    if (this.isTortoiseBodyActive && this.tortoiseBodyTimer > 0) {
-      drawingContext.shadowBlur = 30;
-      drawingContext.shadowColor = 'rgba(255, 215, 0, 1.0)';
-
-      let pulseAlpha = 150 + sin(frameCount * 0.2) * 100;
-      noFill();
-      stroke(255, 215, 0, pulseAlpha);
-      strokeWeight(4);
-      rect(this.x, this.y, this.w, this.h, 5);
-
-      stroke(255, 235, 100, pulseAlpha * 0.6);
-      strokeWeight(2);
-      rect(this.x - 2, this.y - 2, this.w + 4, this.h + 4, 5);
-
-      for (let i = 0; i < 4; i++) {
-        let shieldX = this.x + random(0, this.w);
-        let shieldY = this.y + random(0, this.h);
-        fill(255, 215, 0, random(120, 220));
-        noStroke();
-        push();
-        translate(shieldX, shieldY);
-        rotate(random(TWO_PI));
-        ellipse(0, 0, random(5, 10), random(5, 10));
-        pop();
-      }
-
-      let timeLeft = Math.ceil(this.tortoiseBodyTimer / 60);
-      fill(255, 215, 0, 220);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`TORTOISE BODY: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
-    }
-
-    // Ocean Mending
-    if (this.isOceanMendingActive && this.oceanMendingTimer > 0) {
-      drawingContext.shadowBlur = 35;
-      drawingContext.shadowColor = 'rgba(0, 200, 255, 1.0)';
-
-      let pulseAlpha = 180 + sin(frameCount * 0.25) * 75;
-      noFill();
-      stroke(0, 220, 255, pulseAlpha);
-      strokeWeight(5);
-      rect(this.x, this.y, this.w, this.h, 5);
-
-      stroke(100, 240, 255, pulseAlpha * 0.7);
-      strokeWeight(3);
-      rect(this.x - 3, this.y - 3, this.w + 6, this.h + 6, 5);
-
-      for (let i = 0; i < 6; i++) {
-        let dropX = this.x + random(0, this.w);
-        let dropY = this.y + random(0, this.h);
-        fill(0, 220, 255, random(150, 255));
-        noStroke();
-        ellipse(dropX, dropY, random(4, 10), random(6, 12));
-      }
-
-      for (let i = 0; i < 3; i++) {
-        let bubbleX = this.x + random(0, this.w);
-        let bubbleY = this.y + this.h - (frameCount % 60) * 2 + (i * 20);
-        fill(100, 240, 255, random(80, 150));
-        noStroke();
-        ellipse(bubbleX, bubbleY, random(6, 12), random(6, 12));
-      }
-
-      let timeLeft = Math.ceil(this.oceanMendingTimer / 60);
-      fill(0, 220, 255, 255);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`OCEAN MENDING: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
-    }
-
-    // Demonic Awakening
-    if (this.isDemonicAwakeningActive && this.demonicAwakeningTimer > 0) {
-      drawingContext.shadowBlur = 40;
-      drawingContext.shadowColor = 'rgba(150, 0, 150, 1.0)';
-
-      let pulseAlpha = 180 + sin(frameCount * 0.3) * 75;
-      noFill();
-      stroke(200, 0, 100, pulseAlpha);
-      strokeWeight(5);
-      rect(this.x, this.y, this.w, this.h, 5);
-
-      stroke(150, 0, 150, pulseAlpha * 0.7);
-      strokeWeight(3);
-      rect(this.x - 3, this.y - 3, this.w + 6, this.h + 6, 5);
-
-      for (let i = 0; i < 8; i++) {
-        let particleX = this.x + random(0, this.w);
-        let particleY = this.y + random(0, this.h);
-        fill(random(150, 200), 0, random(100, 150), random(150, 255));
-        noStroke();
-        ellipse(particleX, particleY, random(4, 10), random(4, 10));
-      }
-
-      for (let i = 0; i < 4; i++) {
-        let flameX = this.x + random(0, this.w);
-        let flameY = this.y + this.h - (frameCount % 60) * 2 + (i * 20);
-        fill(150, 0, 100, random(100, 200));
-        noStroke();
-        ellipse(flameX, flameY, random(6, 14), random(10, 18));
-      }
-
-      let timeLeft = Math.ceil(this.demonicAwakeningTimer / 60);
-      fill(200, 0, 150, 255);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`DEMONIC AWAKENING: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
-    }
-
-    // Demonic Abyss
-    if (this.isDemonicAbyssActive && this.demonicAbyssTimer > 0) {
-      let zoneX = this.facing === 1 ? this.x + this.w : this.x - this.demonicAbyssRange;
-      let zoneW = this.demonicAbyssRange;
-      let zoneY = this.y;
-      let zoneH = this.h;
-
-      drawingContext.shadowBlur = 40;
-      drawingContext.shadowColor = 'rgba(150, 0, 100, 0.8)';
-
-      let abyssPulse = 80 + sin(frameCount * 0.15) * 40;
-      fill(150, 0, 100, abyssPulse);
-      noStroke();
 
       if (this.facing === 1) {
-        rect(this.x + this.w, zoneY, zoneW, zoneH, 5);
+        line(lineX, zoneY, hurtboxX + this.hurtboxWidth, hurtboxY + this.hurtboxHeight / 2);
       } else {
-        rect(this.x - this.demonicAbyssRange, zoneY, zoneW, zoneH, 5);
-      }
-
-      for (let i = 0; i < 8; i++) {
-        let lineProgress = (frameCount * 0.05 + i * 0.3) % 1;
-        let lineX = this.facing === 1 ?
-          this.x + this.w + (this.demonicAbyssRange * (1 - lineProgress)) :
-          this.x - (this.demonicAbyssRange * (1 - lineProgress));
-
-        stroke(200, 0, 150, 150 * lineProgress);
-        strokeWeight(3);
-
-        if (this.facing === 1) {
-          line(lineX, zoneY, this.x + this.w, this.y + this.h / 2);
-        } else {
-          line(lineX, zoneY, this.x, this.y + this.h / 2);
-        }
-      }
-
-      for (let i = 0; i < 10; i++) {
-        let spiralAngle = (frameCount * 0.1 + i * 0.6) % TWO_PI;
-        let spiralDist = this.demonicAbyssRange * (0.5 + sin(frameCount * 0.05 + i) * 0.5);
-
-        let particleX = this.facing === 1 ?
-          this.x + this.w + cos(spiralAngle) * spiralDist :
-          this.x - cos(spiralAngle) * spiralDist;
-        let particleY = this.y + this.h / 2 + sin(spiralAngle) * 50;
-
-        fill(150, 0, 100, random(100, 200));
-        noStroke();
-        ellipse(particleX, particleY, random(4, 10), random(4, 10));
-      }
-
-      let timeLeft = Math.ceil(this.demonicAbyssTimer / 60);
-      fill(200, 0, 150, 255);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`ABYSS: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
-    }
-
-    // Annihilation mark
-    if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
-      let markPulse = 150 + sin(frameCount * 0.4) * 100;
-      let markSize = 20 + sin(frameCount * 0.3) * 8;
-
-      drawingContext.shadowBlur = 40;
-      drawingContext.shadowColor = 'rgba(0, 0, 0, 1.0)';
-
-      fill(0, 0, 0, markPulse * 0.6);
-      noStroke();
-      ellipse(this.x + this.w / 2, this.y + this.h / 2, markSize * 2, markSize * 2);
-
-      fill(50, 0, 50, markPulse);
-      stroke(150, 0, 150, 255);
-      strokeWeight(3);
-      ellipse(this.x + this.w / 2, this.y + this.h / 2, markSize, markSize);
-
-      fill(0, 0, 0, 255);
-      noStroke();
-      ellipse(this.x + this.w / 2, this.y + this.h / 2, markSize * 0.5, markSize * 0.5);
-
-      for (let i = 0; i < 6; i++) {
-        let orbitAngle = (frameCount * 0.08 + i * TWO_PI / 6) % TWO_PI;
-        let orbitDist = markSize * 1.5;
-
-        let particleX = this.x + this.w / 2 + cos(orbitAngle) * orbitDist;
-        let particleY = this.y + this.h / 2 + sin(orbitAngle) * orbitDist;
-
-        fill(100, 0, 100, random(150, 255));
-        noStroke();
-        ellipse(particleX, particleY, random(3, 8), random(3, 8));
-      }
-
-      let timeLeft = Math.ceil(this.annihilationTimer / 60);
-      let dmgAccumulated = Math.floor(this.annihilationCumulativeDamage);
-
-      fill(200, 0, 150, 255);
-      noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(14);
-      text(`MARKED: ${timeLeft}s`, this.x + this.w / 2, this.y - 10);
-
-      fill(255, 0, 150, 220);
-      textSize(12);
-      text(`${dmgAccumulated} DMG`, this.x + this.w / 2, this.y - 25);
-    }
-
-    // Annihilation explosion
-    if (this.annihilationExploding && this.annihilationExplosionTimer > 0) {
-      let explosionProgress = (30 - this.annihilationExplosionTimer) / 30;
-      let explosionSize = 150 * explosionProgress;
-      let explosionAlpha = 255 * (1 - explosionProgress);
-
-      drawingContext.shadowBlur = 60;
-      drawingContext.shadowColor = 'rgba(100, 0, 100, 1.0)';
-
-      noFill();
-      stroke(150, 0, 150, explosionAlpha);
-      strokeWeight(10);
-      ellipse(this.x + this.w / 2, this.y + this.h / 2, explosionSize * 2, explosionSize * 2);
-
-      stroke(200, 0, 200, explosionAlpha * 0.8);
-      strokeWeight(6);
-      ellipse(this.x + this.w / 2, this.y + this.h / 2, explosionSize * 1.5, explosionSize * 1.5);
-
-      fill(100, 0, 100, explosionAlpha);
-      noStroke();
-      ellipse(this.x + this.w / 2, this.y + this.h / 2, explosionSize, explosionSize);
-
-      for (let i = 0; i < 20; i++) {
-        let particleAngle = random(TWO_PI);
-        let particleDist = explosionSize * random(0.5, 1.5);
-
-        let particleX = this.x + this.w / 2 + cos(particleAngle) * particleDist;
-        let particleY = this.y + this.h / 2 + sin(particleAngle) * particleDist;
-
-        fill(150, 0, 150, explosionAlpha * random(0.5, 1));
-        noStroke();
-        ellipse(particleX, particleY, random(5, 15), random(5, 15));
+        line(lineX, zoneY, hurtboxX, hurtboxY + this.hurtboxHeight / 2);
       }
     }
 
-    // Demonic Steps bonus indicator
-    if (this.demonicStepsNextAttackBonus) {
-      let bonusPulse = 200 + sin(frameCount * 0.4) * 55;
+    for (let i = 0; i < 10; i++) {
+      let spiralAngle = (frameCount * 0.1 + i * 0.6) % TWO_PI;
+      let spiralDist = this.demonicAbyssRange * (0.5 + sin(frameCount * 0.05 + i) * 0.5);
 
-      fill(255, 215, 0, bonusPulse);
+      let particleX = this.facing === 1 ?
+        hurtboxX + this.hurtboxWidth + cos(spiralAngle) * spiralDist :
+        hurtboxX - cos(spiralAngle) * spiralDist;
+      let particleY = hurtboxY + this.hurtboxHeight / 2 + sin(spiralAngle) * 50;
+
+      fill(150, 0, 100, random(100, 200));
       noStroke();
-      textAlign(CENTER, BOTTOM);
-      textSize(16);
-      text("BONUS READY", this.x + this.w / 2, this.y - 25);
-
-      for (let i = 0; i < 3; i++) {
-        let sparkX = this.x + this.w / 2 + random(-20, 20);
-        let sparkY = this.y - 30 + random(-10, 10);
-        fill(255, 215, 0, random(150, 255));
-        noStroke();
-        ellipse(sparkX, sparkY, random(3, 6), random(3, 6));
-      }
+      ellipse(particleX, particleY, random(4, 10), random(4, 10));
     }
 
-    pop();
+    let timeLeft = Math.ceil(this.demonicAbyssTimer / 60);
+    fill(200, 0, 150, 255);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`ABYSS: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
   }
+
+  // Annihilation mark
+  if (this.isAnnihilationMarked && this.annihilationTimer > 0) {
+    let markPulse = 150 + sin(frameCount * 0.4) * 100;
+    let markSize = 20 + sin(frameCount * 0.3) * 8;
+
+    drawingContext.shadowBlur = 40;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 1.0)';
+
+    fill(0, 0, 0, markPulse * 0.6);
+    noStroke();
+    ellipse(hurtboxCenterX, hurtboxCenterY, markSize * 2, markSize * 2);
+
+    fill(50, 0, 50, markPulse);
+    stroke(150, 0, 150, 255);
+    strokeWeight(3);
+    ellipse(hurtboxCenterX, hurtboxCenterY, markSize, markSize);
+
+    fill(0, 0, 0, 255);
+    noStroke();
+    ellipse(hurtboxCenterX, hurtboxCenterY, markSize * 0.5, markSize * 0.5);
+
+    for (let i = 0; i < 6; i++) {
+      let orbitAngle = (frameCount * 0.08 + i * TWO_PI / 6) % TWO_PI;
+      let orbitDist = markSize * 1.5;
+
+      let particleX = hurtboxCenterX + cos(orbitAngle) * orbitDist;
+      let particleY = hurtboxCenterY + sin(orbitAngle) * orbitDist;
+
+      fill(100, 0, 100, random(150, 255));
+      noStroke();
+      ellipse(particleX, particleY, random(3, 8), random(3, 8));
+    }
+
+    let timeLeft = Math.ceil(this.annihilationTimer / 60);
+    let dmgAccumulated = Math.floor(this.annihilationCumulativeDamage);
+
+    fill(200, 0, 150, 255);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(14);
+    text(`MARKED: ${timeLeft}s`, hurtboxCenterX, hurtboxY - 10);
+
+    fill(255, 0, 150, 220);
+    textSize(12);
+    text(`${dmgAccumulated} DMG`, hurtboxCenterX, hurtboxY - 25);
+  }
+
+  // Annihilation explosion
+  if (this.annihilationExploding && this.annihilationExplosionTimer > 0) {
+    let explosionProgress = (30 - this.annihilationExplosionTimer) / 30;
+    let explosionSize = 150 * explosionProgress;
+    let explosionAlpha = 255 * (1 - explosionProgress);
+
+    drawingContext.shadowBlur = 60;
+    drawingContext.shadowColor = 'rgba(100, 0, 100, 1.0)';
+
+    noFill();
+    stroke(150, 0, 150, explosionAlpha);
+    strokeWeight(10);
+    ellipse(hurtboxCenterX, hurtboxCenterY, explosionSize * 2, explosionSize * 2);
+
+    stroke(200, 0, 200, explosionAlpha * 0.8);
+    strokeWeight(6);
+    ellipse(hurtboxCenterX, hurtboxCenterY, explosionSize * 1.5, explosionSize * 1.5);
+
+    fill(100, 0, 100, explosionAlpha);
+    noStroke();
+    ellipse(hurtboxCenterX, hurtboxCenterY, explosionSize, explosionSize);
+
+    for (let i = 0; i < 20; i++) {
+      let particleAngle = random(TWO_PI);
+      let particleDist = explosionSize * random(0.5, 1.5);
+
+      let particleX = hurtboxCenterX + cos(particleAngle) * particleDist;
+      let particleY = hurtboxCenterY + sin(particleAngle) * particleDist;
+
+      fill(150, 0, 150, explosionAlpha * random(0.5, 1));
+      noStroke();
+      ellipse(particleX, particleY, random(5, 15), random(5, 15));
+    }
+  }
+
+  // Demonic Steps bonus indicator
+  if (this.demonicStepsNextAttackBonus) {
+    let bonusPulse = 200 + sin(frameCount * 0.4) * 55;
+
+    fill(255, 215, 0, bonusPulse);
+    noStroke();
+    textAlign(CENTER, BOTTOM);
+    textSize(16);
+    text("BONUS READY", hurtboxCenterX, hurtboxY - 25);
+
+    for (let i = 0; i < 3; i++) {
+      let sparkX = hurtboxCenterX + random(-20, 20);
+      let sparkY = hurtboxY - 30 + random(-10, 10);
+      fill(255, 215, 0, random(150, 255));
+      noStroke();
+      ellipse(sparkX, sparkY, random(3, 6), random(3, 6));
+    }
+  }
+
+  pop();
+}
 
   // Draw hitbox (called from draw)
   drawHitbox() {

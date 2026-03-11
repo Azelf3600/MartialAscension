@@ -14,10 +14,14 @@ function checkHit(attacker, defender) {
     let data = attacker.getHitboxData();
     
     for (let box of data.shapes) {
-      if (box.x < defender.x + defender.w &&
-          box.x + box.w > defender.x &&
-          box.y < defender.y + defender.h &&
-          box.y + box.h > defender.y) {
+// ✅ Use hurtbox dimensions for collision detection
+let defenderHurtboxX = defender.x + defender.hurtboxOffsetX;
+let defenderHurtboxY = defender.y + defender.hurtboxOffsetY;
+
+if (box.x < defenderHurtboxX + defender.hurtboxWidth &&
+    box.x + box.w > defenderHurtboxX &&
+    box.y < defenderHurtboxY + defender.hurtboxHeight &&
+    box.y + box.h > defenderHurtboxY) {
         
         let baseDmg = 10;  
         let isSwordQiLunge = (attacker.attacking === "Sword Qi Lunge");
@@ -300,13 +304,22 @@ if (typeof spawnDamageIndicator === "function") {
 }
 
 function handleBodyCollision(p1, p2) {
-  let isOverlappingY = p1.y < p2.y + p2.h && p1.y + p1.h > p2.y;
+  // ✅ Use hurtbox dimensions for body collision
+  let p1HurtboxY = p1.y + p1.hurtboxOffsetY;
+  let p2HurtboxY = p2.y + p2.hurtboxOffsetY;
+  
+  let isOverlappingY = 
+    p1HurtboxY < p2HurtboxY + p2.hurtboxHeight && 
+    p1HurtboxY + p1.hurtboxHeight > p2HurtboxY;
 
   if (isOverlappingY) {
-    let p1Center = p1.x + p1.w / 2;
-    let p2Center = p2.x + p2.w / 2;
+    let p1HurtboxX = p1.x + p1.hurtboxOffsetX;
+    let p2HurtboxX = p2.x + p2.hurtboxOffsetX;
+    
+    let p1Center = p1HurtboxX + p1.hurtboxWidth / 2;
+    let p2Center = p2HurtboxX + p2.hurtboxWidth / 2;
     let dx = p1Center - p2Center;
-    let minDistance = (p1.w / 2) + (p2.w / 2);
+    let minDistance = (p1.hurtboxWidth / 2) + (p2.hurtboxWidth / 2);
 
     if (Math.abs(dx) < minDistance) {
       let overlap = minDistance - Math.abs(dx);

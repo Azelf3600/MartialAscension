@@ -27,6 +27,9 @@ function preloadMainMenu() {
   STAGES.forEach(stage => {
     stage.img = loadImage(stage.path);
   });
+
+  animationSystem = new AnimationSystem();
+  animationSystem.loadCharacterAnimations("Ethan Li");
 }
 
 function setupMenuLayout() {

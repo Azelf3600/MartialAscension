@@ -28,6 +28,7 @@ let campaignOpponents = [];
 let campaignStages = []; 
 let campaignPlayerChar = 0; 
 let singleDamageIndicators = [];
+let showHurtboxes = true;
 
 function preload() {
   preloadMainMenu();
