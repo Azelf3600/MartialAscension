@@ -250,6 +250,24 @@ class AnimationSystem {
         let path = `Assets/sprites/characters/${folderName}/CrouchLightPunch/frame${frameNum}.png`;
         this.loadedAnimations[characterName].crouchlightpunch.push(loadImage(path));
       }
+      this.loadedAnimations[characterName].crouchheavypunch = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/CrouchHeavyPunch/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchheavypunch.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchlightkick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/CrouchLightKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchlightkick.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchheavykick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/CrouchHeavyKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchheavykick.push(loadImage(path));
+      }
     }
     if (folderName === "AaronShu") { }
     if (folderName === "DamonCheon") { }
