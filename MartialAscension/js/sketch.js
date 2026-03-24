@@ -248,7 +248,7 @@ function windowResized() {
   }
 }
 
-function keyPressed() {
+function keyPressed(keyEvent) {
   // First key press also counts as user interaction for audio playback.
   soundSystem.markUserInteraction();
 
@@ -356,7 +356,7 @@ if (currentState === GAME_STATE.CHARACTER_SELECT_TRAINING) {
 
 // TRAINING MODE CONTROLS
 if (currentState === GAME_STATE.TRAINING) {
-  handleTrainingInput(key, keyCode);
+  handleTrainingInput(key, keyCode, keyEvent);
 }
 
   // MULTIPLAYER CHARACTER SELECTION CONTROLS
@@ -450,15 +450,17 @@ if (currentState === GAME_STATE.TRAINING) {
   // MATCH INPUT RECORDING (COMBO SYSTEM)
   if (currentState === GAME_STATE.MATCH) {
     // Single player uses singlePlayer1
-    if (typeof singlePlayer1 !== 'undefined') handleRecording(singlePlayer1, p1Buffer, keyCode);
+    if (typeof singlePlayer1 !== 'undefined') handleRecording(singlePlayer1, p1Buffer, keyCode, keyEvent);
   } else if (currentState === GAME_STATE.MATCH_MULTI) {
     // Multiplayer uses player1 and player2
-    if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
-    if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
+    if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode, keyEvent);
+    if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode, keyEvent);
   }
 }
 
-function handleRecording(char, buffer, code) {
+function handleRecording(char, buffer, code, keyEvent) {
+  if (keyEvent && keyEvent.repeat) return;
+
   //  Check correct fightStarted flag based on game mode
   if (currentState === GAME_STATE.TRAINING) {
     // Training mode - no restrictions

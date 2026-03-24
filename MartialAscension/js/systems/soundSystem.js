@@ -13,6 +13,9 @@ const soundSystem = {
   _kickPool: [],
   _bodyHitPool: [],
   _blockPool: [],
+  _dashPool: [],
+  _jumpPool: [],
+  _landPool: [],
 
   // Builds a list of Audio objects from paths (volume set for template clones).
   _loadSfxPool(urls) {
@@ -57,6 +60,23 @@ const soundSystem = {
   playRandomBlockSfx() {
     this.init();
     this._playRandomFromPool(this._blockPool);
+  },
+
+  playRandomDashSfx() {
+    this.init();
+    this._playRandomFromPool(this._dashPool);
+  },
+
+  // Play jump whoosh / takeoff.
+  playRandomJumpSfx() {
+    this.init();
+    this._playRandomFromPool(this._jumpPool);
+  },
+
+  // Play landing impact after being airborne.
+  playRandomLandSfx() {
+    this.init();
+    this._playRandomFromPool(this._landPool);
   },
 
   // Initialize audio assets once (safe to call multiple times).
@@ -114,6 +134,10 @@ const soundSystem = {
       "Assets/audio/sfx/block/block_large_71.wav",
       "Assets/audio/sfx/block/block_large_59.wav"
     ]);
+    this._dashPool = this._loadSfxPool(["Assets/audio/sfx/dash/dash1.wav"]);
+
+    this._jumpPool = this._loadSfxPool(["Assets/audio/sfx/Jump/jump1.wav"]);
+    this._landPool = this._loadSfxPool(["Assets/audio/sfx/Land/land1.wav"]);
 
     this.initialized = true;
   },

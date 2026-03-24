@@ -590,6 +590,7 @@ class Character {
         this.isAirDashing = true;
         this.canAirDash = false;
         this.airDashTimer = 15;
+        soundSystem.playRandomDashSfx();
 
         let opponent;
         if (currentState === GAME_STATE.TRAINING) {
@@ -625,48 +626,50 @@ class Character {
       }
     }
 
-// Dash 
-if (!this.attacking && this.isGrounded && buffer) {
-  if (buffer.checkDoubleTap("FW")) {
-    if (this.isCrouching) {
-      this.isCrouchDashing = true;
-      this.isDashing = true;
-      this.dashDirection = this.facing;
-      this.dashTimer = 20; 
-      this.dashMaxSpeed = 55;
-      let dashSpeed = this.isInPoisonField ? 22 : 45;
-      this.velX = this.facing * dashSpeed;
-      console.log("Crouch Dash Forward!");
-    } else {
-      this.isDashing = true;
-      this.dashDirection = this.facing;
-      this.dashTimer = 18;
-      this.dashMaxSpeed = 60;
-      let dashSpeed = this.isInPoisonField ? 25 : 50;
-      this.velX = this.facing * dashSpeed;
+    // Ground dash (double-tap FW/BW). !isDashing keeps one SFX per dash start.
+    if (!this.attacking && this.isGrounded && buffer && !this.isDashing) {
+      if (buffer.checkDoubleTap("FW")) {
+        soundSystem.playRandomDashSfx();
+        if (this.isCrouching) {
+          this.isCrouchDashing = true;
+          this.isDashing = true;
+          this.dashDirection = this.facing;
+          this.dashTimer = 20;
+          this.dashMaxSpeed = 55;
+          let dashSpeed = this.isInPoisonField ? 22 : 45;
+          this.velX = this.facing * dashSpeed;
+          console.log("Crouch Dash Forward!");
+        } else {
+          this.isDashing = true;
+          this.dashDirection = this.facing;
+          this.dashTimer = 18;
+          this.dashMaxSpeed = 60;
+          let dashSpeed = this.isInPoisonField ? 25 : 50;
+          this.velX = this.facing * dashSpeed;
+        }
+      } else if (buffer.checkDoubleTap("BW")) {
+        soundSystem.playRandomDashSfx();
+        if (this.isCrouching) {
+          this.isCrouchBackDashing = true;
+          this.isDashing = true;
+          this.dashDirection = -this.facing;
+          this.dashTimer = 18;
+          this.dashMaxSpeed = 48;
+          let dashSpeed = this.isInPoisonField ? 19 : 38;
+          this.velX = -this.facing * dashSpeed;
+          console.log("Crouch Back Dash!");
+        } else {
+          this.isBackDashing = true;
+          this.isDashing = true;
+          this.dashDirection = -this.facing;
+          this.dashTimer = 16;
+          this.dashMaxSpeed = 52;
+          let dashSpeed = this.isInPoisonField ? 21 : 42;
+          this.velX = -this.facing * dashSpeed;
+          console.log("Back Dash!");
+        }
+      }
     }
-  } else if (buffer.checkDoubleTap("BW")) {
-    if (this.isCrouching) {
-      this.isCrouchBackDashing = true;
-      this.isDashing = true;
-      this.dashDirection = -this.facing;
-      this.dashTimer = 18;
-      this.dashMaxSpeed = 48;
-      let dashSpeed = this.isInPoisonField ? 19 : 38;
-      this.velX = -this.facing * dashSpeed;
-      console.log("Crouch Back Dash!");
-    } else {
-      this.isBackDashing = true;
-      this.isDashing = true;
-      this.dashDirection = -this.facing;
-      this.dashTimer = 16;
-      this.dashMaxSpeed = 52;
-      let dashSpeed = this.isInPoisonField ? 21 : 42;
-      this.velX = -this.facing * dashSpeed;
-      console.log("Back Dash!");
-    }
-  }
-}
 
     // Dash momentum
     if (this.isDashing && this.dashTimer > 0) {
@@ -739,6 +742,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       if (this.isInPoisonField) {
         console.log("Jump nullified by Poison Flower Field!");
       } else {
+        soundSystem.playRandomJumpSfx();
         this.velY = -this.jumpPower;
         this.isGrounded = false;
         this.isDashing = false;
@@ -935,6 +939,10 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ground collision
     if (this.y + this.h >= groundY) {
+      // Landing: only play once when transitioning from air to ground.
+      if (!this.isGrounded && this.velY > 0) {
+        soundSystem.playRandomLandSfx();
+      }
       this.y = groundY - this.h;
       this.velY = 0;
       this.isGrounded = true;
@@ -1046,6 +1054,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isGrounded = false;
         this.velY = -this.jumpPower * 0.8;
         this.flightLaunchTimer = 10;
+      soundSystem.playRandomJumpSfx();
       }
 
       if (comboData.isDemonicSteps) {
@@ -1307,6 +1316,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       this.velY = -this.jumpPower * 1.2;
       this.diveVelX = this.facing * 12;
       this.diveVelY = 0;
+      soundSystem.playRandomJumpSfx();
     }
 
     // Ethan Li - Sword Qi Strike

@@ -236,7 +236,7 @@ if (showInputHistory) {
   pop();
 }
 
-function handleTrainingInput(key, keyCode) {
+function handleTrainingInput(key, keyCode, keyEvent) {
   // NEW: ESC to pause
   if (keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU_TRAINING;
@@ -276,7 +276,7 @@ function handleTrainingInput(key, keyCode) {
 
   // Normal combat input (player only)
   if (typeof trainingPlayer !== 'undefined') {
-    handleRecording(trainingPlayer, p1Buffer, keyCode);
+    handleRecording(trainingPlayer, p1Buffer, keyCode, keyEvent);
   }
 }
 
