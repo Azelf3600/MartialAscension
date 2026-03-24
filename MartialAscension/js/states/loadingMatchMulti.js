@@ -1,6 +1,7 @@
 let loadingTimerMulti = 0; 
 const LOADING_DURATION_MULTI = 300;
 let loadingInitializedMulti = false; 
+let loadingGongPlayedMulti = false;
 
 function drawLoadingMatchMulti() {
   background(0);
@@ -9,6 +10,11 @@ function drawLoadingMatchMulti() {
   if (!loadingInitializedMulti) {
     loadingTimerMulti = 0;
     loadingInitializedMulti = true;
+    // Gong plays when the VS/loading screen first appears.
+    if (!loadingGongPlayedMulti) {
+      soundSystem.playSfx("startMatchGong");
+      loadingGongPlayedMulti = true;
+    }
   }
   
   loadingTimerMulti++;
@@ -16,6 +22,7 @@ function drawLoadingMatchMulti() {
   if (loadingTimerMulti >= LOADING_DURATION_MULTI) {
     loadingTimerMulti = 0;
     loadingInitializedMulti = false;
+    loadingGongPlayedMulti = false;
     
     // Initialize multiplayer match
     initMatch();

@@ -1,6 +1,7 @@
 let loadingTimerSingle = 0;
 const LOADING_DURATION_SINGLE = 300;
 let loadingInitializedSingle = false;
+let loadingGongPlayedSingle = false;
 
 function drawLoadingMatch() {
   background(0);
@@ -8,6 +9,11 @@ function drawLoadingMatch() {
   if (!loadingInitializedSingle) {
     loadingTimerSingle = 0;
     loadingInitializedSingle = true;
+    // Gong plays once when the single-player character showcase appears.
+    if (!loadingGongPlayedSingle) {
+      soundSystem.playSfx("startMatchGong");
+      loadingGongPlayedSingle = true;
+    }
   }
   
   loadingTimerSingle++;
@@ -15,6 +21,7 @@ function drawLoadingMatch() {
   if (loadingTimerSingle >= LOADING_DURATION_SINGLE) {
     loadingTimerSingle = 0;
     loadingInitializedSingle = false;
+    loadingGongPlayedSingle = false;
     
     console.log("⏰ Loading complete! Calling initMatchSingle()...");
     
@@ -25,7 +32,7 @@ function drawLoadingMatch() {
     } else {
       console.error("❌ initMatchSingle() function not found!");
     }
-    
+
     currentState = GAME_STATE.MATCH;
     return;
   }

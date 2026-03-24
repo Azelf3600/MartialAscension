@@ -20,7 +20,7 @@ function drawLoadingMatchTraining() {
     loadingInitializedTraining = false;
     
     initTraining();
-    
+
     currentState = GAME_STATE.TRAINING;
     return;
   }

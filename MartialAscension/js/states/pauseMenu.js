@@ -321,15 +321,21 @@ function handleMainMenuInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     pauseMenuSelection--;
     if (pauseMenuSelection < 0) pauseMenuSelection = PAUSE_MENU_OPTIONS.length - 1;
+    // Navigation feedback while moving through pause options.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     pauseMenuSelection++;
     if (pauseMenuSelection >= PAUSE_MENU_OPTIONS.length) pauseMenuSelection = 0;
+    // Navigation feedback while moving through pause options.
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm selection
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback for pause menu actions.
+    soundSystem.playSfx("uiSelect");
     let selectedOption = PAUSE_MENU_OPTIONS[pauseMenuSelection];
     
     if (selectedOption === "RESUME") {
@@ -350,6 +356,8 @@ function handleMainMenuInput(key, keyCode) {
   
   // ESC to resume
   if (keyCode === ESCAPE) {
+    // Resume feedback when closing pause menu.
+    soundSystem.playSfx("uiSelect");
     currentState = GAME_STATE.MATCH;
     pauseMenuState = "MAIN";
     pauseMenuSelection = 0;
@@ -361,15 +369,21 @@ function handleConfirmInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     pauseConfirmSelection--;
     if (pauseConfirmSelection < 0) pauseConfirmSelection = CONFIRM_OPTIONS.length - 1;
+    // Navigation feedback inside confirmation prompt.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     pauseConfirmSelection++;
     if (pauseConfirmSelection >= CONFIRM_OPTIONS.length) pauseConfirmSelection = 0;
+    // Navigation feedback inside confirmation prompt.
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm selection
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback for YES/NO choice.
+    soundSystem.playSfx("uiSelect");
     if (pauseConfirmSelection === 0) { // YES
       executePauseAction(pendingAction);
     } else { // NO
@@ -380,6 +394,8 @@ function handleConfirmInput(key, keyCode) {
   
   // ESC to cancel
   if (keyCode === ESCAPE) {
+    // Cancel feedback when leaving confirmation prompt.
+    soundSystem.playSfx("uiSelect");
     pauseMenuState = "MAIN";
     pauseConfirmSelection = 0;
   }
@@ -394,15 +410,21 @@ function handleComboListViewInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     selectedComboIndex--;
     if (selectedComboIndex < 0) selectedComboIndex = comboList.length - 1;
+    // Navigation feedback while scrolling combo entries.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     selectedComboIndex++;
     if (selectedComboIndex >= comboList.length) selectedComboIndex = 0;
+    // Navigation feedback while scrolling combo entries.
+    soundSystem.playSfx("uiSelect");
   }
   
   // ESC or Backspace to go back
   if (keyCode === ESCAPE || keyCode === BACKSPACE) {
+    // Back feedback when leaving combo list.
+    soundSystem.playSfx("uiSelect");
     pauseMenuState = "MAIN";
     selectedComboIndex = 0;
   }
