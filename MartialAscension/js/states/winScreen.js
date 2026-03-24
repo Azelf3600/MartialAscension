@@ -114,15 +114,18 @@ function handleWinScreenSingleInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     winScreenSingleSelection--;
     if (winScreenSingleSelection < 0) winScreenSingleSelection = availableOptions.length - 1;
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     winScreenSingleSelection++;
     if (winScreenSingleSelection >= availableOptions.length) winScreenSingleSelection = 0;
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm selection
   if (key === ' ' || keyCode === ENTER) {
+    soundSystem.playSfx("uiSelect");
     executeWinScreenSingleChoice();
   }
 }
