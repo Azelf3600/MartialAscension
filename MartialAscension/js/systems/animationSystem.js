@@ -268,6 +268,18 @@ class AnimationSystem {
         let path = `Assets/sprites/characters/${folderName}/CrouchHeavyKick/frame${frameNum}.png`;
         this.loadedAnimations[characterName].crouchheavykick.push(loadImage(path));
       }
+      this.loadedAnimations[characterName].launcher = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Launcher/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].launcher.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].divingkick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/DivingKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].divingkick.push(loadImage(path));
+      }
     }
     if (folderName === "AaronShu") { }
     if (folderName === "DamonCheon") { }
