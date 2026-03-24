@@ -28,12 +28,12 @@ let campaignOpponents = [];
 let campaignStages = []; 
 let campaignPlayerChar = 0; 
 let singleDamageIndicators = [];
-let showHurtboxes = true;
+let showHurtboxes = false;
 
 function preload() {
   preloadMainMenu();
 }
-
+  
 function setup() {
   createCanvas(windowWidth, windowHeight);
   rectMode(CENTER); 

@@ -30,6 +30,9 @@ function preloadMainMenu() {
 
   animationSystem = new AnimationSystem();
   animationSystem.loadCharacterAnimations("Ethan Li");
+  animationSystem.loadCharacterAnimations("Lucas Tang");
+  animationSystem.loadCharacterAnimations("Aaron Shu");
+  animationSystem.loadCharacterAnimations("Damon Cheon");
 }
 
 function setupMenuLayout() {
@@ -76,6 +79,8 @@ function drawMenu() {
 
 // Delay when clicked 
 function handleMenuClick() {
+if (!singleBtn || !multiBtn || !trainingBtn) return;
+
   if (isHovering(singleBtn)) {
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT;
@@ -139,6 +144,7 @@ function drawText(content, x, y, size) {
 }
 
 function isHovering(btn) {
+if (!btn) return false;
   return (
     mouseX > btn.x - btn.w / 2 &&
     mouseX < btn.x + btn.w / 2 &&

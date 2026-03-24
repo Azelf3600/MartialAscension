@@ -6,7 +6,7 @@ class Character {
     this.w = w;
     this.h = h;
     this.standH = h;
-    this.crouchH = h * 0.6;
+    this.crouchH = h * 0.8;
     this.color = color;
     this.name = name;
     this.controls = controls;
@@ -46,6 +46,9 @@ class Character {
 
     // Dash
     this.isDashing = false;
+    this.isBackDashing = false;
+    this.isCrouchDashing = false;
+    this.isCrouchBackDashing = false; 
     this.dashDirection = 0;
     this.dashTimer = 0;
     this.dashMaxSpeed = 0;
@@ -223,6 +226,7 @@ class Character {
     this.frameTimer = 0;
     this.frameDelay = 5; 
     this.isWalking = false;
+    this.isCrouching = false;
 
     // Sprite rendering properties
     this.spriteOffsetX = 0;      // Horizontal offset from hurtbox center
@@ -621,24 +625,48 @@ class Character {
       }
     }
 
-    // Dash
-    if (!this.attacking && this.isGrounded && buffer) {
-      if (buffer.checkDoubleTap("FW")) {
-        this.isDashing = true;
-        this.dashDirection = this.facing;
-        this.dashTimer = 18;
-        this.dashMaxSpeed = 60;
-        let dashSpeed = this.isInPoisonField ? 25 : 50;
-        this.velX = this.facing * dashSpeed;
-      } else if (buffer.checkDoubleTap("BW")) {
-        this.isDashing = true;
-        this.dashDirection = -this.facing;
-        this.dashTimer = 16;
-        this.dashMaxSpeed = 52;
-        let dashSpeed = this.isInPoisonField ? 21 : 42;
-        this.velX = -this.facing * dashSpeed;
-      }
+// Dash 
+if (!this.attacking && this.isGrounded && buffer) {
+  if (buffer.checkDoubleTap("FW")) {
+    if (this.isCrouching) {
+      this.isCrouchDashing = true;
+      this.isDashing = true;
+      this.dashDirection = this.facing;
+      this.dashTimer = 20; 
+      this.dashMaxSpeed = 55;
+      let dashSpeed = this.isInPoisonField ? 22 : 45;
+      this.velX = this.facing * dashSpeed;
+      console.log("Crouch Dash Forward!");
+    } else {
+      this.isDashing = true;
+      this.dashDirection = this.facing;
+      this.dashTimer = 18;
+      this.dashMaxSpeed = 60;
+      let dashSpeed = this.isInPoisonField ? 25 : 50;
+      this.velX = this.facing * dashSpeed;
     }
+  } else if (buffer.checkDoubleTap("BW")) {
+    if (this.isCrouching) {
+      this.isCrouchBackDashing = true;
+      this.isDashing = true;
+      this.dashDirection = -this.facing;
+      this.dashTimer = 18;
+      this.dashMaxSpeed = 48;
+      let dashSpeed = this.isInPoisonField ? 19 : 38;
+      this.velX = -this.facing * dashSpeed;
+      console.log("Crouch Back Dash!");
+    } else {
+      this.isBackDashing = true;
+      this.isDashing = true;
+      this.dashDirection = -this.facing;
+      this.dashTimer = 16;
+      this.dashMaxSpeed = 52;
+      let dashSpeed = this.isInPoisonField ? 21 : 42;
+      this.velX = -this.facing * dashSpeed;
+      console.log("Back Dash!");
+    }
+  }
+}
 
     // Dash momentum
     if (this.isDashing && this.dashTimer > 0) {
@@ -660,6 +688,9 @@ class Character {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
+        this.isCrouchDashing = false;
+        this.isBackDashing = false;
+        this.isCrouchBackDashing = false; 
         this.dashDirection = 0;
       }
     }
@@ -684,18 +715,24 @@ if (this.isDashing) {
 } else {
   this.velX *= 0.82;
 }
-    // Crouch
-    if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
-      if (this.h !== this.crouchH) {
-        this.y += (this.h - this.crouchH);
-        this.h = this.crouchH;
-      }
-    } else {
-      if (this.h !== this.standH) {
-        this.y -= (this.standH - this.h);
-        this.h = this.standH;
-      }
-    }
+// Crouch
+if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
+  if (!this.isCrouching) {
+    this.isCrouching = true;
+    
+    // Move hurtbox down so bottom stays at ground level
+    this.hurtboxOffsetY = this.standH - this.crouchH;
+    this.hurtboxHeight = this.crouchH;
+  }
+} else {
+  if (this.isCrouching) {
+    this.isCrouching = false;
+    
+    // Restore original hurtbox position and size
+    this.hurtboxOffsetY = -60;
+    this.hurtboxHeight = this.standH + 60;
+  }
+}
 
     // Jump
     if (keyIsDown(this.controls.jump) && this.isGrounded && !this.attacking && !this.isFlying) {
@@ -1457,98 +1494,126 @@ if (this.isDashing) {
   draw() {
     push();
 
-    // Dash trail
+// Dash trail - sprite-based afterimages
 if (this.isDashing && this.dashTimer > 0) {
-  let hurtboxY = this.y + this.hurtboxOffsetY;
+  let frames = animationSystem.getAnimation(this.name, this.currentAnimation);
   
-  for (let i = 1; i <= 3; i++) {
-    let trailX = this.x + this.hurtboxOffsetX - (this.velX * i * 0.3);
-    let alpha = 100 - (i * 25);
-
-    push();
-    fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], alpha);
-    noStroke();
-    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
-    pop();
-  }
-
-      drawingContext.shadowBlur = 15;
-      drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
-    }
-
-    // Launcher slide trail
-if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
-  let hurtboxY = this.y + this.hurtboxOffsetY;
-  
-  for (let i = 1; i <= 4; i++) {
-    let trailX = this.x + this.hurtboxOffsetX - (this.launcherSlideSpeed * i * 0.25);
-    let alpha = 120 - (i * 30);
-
-    push();
-    fill(255, 165, 0, alpha);
-    noStroke();
-    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
-    pop();
-  }
-
-      drawingContext.shadowBlur = 20;
-      drawingContext.shadowColor = 'rgba(255, 165, 0, 0.9)';
-    }
-
-    // Lunge trail
-if (this.isLunging && this.lungeTimer > 0) {
-  let trailCount = this.lungePhase === "burst" ? 5 : 2;
-  let hurtboxY = this.y + this.hurtboxOffsetY;
-
-  for (let i = 1; i <= trailCount; i++) {
-    let trailX = this.lungePhase === "burst" ?
-      this.x + this.hurtboxOffsetX - (this.lungeDirection * i * 30) :
-      this.x + this.hurtboxOffsetX + (this.lungeDirection * i * 15);
-
-    let alpha = this.lungePhase === "burst" ?
-      150 - (i * 30) :
-      100 - (i * 40);
-
-    push();
-    fill(255, 200, 200, alpha);
-    noStroke();
-    rect(trailX, hurtboxY, this.hurtboxWidth, this.hurtboxHeight, 5);
-    pop();
-  }
-
-      if (this.lungePhase === "burst") {
-        drawingContext.shadowBlur = 25;
-        drawingContext.shadowColor = 'rgba(255, 100, 100, 0.9)';
+  if (frames.length > 0 && frames[this.currentFrame]) {
+    let sprite = frames[this.currentFrame];
+    let spriteAspect = sprite.width / sprite.height;
+    let targetHeight = this.standH * this.spriteScale;
+    let targetWidth = targetHeight * spriteAspect;
+    
+    // Draw 3 afterimage sprites behind the character
+    for (let i = 1; i <= 3; i++) {
+      let trailX = this.x - (this.velX * i * 0.3);
+      let alpha = 100 - (i * 25);
+      
+      push();
+      tint(255, alpha); // Apply transparency to sprite
+      
+      let spriteCenterX = trailX + this.w/2 + this.spriteOffsetX;
+      let spriteCenterY = this.y + this.h/2 + this.spriteOffsetY;
+      
+      translate(spriteCenterX, spriteCenterY);
+      
+      if (this.facing === -1) {
+        scale(-1, 1);
       }
+      
+      imageMode(CENTER);
+      image(sprite, 0, 0, targetWidth, targetHeight);
+      pop();
     }
+  }
+
+  drawingContext.shadowBlur = 15;
+  drawingContext.shadowColor = 'rgba(255, 255, 255, 0.8)';
+}
+
+   // Launcher slide trail - sprite-based afterimages with orange tint
+if (this.isLauncherSliding && this.launcherSlideTimer > 0) {
+  let frames = animationSystem.getAnimation(this.name, this.currentAnimation);
+  
+  if (frames.length > 0 && frames[this.currentFrame]) {
+    let sprite = frames[this.currentFrame];
+    let spriteAspect = sprite.width / sprite.height;
+    let targetHeight = this.standH * this.spriteScale;
+    let targetWidth = targetHeight * spriteAspect;
+    
+    for (let i = 1; i <= 4; i++) {
+      let trailX = this.x - (this.launcherSlideSpeed * i * 0.25);
+      let alpha = 120 - (i * 30);
+      
+      push();
+      tint(255, 165, 0, alpha); // Orange tint with transparency
+      
+      let spriteCenterX = trailX + this.w/2 + this.spriteOffsetX;
+      let spriteCenterY = this.y + this.h/2 + this.spriteOffsetY;
+      
+      translate(spriteCenterX, spriteCenterY);
+      
+      if (this.facing === -1) {
+        scale(-1, 1);
+      }
+      
+      imageMode(CENTER);
+      image(sprite, 0, 0, targetWidth, targetHeight);
+      pop();
+    }
+  }
+
+  drawingContext.shadowBlur = 20;
+  drawingContext.shadowColor = 'rgba(255, 165, 0, 0.9)';
+}
+
+// Lunge trail - sprite-based afterimages with pink tint
+if (this.isLunging && this.lungeTimer > 0) {
+  let frames = animationSystem.getAnimation(this.name, this.currentAnimation);
+  
+  if (frames.length > 0 && frames[this.currentFrame]) {
+    let sprite = frames[this.currentFrame];
+    let spriteAspect = sprite.width / sprite.height;
+    let targetHeight = this.standH * this.spriteScale;
+    let targetWidth = targetHeight * spriteAspect;
+    
+    let trailCount = this.lungePhase === "burst" ? 5 : 2;
+
+    for (let i = 1; i <= trailCount; i++) {
+      let trailX = this.lungePhase === "burst" ?
+        this.x - (this.lungeDirection * i * 30) :
+        this.x + (this.lungeDirection * i * 15);
+
+      let alpha = this.lungePhase === "burst" ?
+        150 - (i * 30) :
+        100 - (i * 40);
+
+      push();
+      tint(255, 200, 200, alpha); // Pink tint with transparency
+      
+      let spriteCenterX = trailX + this.w/2 + this.spriteOffsetX;
+      let spriteCenterY = this.y + this.h/2 + this.spriteOffsetY;
+      
+      translate(spriteCenterX, spriteCenterY);
+      
+      if (this.facing === -1) {
+        scale(-1, 1);
+      }
+      
+      imageMode(CENTER);
+      image(sprite, 0, 0, targetWidth, targetHeight);
+      pop();
+    }
+  }
+
+  if (this.lungePhase === "burst") {
+    drawingContext.shadowBlur = 25;
+    drawingContext.shadowColor = 'rgba(255, 100, 100, 0.9)';
+  }
+}
 
     // Flight effects
-    if (this.isFlying && !this.isGrounded) {
-if (this.slowFallActive) {
-  push();
-  noFill();
-  stroke(100, 150, 255, 150);
-  strokeWeight(3);
-
-  let hurtboxX = this.x + this.hurtboxOffsetX;
-  let hurtboxY = this.y + this.hurtboxOffsetY;
-  let pulseSize = sin(frameCount * 0.2) * 10;
-  
-  rect(hurtboxX, hurtboxY, this.hurtboxWidth + pulseSize, this.hurtboxHeight + pulseSize, 5);
-
-for (let i = 0; i < 3; i++) {
-  let hurtboxCenterX = this.x + this.hurtboxOffsetX + this.hurtboxWidth / 2;
-  let hurtboxBottomY = this.y + this.hurtboxOffsetY + this.hurtboxHeight;
-  
-  let particleX = hurtboxCenterX + random(-20, 20);
-  let particleY = hurtboxBottomY + random(0, 20);
-          fill(150, 200, 255, 100);
-          noStroke();
-          ellipse(particleX, particleY, 5, 5);
-        }
-        pop();
-      }
-
+if (this.isFlying && !this.isGrounded) {
 if (this.isAirDashing) {
   push();
   let hurtboxY = this.y + this.hurtboxOffsetY;

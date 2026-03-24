@@ -35,7 +35,7 @@ function getHitboxData(character) {
   }
 }
 
-// SWORD GOD SLASH HITBOX (Animated diagonal slash)
+// SWORD GOD SLASH HITBOX - ✅ FIXED FOR CROUCH
 function getSwordGodSlashHitbox(character) {
   let shapes = [];
   let col = color(255, 0, 0, 150);
@@ -48,9 +48,11 @@ function getSwordGodSlashHitbox(character) {
   // Calculate slash progress (0 = start, 1 = end)
   let slashProgress = map(character.godSlashTimer, 30, 0, 0, 1);
   
-  // Anchor point (center of character)
-  let anchorX = character.x + character.w / 2;
-  let anchorY = character.y + character.h / 2;
+  // ✅ FIX: Anchor from hurtbox center
+  let hurtboxX = character.x + character.hurtboxOffsetX;
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  let anchorX = hurtboxX + character.hurtboxWidth / 2;
+  let anchorY = hurtboxY + character.hurtboxHeight / 2;
   
   // Slash dimensions
   let slashLength = 200;
@@ -88,7 +90,7 @@ function getSwordGodSlashHitbox(character) {
   return { shapes: shapes, col: col };
 }
 
-// NEW: Sword Qi Lunge Hitbox (same as HK)
+// SWORD QI LUNGE HITBOX - ✅ FIXED FOR CROUCH
 function getSwordQiLungeHitbox(character) {
   let shapes = [];
   let col = color(255, 100, 100, 180); 
@@ -97,72 +99,88 @@ function getSwordQiLungeHitbox(character) {
   let atkH = 40;
   let offY = 30; 
   
+  // ✅ FIX: Use hurtbox position
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  
   let atkX = (character.facing === 1) ? 
     (character.x + character.w - innerOverlap) : 
     (character.x - atkW + innerOverlap);
+  
+  let atkY = hurtboxY + offY; // ✅ From hurtbox
     
-  shapes.push({ x: atkX, y: character.y + offY, w: atkW, h: atkH });
+  shapes.push({ x: atkX, y: atkY, w: atkW, h: atkH });
 
   return { shapes: shapes, col: col };
 }
 
-// UNSTOPPABLE SEA DRAGON HITBOX (Vertical wall in front)
+// UNSTOPPABLE SEA DRAGON HITBOX - ✅ FIXED FOR CROUCH
 function getSeaDragonHitbox(character) {
   let shapes = [];
-  let col = color(0, 180, 255, 180); // Cyan glow
+  let col = color(0, 180, 255, 180);
   
-  // Only show hitbox during charge
   if (!character.isSeaDragonCharging) {
     return { shapes: [], col: col };
   }
   
-  // Vertical wall hitbox (like block indicator)
+  // ✅ FIX: Use hurtbox position
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  let hurtboxH = character.hurtboxHeight;
+  
+  // Vertical wall hitbox
   let wallW = 10; 
-  let wallH = character.h; 
+  let wallH = hurtboxH; // ✅ Match hurtbox height
   
   let wallX = (character.facing === 1) ? 
     (character.x + character.w) :
     (character.x - wallW); 
   
-  let wallY = character.y;
+  let wallY = hurtboxY; // ✅ From hurtbox
   
   shapes.push({ x: wallX, y: wallY, w: wallW, h: wallH });
   
   return { shapes: shapes, col: col };
 }
 
-// AZURE FLOWING DRAGON HITBOX (Rising pillar from underground)
+// AZURE FLOWING DRAGON HITBOX - ✅ FIXED FOR CROUCH
 function getAzureDragonHitbox(character) {
   let shapes = [];
-  let col = color(0, 220, 255, 180); // Bright cyan
+  let col = color(0, 220, 255, 180);
   
-  // Only show hitbox during emerge phase
   if (character.azureDragonPhase !== "emerge") {
     return { shapes: [], col: col };
   }
   
-  // Rising pillar hitbox (covers character + upward area)
-  let pillW = character.w * 1.2; 
-  let pillH = character.h * 1.5; 
+  // ✅ FIX: Use hurtbox dimensions
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  let hurtboxW = character.hurtboxWidth;
+  let hurtboxH = character.hurtboxHeight;
   
-  let pillX = character.x - (pillW - character.w) / 2; 
-  let pillY = character.y - (pillH - character.h);
+  // Rising pillar hitbox
+  let pillW = hurtboxW * 1.2; 
+  let pillH = hurtboxH * 1.5; 
+  
+  let pillX = character.x - (pillW - hurtboxW) / 2; 
+  let pillY = hurtboxY - (pillH - hurtboxH); // ✅ From hurtbox
   
   shapes.push({ x: pillX, y: pillY, w: pillW, h: pillH });
   
   return { shapes: shapes, col: col };
 }
 
-// LAUNCHER COMBO HITBOX (L-SHAPE)
+// LAUNCHER COMBO HITBOX (L-SHAPE) - ✅ FIXED FOR CROUCH
 function getLauncherHitbox(character) {
   let shapes = [];
   let col = color(255, 165, 0, 150);
   let innerOverlap = 10;
   
+  // ✅ FIX: Use hurtbox position
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  let hurtboxH = character.hurtboxHeight;
+  
   // Horizontal Base (The sweep)
   let baseW = 150;
   let baseH = 20;
-  let baseY = character.y + character.h * 0.3;
+  let baseY = hurtboxY + hurtboxH * 0.3; // ✅ Relative to hurtbox
   let baseX = (character.facing === 1) ? 
     (character.x + character.w - innerOverlap) : 
     (character.x - baseW + innerOverlap);
@@ -177,22 +195,26 @@ function getLauncherHitbox(character) {
   return { shapes: shapes, col: col };
 }
 
-// DIVING KICK HITBOX (DIAGONAL STAIRCASE)
+// DIVING KICK HITBOX (DIAGONAL STAIRCASE) - ✅ FIXED FOR CROUCH
 function getDivingKickHitbox(character) {
   let shapes = [];
   let col = color(255, 100, 0, 180);
+  
+  // ✅ FIX: Use hurtbox position
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  let hurtboxH = character.hurtboxHeight;
   
   // Hitbox configuration
   let boxW = 60;
   let boxH = 70;
   let dirX = character.facing === 1 ? 1 : -1;
-  let startOffsetY = character.h * 0.4; 
+  let startOffsetY = hurtboxH * 0.4; // ✅ Relative to hurtbox height
   
   // Box 1: Top (chest/hip area)
   let box1X = character.facing === 1 ? 
     character.x + character.w : 
     character.x - boxW;
-  let box1Y = character.y + startOffsetY;
+  let box1Y = hurtboxY + startOffsetY; // ✅ From hurtbox
   shapes.push({ x: box1X, y: box1Y, w: boxW, h: boxH });
   
   // Box 2: Step down and forward
@@ -213,7 +235,7 @@ function getDivingKickHitbox(character) {
   return { shapes: shapes, col: col };
 }
 
-// STANDARD HITBOXES (LP, HP, LK, HK, etc.)
+// STANDARD HITBOXES (LP, HP, LK, HK, etc.) - ✅ FIXED FOR CROUCH
 function getStandardHitbox(character, actualAttack) {
   let shapes = [];
   let col = color(255, 150);
@@ -255,10 +277,17 @@ function getStandardHitbox(character, actualAttack) {
       col = color(255, 0, 255, 150);
   }
 
+  // ✅ FIX: Use hurtbox position instead of character.y
+  let hurtboxY = character.y + character.hurtboxOffsetY;
+  
   let atkX = (character.facing === 1) ? 
     (character.x + character.w - innerOverlap) : 
     (character.x - atkW + innerOverlap);
-  shapes.push({ x: atkX, y: character.y + offY, w: atkW, h: atkH });
+  
+  // ✅ FIX: Calculate attack Y from hurtbox position
+  let atkY = hurtboxY + offY;
+  
+  shapes.push({ x: atkX, y: atkY, w: atkW, h: atkH });
 
   return { shapes: shapes, col: col };
 }
