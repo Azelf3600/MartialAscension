@@ -395,6 +395,8 @@ function handleCountdown() {
       if (countdown <= 0) {
         fightStarted = true;
         showFightText = true;
+        // Play voice cue when the FIGHT overlay appears.
+        soundSystem.playSfx("fightVoice");
       }
     }
   } else if (showFightText) {

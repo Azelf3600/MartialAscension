@@ -966,6 +966,13 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
             this.comboHitTimer = this.comboHits[this.currentComboHit].duration;
             this.hasHit = false;
             this.lastHitIndex = -1;
+            // Next combo segment: swing SFX only for normal punch/kick symbols.
+            let comboAtk = this.comboHits[this.currentComboHit].attack;
+            if (comboAtk === "LP" || comboAtk === "HP") {
+              soundSystem.playRandomPunchSfx();
+            } else if (comboAtk === "LK" || comboAtk === "HK") {
+              soundSystem.playRandomKickSfx();
+            }
           } else {
             if (this.hasHit) {
               this.lastHitIndex = this.currentComboHit;
@@ -1004,6 +1011,13 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         console.log("Demonic Steps bonus applied! +50% damage on this attack!");
       } else {
         this.comboDamageMod = 1.0;
+      }
+
+      // Basic attack swing layer: separate pools for arms vs legs.
+      if (type === "LP" || type === "HP") {
+        soundSystem.playRandomPunchSfx();
+      } else if (type === "LK" || type === "HK") {
+        soundSystem.playRandomKickSfx();
       }
     }
   }
@@ -1266,6 +1280,13 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       let totalDuration = this.comboHits.reduce((sum, hit) => sum + hit.duration, 0);
       this.attackTimer = totalDuration;
       this.comboHitTimer = this.comboHits[0].duration;
+      // First segment of the combo string uses the same swing rules as startAttack.
+      let firstAtk = this.comboHits[0].attack;
+      if (firstAtk === "LP" || firstAtk === "HP") {
+        soundSystem.playRandomPunchSfx();
+      } else if (firstAtk === "LK" || firstAtk === "HK") {
+        soundSystem.playRandomKickSfx();
+      }
     } else {
       this.attackTimer = 25;
       this.comboHitTimer = 25;

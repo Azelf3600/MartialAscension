@@ -267,6 +267,8 @@ function handleSingleCountdown() {
       if (singleCountdown <= 0) {
         singleFightStarted = true;
         singleShowFightText = true;
+        // Play voice cue when the FIGHT overlay appears.
+        soundSystem.playSfx("fightVoice");
       }
     }
   } else if (singleShowFightText) {
