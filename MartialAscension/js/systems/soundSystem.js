@@ -34,7 +34,7 @@ const soundSystem = {
     oneShot.volume = this.sfxVolume;
     const playPromise = oneShot.play();
     if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => {});
+      playPromise.catch(() => { });
     }
   },
 
@@ -103,6 +103,28 @@ const soundSystem = {
     this.sfx.startMatchGong.volume = this.sfxVolume;
     this.sfx.fightVoice = new Audio("Assets/audio/sfx/Fight-VoiceBosch.mp3");
     this.sfx.fightVoice.volume = this.sfxVolume;
+    this.sfx.victoryVoice = new Audio("Assets/audio/sfx/Victory-VoiceBosch.mp3");
+    this.sfx.victoryVoice.volume = this.sfxVolume;
+
+    //Lucas tang
+    this.sfx.myriadVenomBody = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/Myriad Venom Body.wav");
+    this.sfx.myriadVenomBody.volume = this.sfxVolume;
+    this.sfx.netherBlossomDomain = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/Nether Blossom Domain.wav");
+    this.sfx.netherBlossomDomain.volume = this.sfxVolume;
+    this.sfx.venomShadowStep = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/Venom Shadow Step.wav");
+    this.sfx.venomShadowStep.volume = this.sfxVolume;
+    this.sfx.projectileAbility = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/ProjectileAbilities.wav");
+    this.sfx.projectileAbility.volume = this.sfxVolume;
+
+    // Ethan Li
+    this.sfx.whiteWindSword = new Audio("Assets/audio/sfx/UniqueAbilities/Ethan Li/White Wind Sword Q1.wav");
+    this.sfx.whiteWindSword.volume = this.sfxVolume;
+    this.sfx.unstoppableSword = new Audio("Assets/audio/sfx/UniqueAbilities/Ethan Li/Unstoppable Sword.wav");
+    this.sfx.unstoppableSword.volume = this.sfxVolume;
+    this.sfx.skySeveringStep = new Audio("Assets/audio/sfx/UniqueAbilities/Ethan Li/Sky Severing Step.wav");
+    this.sfx.skySeveringStep.volume = this.sfxVolume;
+    this.sfx.heavenfallSlash = new Audio("Assets/audio/sfx/UniqueAbilities/Ethan Li/Heavenfall Sword God Slash.wav");
+    this.sfx.heavenfallSlash.volume = this.sfxVolume;
     this.sfx.uiSelect = new Audio("Assets/audio/sfx/UISelect.mp3");
     this.sfx.uiSelect.volume = this.sfxVolume;
 

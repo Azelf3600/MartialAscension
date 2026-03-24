@@ -590,7 +590,11 @@ class Character {
         this.isAirDashing = true;
         this.canAirDash = false;
         this.airDashTimer = 15;
-        soundSystem.playRandomDashSfx();
+        if (this.name === "Ethan Li") {
+          soundSystem.playSfx("skySeveringStep");
+        } else {
+          soundSystem.playRandomDashSfx();
+        }
 
         let opponent;
         if (currentState === GAME_STATE.TRAINING) {
@@ -621,6 +625,7 @@ class Character {
         let teleportX = opponent.facing === 1 ? opponent.x - 150 : opponent.x + opponent.w + 150;
         this.x = teleportX;
         this.canPoisonFieldTeleport = false;
+        soundSystem.playSfx("venomShadowStep");
         console.log("Poison Field Teleport! Behind enemy!");
         return;
       }
@@ -1106,6 +1111,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isPoisonHandsActive = true;
         this.poisonHandsTimer = comboData.duration;
         this.poisonHandsCooldownPending = true;
+        soundSystem.playSfx("myriadVenomBody");
         console.log("Poison Hands activated! Damage +50% for 5 seconds");
       }
 
@@ -1234,6 +1240,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.poisonFieldHealTickTimer = 60;
         this.canPoisonFieldTeleport = true;
 
+        soundSystem.playSfx("netherBlossomDomain");
         console.log("Poison Flower Field activated!");
       }
 
@@ -1321,6 +1328,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ethan Li - Sword Qi Strike
     if (comboData.name === "Sword Qi Strike") {
+      soundSystem.playSfx("whiteWindSword");
       let spawnX = this.facing === 1 ? this.x + this.w : this.x;
       let spawnY = this.y + 50;
       spawnProjectile(spawnX, spawnY, this.facing, this, "sword_qi");
@@ -1332,6 +1340,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.y -= (this.standH - this.h);
         this.h = this.standH;
       }
+      soundSystem.playSfx("unstoppableSword");
 
       this.isLunging = true;
       this.lungeTimer = 35;
@@ -1343,6 +1352,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ethan Li - Sword God Slash
     if (comboData.name === "Sword God Slash") {
+      soundSystem.playSfx("heavenfallSlash");
       this.isGodSlashing = true;
       this.godSlashTimer = 40;
       this.godSlashPhase = "teleport";
@@ -1379,6 +1389,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       let spawnX = this.facing === 1 ? this.x + this.w : this.x;
       let spawnY = this.y + 50;
       spawnProjectile(spawnX, spawnY, this.facing, this, "poison_qi");
+      soundSystem.playSfx("projectileAbility");
 
       console.log("Poison Qi Palm fired! Poison Hands ended.");
     }
@@ -1388,6 +1399,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       let spawnX = this.facing === 1 ? this.x + this.w : this.x;
       let spawnY = this.y + 50;
       spawnProjectile(spawnX, spawnY, this.facing, this, "flame_needle");
+      soundSystem.playSfx("projectileAbility");
     }
 
     // Lucas Tang - Poison Rain
