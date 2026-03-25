@@ -227,6 +227,8 @@ class Character {
     this.frameDelay = 5; 
     this.isWalking = false;
     this.isCrouching = false;
+    // Generate a unique identifier for independent footstep audio tracking
+    this.footstepId = name + "_" + Math.floor(Math.random() * 1000000);
 
     // Sprite rendering properties
     this.spriteOffsetX = 0;      // Horizontal offset from hurtbox center
@@ -549,8 +551,21 @@ class Character {
     }
 
     this.applyPhysics(groundY);
+    
+    // Play looping footstep audio only during uninterrupted ground walking
+    if (this.isWalking && this.isGrounded && this.hitStun <= 0 && !this.isBlocking && !this.attacking && !this.isDashing) {
+      if (typeof soundSystem !== 'undefined') {
+        soundSystem.startFootstep(this.footstepId);
+      }
+    } else {
+      // Pause audio immediately when action is interrupted (e.g. jumping, attacking, or stopping)
+      if (typeof soundSystem !== 'undefined') {
+        soundSystem.stopFootstep(this.footstepId);
+      }
+    }
+
     if (typeof animationSystem !== 'undefined') {
-    animationSystem.updateAnimation(this); 
+      animationSystem.updateAnimation(this); 
     }
   }
 

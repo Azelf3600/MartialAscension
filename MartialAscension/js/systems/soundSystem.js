@@ -16,6 +16,7 @@ const soundSystem = {
   _dashPool: [],
   _jumpPool: [],
   _landPool: [],
+  _footstepTracks: {},
 
   // Builds a list of Audio objects from paths (volume set for template clones).
   _loadSfxPool(urls) {
@@ -259,5 +260,32 @@ const soundSystem = {
   // Called from input events so browser allows audio playback.
   markUserInteraction() {
     this.hasUserInteracted = true;
+  },
+
+  // Starts or resumes a looping footstep audio track for a specific ID.
+  // Creates a dedicated Audio instance per character to allow independent overlapping.
+  startFootstep(id) {
+    this.init();
+    if (!this._footstepTracks) this._footstepTracks = {};
+    if (!this._footstepTracks[id]) {
+      const track = new Audio("Assets/audio/sfx/Footstep.wav");
+      track.loop = true;
+      track.volume = this.sfxVolume * 0.5;
+      this._footstepTracks[id] = track;
+    }
+    const track = this._footstepTracks[id];
+    if (track.paused) {
+      const playPromise = track.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+    }
+  },
+
+  // Pauses the footstep audio track assigned to the given ID.
+  stopFootstep(id) {
+    if (this._footstepTracks && this._footstepTracks[id]) {
+      this._footstepTracks[id].pause();
+    }
   }
 };
