@@ -229,10 +229,14 @@ function drawMatchMulti() {
   let bgImg = currentStageMap.ingameImg || currentStageMap.img;
   
   if (bgImg) {
-    push();
-    imageMode(CENTER);
-    image(bgImg, width/2, height/2, width, height);
-    pop();
+    if (typeof drawStageBackground === "function") {
+      drawStageBackground(bgImg);
+    } else {
+      push();
+      imageMode(CENTER);
+      image(bgImg, width/2, height/2, width, height);
+      pop();
+    }
   }
 
   gameCamera.update(player1, player2);
@@ -342,10 +346,15 @@ if (player1 && player2) {
   }
 }
     
-    rectMode(CORNER);
-    fill(60);
-    noStroke();
-    rect(-10000, groundY, 20000, 2000);
+    // Draw detailed ground
+    if (typeof drawStageGround === "function") {
+      drawStageGround(currentStageMap, groundY);
+    } else {
+      rectMode(CORNER);
+      fill(60);
+      noStroke();
+      rect(-10000, groundY, 20000, 2000);
+    }
     
     drawWorldBorders();
     handleCountdown();
