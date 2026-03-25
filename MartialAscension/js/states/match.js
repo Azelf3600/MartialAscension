@@ -127,10 +127,14 @@ function drawMatch() {
   
   // Render the unique campaign location before updating camera offsets!
   let cStageIndex = campaignStages[campaignProgress];
-  if (typeof cStageIndex === "number" && STAGES[cStageIndex] && STAGES[cStageIndex].img) {
+  let currentStageMap = (typeof cStageIndex === "number" && STAGES[cStageIndex]) ? STAGES[cStageIndex] : {};
+  // Render match-specific high quality background image if available, else fallback to select screen thumnail
+  let bgImg = currentStageMap.ingameImg || currentStageMap.img;
+  
+  if (bgImg) {
     push();
     imageMode(CENTER);
-    image(STAGES[cStageIndex].img, width/2, height/2, width, height);
+    image(bgImg, width/2, height/2, width, height);
     pop();
   }
 

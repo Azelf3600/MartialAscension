@@ -74,10 +74,14 @@ function drawTraining() {
   background(20);
 
   // Draw the random arena map as a fixed background graphic.
-  if (typeof trainingStageIndex === "number" && STAGES[trainingStageIndex] && STAGES[trainingStageIndex].img) {
+  let currentStageMap = (typeof trainingStageIndex === "number" && STAGES[trainingStageIndex]) ? STAGES[trainingStageIndex] : {};
+  // Render match-specific high quality background image if available, else fallback to select screen thumnail
+  let bgImg = currentStageMap.ingameImg || currentStageMap.img;
+  
+  if (bgImg) {
     push();
     imageMode(CENTER);
-    image(STAGES[trainingStageIndex].img, width/2, height/2, width, height);
+    image(bgImg, width/2, height/2, width, height);
     pop();
   }
 

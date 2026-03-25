@@ -27,6 +27,9 @@ function preloadMainMenu() {
   // For stage images 
   STAGES.forEach(stage => {
     stage.img = loadImage(stage.path);
+    if (stage.ingamePath) {
+      stage.ingameImg = loadImage(stage.ingamePath);
+    }
   });
 
   animationSystem = new AnimationSystem();

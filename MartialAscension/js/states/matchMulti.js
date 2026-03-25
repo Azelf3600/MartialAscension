@@ -224,10 +224,14 @@ function drawMatchMulti() {
 
   // Draw the selected arena map as a fixed background graphic.
   // The camera transformations applied below will only move fighters and the physical floor.
-  if (STAGES[selectedStage] && STAGES[selectedStage].img) {
+  // Use in-game specific background if available, otherwise fallback to stage select thumbnail
+  let currentStageMap = STAGES[selectedStage] || {};
+  let bgImg = currentStageMap.ingameImg || currentStageMap.img;
+  
+  if (bgImg) {
     push();
     imageMode(CENTER);
-    image(STAGES[selectedStage].img, width/2, height/2, width, height);
+    image(bgImg, width/2, height/2, width, height);
     pop();
   }
 
