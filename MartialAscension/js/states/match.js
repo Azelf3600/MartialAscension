@@ -125,6 +125,19 @@ function drawMatch() {
 
   background(20);
   
+  // Render the unique campaign location before updating camera offsets!
+  let cStageIndex = campaignStages[campaignProgress];
+  let currentStageMap = (typeof cStageIndex === "number" && STAGES[cStageIndex]) ? STAGES[cStageIndex] : {};
+  // Render match-specific high quality background image if available, else fallback to select screen thumnail
+  let bgImg = currentStageMap.ingameImg || currentStageMap.img;
+  
+  if (bgImg) {
+    push();
+    imageMode(CENTER);
+    image(bgImg, width/2, height/2, width, height);
+    pop();
+  }
+
   gameCamera.update(singlePlayer1, singlePlayer2);
 
   if (p1Buffer) p1Buffer.update();
@@ -267,6 +280,8 @@ function handleSingleCountdown() {
       if (singleCountdown <= 0) {
         singleFightStarted = true;
         singleShowFightText = true;
+        // Play voice cue when the FIGHT overlay appears.
+        soundSystem.playSfx("fightVoice");
       }
     }
   } else if (singleShowFightText) {

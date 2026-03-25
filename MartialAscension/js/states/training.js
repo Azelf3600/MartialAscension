@@ -6,6 +6,9 @@ let inputHistoryBuffer = [];
 const MAX_INPUT_HISTORY = 10;
 
 function initTraining() {
+  // Assign a random arena background
+  trainingStageIndex = Math.floor(Math.random() * STAGES.length);
+
   trainingGroundY = height - 100;
   trainingDamageIndicators = [];
   inputHistoryBuffer = [];
@@ -69,6 +72,18 @@ function drawTraining() {
   }
 
   background(20);
+
+  // Draw the random arena map as a fixed background graphic.
+  let currentStageMap = (typeof trainingStageIndex === "number" && STAGES[trainingStageIndex]) ? STAGES[trainingStageIndex] : {};
+  // Render match-specific high quality background image if available, else fallback to select screen thumnail
+  let bgImg = currentStageMap.ingameImg || currentStageMap.img;
+  
+  if (bgImg) {
+    push();
+    imageMode(CENTER);
+    image(bgImg, width/2, height/2, width, height);
+    pop();
+  }
 
   gameCamera.update(trainingPlayer, trainingDummy);
 
@@ -236,7 +251,7 @@ if (showInputHistory) {
   pop();
 }
 
-function handleTrainingInput(key, keyCode) {
+function handleTrainingInput(key, keyCode, keyEvent) {
   // NEW: ESC to pause
   if (keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU_TRAINING;
@@ -276,7 +291,7 @@ function handleTrainingInput(key, keyCode) {
 
   // Normal combat input (player only)
   if (typeof trainingPlayer !== 'undefined') {
-    handleRecording(trainingPlayer, p1Buffer, keyCode);
+    handleRecording(trainingPlayer, p1Buffer, keyCode, keyEvent);
   }
 }
 

@@ -218,9 +218,10 @@ function applyDamage(target, amount, attacker, stunTime, knockback,ignoreBlock =
     damageToApply = damageToApply * 0.8; 
   }
 
-  // Apply block reduction unless ignored
+  // Blockable hit while guarding: cut damage, then play a random parry/clang layer.
   if (target.isBlocking && !ignoreBlock) {
     damageToApply = damageToApply * (1 - target.blockMod);
+    soundSystem.playRandomBlockSfx();
   }
 
   // Azure Dragon Scales 
@@ -252,6 +253,10 @@ if (target.isAnnihilationMarked && target.annihilationCaster === attacker) {
 
   target.hp -= damageToApply;
   if (target.hp < 0) target.hp = 0;
+  // Hit grunt / impact rumble only when HP actually drops (clean block stays silent here).
+  if (damageToApply > 0) {
+    soundSystem.playRandomBodyHitSfx();
+  }
   target.isHit = !target.isBlocking;
 
   // Demonic Heaven's Awakening 

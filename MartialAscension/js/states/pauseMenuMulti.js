@@ -477,14 +477,20 @@ function handleMainMenuInputMulti(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     pauseMenuSelectionMulti--;
     if (pauseMenuSelectionMulti < 0) pauseMenuSelectionMulti = PAUSE_MENU_OPTIONS_MULTI.length - 1;
+    // Navigation feedback while moving through pause options.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     pauseMenuSelectionMulti++;
     if (pauseMenuSelectionMulti >= PAUSE_MENU_OPTIONS_MULTI.length) pauseMenuSelectionMulti = 0;
+    // Navigation feedback while moving through pause options.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback for pause menu actions.
+    soundSystem.playSfx("uiSelect");
     let selectedOption = PAUSE_MENU_OPTIONS_MULTI[pauseMenuSelectionMulti];
     
     if (selectedOption === "RESUME") {
@@ -502,6 +508,8 @@ function handleMainMenuInputMulti(key, keyCode) {
   }
   
   if (keyCode === ESCAPE) {
+    // Resume feedback when closing pause menu.
+    soundSystem.playSfx("uiSelect");
     currentState = GAME_STATE.MATCH_MULTI;
     pauseMenuStateMulti = "MAIN";
     pauseMenuSelectionMulti = 0;
@@ -512,14 +520,20 @@ function handleConfirmInputMulti(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     pauseConfirmSelectionMulti--;
     if (pauseConfirmSelectionMulti < 0) pauseConfirmSelectionMulti = CONFIRM_OPTIONS_MULTI.length - 1;
+    // Navigation feedback inside confirmation prompt.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     pauseConfirmSelectionMulti++;
     if (pauseConfirmSelectionMulti >= CONFIRM_OPTIONS_MULTI.length) pauseConfirmSelectionMulti = 0;
+    // Navigation feedback inside confirmation prompt.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback for YES/NO choice.
+    soundSystem.playSfx("uiSelect");
     if (pauseConfirmSelectionMulti === 0) {
       executePauseActionMulti(pendingActionMulti);
     } else {
@@ -529,6 +543,8 @@ function handleConfirmInputMulti(key, keyCode) {
   }
   
   if (keyCode === ESCAPE) {
+    // Cancel feedback when leaving confirmation prompt.
+    soundSystem.playSfx("uiSelect");
     pauseMenuStateMulti = "MAIN";
     pauseConfirmSelectionMulti = 0;
   }
@@ -538,18 +554,26 @@ function handleComboListSelectInputMulti(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     comboListSelectionMulti--;
     if (comboListSelectionMulti < 0) comboListSelectionMulti = 1;
+    // Navigation feedback while switching selected character.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     comboListSelectionMulti++;
     if (comboListSelectionMulti > 1) comboListSelectionMulti = 0;
+    // Navigation feedback while switching selected character.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback before opening combo list details.
+    soundSystem.playSfx("uiSelect");
     pauseMenuStateMulti = "COMBO_LIST_VIEW";
   }
   
   if (keyCode === ESCAPE) {
+    // Back feedback when leaving combo list select screen.
+    soundSystem.playSfx("uiSelect");
     pauseMenuStateMulti = "MAIN";
   }
 }
@@ -562,14 +586,20 @@ function handleComboListViewInputMulti(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     selectedComboIndexMulti--;
     if (selectedComboIndexMulti < 0) selectedComboIndexMulti = comboList.length - 1;
+    // Navigation feedback while scrolling combo entries.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     selectedComboIndexMulti++;
     if (selectedComboIndexMulti >= comboList.length) selectedComboIndexMulti = 0;
+    // Navigation feedback while scrolling combo entries.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (keyCode === ESCAPE || keyCode === BACKSPACE) {
+    // Back feedback when returning to character select list.
+    soundSystem.playSfx("uiSelect");
     pauseMenuStateMulti = "COMBO_LIST_SELECT";
     selectedComboIndexMulti = 0;
   }

@@ -222,6 +222,19 @@ function drawMatchMulti() {
 
   background(20); 
 
+  // Draw the selected arena map as a fixed background graphic.
+  // The camera transformations applied below will only move fighters and the physical floor.
+  // Use in-game specific background if available, otherwise fallback to stage select thumbnail
+  let currentStageMap = STAGES[selectedStage] || {};
+  let bgImg = currentStageMap.ingameImg || currentStageMap.img;
+  
+  if (bgImg) {
+    push();
+    imageMode(CENTER);
+    image(bgImg, width/2, height/2, width, height);
+    pop();
+  }
+
   gameCamera.update(player1, player2);
 
   push();
@@ -395,6 +408,8 @@ function handleCountdown() {
       if (countdown <= 0) {
         fightStarted = true;
         showFightText = true;
+        // Play voice cue when the FIGHT overlay appears.
+        soundSystem.playSfx("fightVoice");
       }
     }
   } else if (showFightText) {

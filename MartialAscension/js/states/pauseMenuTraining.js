@@ -322,15 +322,21 @@ function handleTrainingMainMenuInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     pauseMenuTrainingSelection--;
     if (pauseMenuTrainingSelection < 0) pauseMenuTrainingSelection = PAUSE_MENU_TRAINING_OPTIONS.length - 1;
+    // Navigation feedback while moving through pause options.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     pauseMenuTrainingSelection++;
     if (pauseMenuTrainingSelection >= PAUSE_MENU_TRAINING_OPTIONS.length) pauseMenuTrainingSelection = 0;
+    // Navigation feedback while moving through pause options.
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm selection
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback for pause menu actions.
+    soundSystem.playSfx("uiSelect");
     let selectedOption = PAUSE_MENU_TRAINING_OPTIONS[pauseMenuTrainingSelection];
     
     if (selectedOption === "RESUME") {
@@ -352,6 +358,8 @@ function handleTrainingMainMenuInput(key, keyCode) {
   
   // ESC to resume
   if (keyCode === ESCAPE) {
+    // Resume feedback when closing pause menu.
+    soundSystem.playSfx("uiSelect");
     currentState = GAME_STATE.TRAINING;
     pauseMenuTrainingState = "MAIN";
     pauseMenuTrainingSelection = 0;
@@ -363,15 +371,21 @@ function handleTrainingConfirmInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     pauseTrainingConfirmSelection--;
     if (pauseTrainingConfirmSelection < 0) pauseTrainingConfirmSelection = CONFIRM_TRAINING_OPTIONS.length - 1;
+    // Navigation feedback inside confirmation prompt.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     pauseTrainingConfirmSelection++;
     if (pauseTrainingConfirmSelection >= CONFIRM_TRAINING_OPTIONS.length) pauseTrainingConfirmSelection = 0;
+    // Navigation feedback inside confirmation prompt.
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm selection
   if (key === ' ' || keyCode === ENTER) {
+    // Confirm feedback for YES/NO choice.
+    soundSystem.playSfx("uiSelect");
     if (pauseTrainingConfirmSelection === 0) { // YES
       executePauseTrainingAction(pendingTrainingAction);
     } else { // NO
@@ -382,6 +396,8 @@ function handleTrainingConfirmInput(key, keyCode) {
   
   // ESC to cancel
   if (keyCode === ESCAPE) {
+    // Cancel feedback when leaving confirmation prompt.
+    soundSystem.playSfx("uiSelect");
     pauseMenuTrainingState = "MAIN";
     pauseTrainingConfirmSelection = 0;
   }
@@ -396,15 +412,21 @@ function handleTrainingComboListViewInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     selectedTrainingComboIndex--;
     if (selectedTrainingComboIndex < 0) selectedTrainingComboIndex = comboList.length - 1;
+    // Navigation feedback while scrolling combo entries.
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     selectedTrainingComboIndex++;
     if (selectedTrainingComboIndex >= comboList.length) selectedTrainingComboIndex = 0;
+    // Navigation feedback while scrolling combo entries.
+    soundSystem.playSfx("uiSelect");
   }
   
   // ESC or Backspace to go back
   if (keyCode === ESCAPE || keyCode === BACKSPACE) {
+    // Back feedback when leaving combo list.
+    soundSystem.playSfx("uiSelect");
     pauseMenuTrainingState = "MAIN";
     selectedTrainingComboIndex = 0;
   }

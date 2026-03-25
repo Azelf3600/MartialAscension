@@ -227,6 +227,8 @@ class Character {
     this.frameDelay = 5; 
     this.isWalking = false;
     this.isCrouching = false;
+    // Generate a unique identifier for independent footstep audio tracking
+    this.footstepId = name + "_" + Math.floor(Math.random() * 1000000);
 
     // Sprite rendering properties
     this.spriteOffsetX = 0;      // Horizontal offset from hurtbox center
@@ -549,8 +551,21 @@ class Character {
     }
 
     this.applyPhysics(groundY);
+    
+    // Play looping footstep audio only during uninterrupted ground walking
+    if (this.isWalking && this.isGrounded && this.hitStun <= 0 && !this.isBlocking && !this.attacking && !this.isDashing) {
+      if (typeof soundSystem !== 'undefined') {
+        soundSystem.startFootstep(this.footstepId);
+      }
+    } else {
+      // Pause audio immediately when action is interrupted (e.g. jumping, attacking, or stopping)
+      if (typeof soundSystem !== 'undefined') {
+        soundSystem.stopFootstep(this.footstepId);
+      }
+    }
+
     if (typeof animationSystem !== 'undefined') {
-    animationSystem.updateAnimation(this); 
+      animationSystem.updateAnimation(this); 
     }
   }
 
@@ -590,6 +605,11 @@ class Character {
         this.isAirDashing = true;
         this.canAirDash = false;
         this.airDashTimer = 15;
+        if (this.name === "Ethan Li") {
+          soundSystem.playSfx("skySeveringStep");
+        } else {
+          soundSystem.playRandomDashSfx();
+        }
 
         let opponent;
         if (currentState === GAME_STATE.TRAINING) {
@@ -620,53 +640,56 @@ class Character {
         let teleportX = opponent.facing === 1 ? opponent.x - 150 : opponent.x + opponent.w + 150;
         this.x = teleportX;
         this.canPoisonFieldTeleport = false;
+        soundSystem.playSfx("venomShadowStep");
         console.log("Poison Field Teleport! Behind enemy!");
         return;
       }
     }
 
-// Dash 
-if (!this.attacking && this.isGrounded && buffer) {
-  if (buffer.checkDoubleTap("FW")) {
-    if (this.isCrouching) {
-      this.isCrouchDashing = true;
-      this.isDashing = true;
-      this.dashDirection = this.facing;
-      this.dashTimer = 20; 
-      this.dashMaxSpeed = 55;
-      let dashSpeed = this.isInPoisonField ? 22 : 45;
-      this.velX = this.facing * dashSpeed;
-      console.log("Crouch Dash Forward!");
-    } else {
-      this.isDashing = true;
-      this.dashDirection = this.facing;
-      this.dashTimer = 18;
-      this.dashMaxSpeed = 60;
-      let dashSpeed = this.isInPoisonField ? 25 : 50;
-      this.velX = this.facing * dashSpeed;
+    // Ground dash (double-tap FW/BW). !isDashing keeps one SFX per dash start.
+    if (!this.attacking && this.isGrounded && buffer && !this.isDashing) {
+      if (buffer.checkDoubleTap("FW")) {
+        soundSystem.playRandomDashSfx();
+        if (this.isCrouching) {
+          this.isCrouchDashing = true;
+          this.isDashing = true;
+          this.dashDirection = this.facing;
+          this.dashTimer = 20;
+          this.dashMaxSpeed = 55;
+          let dashSpeed = this.isInPoisonField ? 22 : 45;
+          this.velX = this.facing * dashSpeed;
+          console.log("Crouch Dash Forward!");
+        } else {
+          this.isDashing = true;
+          this.dashDirection = this.facing;
+          this.dashTimer = 18;
+          this.dashMaxSpeed = 60;
+          let dashSpeed = this.isInPoisonField ? 25 : 50;
+          this.velX = this.facing * dashSpeed;
+        }
+      } else if (buffer.checkDoubleTap("BW")) {
+        soundSystem.playRandomDashSfx();
+        if (this.isCrouching) {
+          this.isCrouchBackDashing = true;
+          this.isDashing = true;
+          this.dashDirection = -this.facing;
+          this.dashTimer = 18;
+          this.dashMaxSpeed = 48;
+          let dashSpeed = this.isInPoisonField ? 19 : 38;
+          this.velX = -this.facing * dashSpeed;
+          console.log("Crouch Back Dash!");
+        } else {
+          this.isBackDashing = true;
+          this.isDashing = true;
+          this.dashDirection = -this.facing;
+          this.dashTimer = 16;
+          this.dashMaxSpeed = 52;
+          let dashSpeed = this.isInPoisonField ? 21 : 42;
+          this.velX = -this.facing * dashSpeed;
+          console.log("Back Dash!");
+        }
+      }
     }
-  } else if (buffer.checkDoubleTap("BW")) {
-    if (this.isCrouching) {
-      this.isCrouchBackDashing = true;
-      this.isDashing = true;
-      this.dashDirection = -this.facing;
-      this.dashTimer = 18;
-      this.dashMaxSpeed = 48;
-      let dashSpeed = this.isInPoisonField ? 19 : 38;
-      this.velX = -this.facing * dashSpeed;
-      console.log("Crouch Back Dash!");
-    } else {
-      this.isBackDashing = true;
-      this.isDashing = true;
-      this.dashDirection = -this.facing;
-      this.dashTimer = 16;
-      this.dashMaxSpeed = 52;
-      let dashSpeed = this.isInPoisonField ? 21 : 42;
-      this.velX = -this.facing * dashSpeed;
-      console.log("Back Dash!");
-    }
-  }
-}
 
     // Dash momentum
     if (this.isDashing && this.dashTimer > 0) {
@@ -739,6 +762,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       if (this.isInPoisonField) {
         console.log("Jump nullified by Poison Flower Field!");
       } else {
+        soundSystem.playRandomJumpSfx();
         this.velY = -this.jumpPower;
         this.isGrounded = false;
         this.isDashing = false;
@@ -935,6 +959,10 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ground collision
     if (this.y + this.h >= groundY) {
+      // Landing: only play once when transitioning from air to ground.
+      if (!this.isGrounded && this.velY > 0) {
+        soundSystem.playRandomLandSfx();
+      }
       this.y = groundY - this.h;
       this.velY = 0;
       this.isGrounded = true;
@@ -966,6 +994,13 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
             this.comboHitTimer = this.comboHits[this.currentComboHit].duration;
             this.hasHit = false;
             this.lastHitIndex = -1;
+            // Next combo segment: swing SFX only for normal punch/kick symbols.
+            let comboAtk = this.comboHits[this.currentComboHit].attack;
+            if (comboAtk === "LP" || comboAtk === "HP") {
+              soundSystem.playRandomPunchSfx();
+            } else if (comboAtk === "LK" || comboAtk === "HK") {
+              soundSystem.playRandomKickSfx();
+            }
           } else {
             if (this.hasHit) {
               this.lastHitIndex = this.currentComboHit;
@@ -1005,6 +1040,13 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       } else {
         this.comboDamageMod = 1.0;
       }
+
+      // Basic attack swing layer: separate pools for arms vs legs.
+      if (type === "LP" || type === "HP") {
+        soundSystem.playRandomPunchSfx();
+      } else if (type === "LK" || type === "HK") {
+        soundSystem.playRandomKickSfx();
+      }
     }
   }
 
@@ -1032,6 +1074,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isGrounded = false;
         this.velY = -this.jumpPower * 0.8;
         this.flightLaunchTimer = 10;
+      soundSystem.playRandomJumpSfx();
       }
 
       if (comboData.isDemonicSteps) {
@@ -1041,10 +1084,12 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
     // ✅ Dash toward opponent instead of fixed 500px
     this.demonicStepsTargetX = opponent.x + (opponent.facing === 1 ? -50 : opponent.w + 50);
     this.demonicStepsDirection = 1;
+    soundSystem.playSfx("heavenSplittingDemonStep");
     console.log("Demonic Heaven's Steps FORWARD toward enemy!");
   } else {
     this.demonicStepsTargetX = this.x + (this.facing * -500);
     this.demonicStepsDirection = -1;
+    soundSystem.playSfx("heavenShadowReversalStep");
     console.log("Demonic Heaven's Steps BACKWARD!");
   }
 
@@ -1083,6 +1128,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isPoisonHandsActive = true;
         this.poisonHandsTimer = comboData.duration;
         this.poisonHandsCooldownPending = true;
+        soundSystem.playSfx("myriadVenomBody");
         console.log("Poison Hands activated! Damage +50% for 5 seconds");
       }
 
@@ -1098,6 +1144,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isAzureScalesActive = true;
         this.azureScalesTimer = comboData.duration;
         this.azureScalesCooldownPending = true;
+        soundSystem.playSfx("azureDragonScale");
         console.log("Azure Dragon Scales activated! 50% damage reflection for 5 seconds");
       }
 
@@ -1113,6 +1160,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isTortoiseBodyActive = true;
         this.tortoiseBodyTimer = comboData.duration;
         this.tortoiseBodyCooldownPending = true;
+        soundSystem.playSfx("immortalTortoiseBody");
         console.log("Undying Tortoise Body activated! +20% defense, damage boost for 5 seconds");
       }
 
@@ -1162,6 +1210,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isOceanMendingActive = true;
         this.oceanMendingTimer = 180;
 
+        soundSystem.playSfx("oceanRebirthScripture");
         console.log(`Ocean Mending Water healed ${healAmount} HP! ${consumedBuff} consumed. Debuff immunity for 3 seconds.`);
       }
 
@@ -1182,6 +1231,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.demonicAwakeningTimer = comboData.duration;
         this.demonicAwakeningCooldownPending = true;
 
+        soundSystem.playSfx("crimsonHeavenAwakening");
         console.log("Demonic Heaven's Awakening activated! +40% damage, 50% lifesteal for 5 seconds");
       }
 
@@ -1211,6 +1261,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.poisonFieldHealTickTimer = 60;
         this.canPoisonFieldTeleport = true;
 
+        soundSystem.playSfx("netherBlossomDomain");
         console.log("Poison Flower Field activated!");
       }
 
@@ -1225,6 +1276,8 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.demonicAbyssCooldownPending = true;
         this.demonicAbyssDmgTickTimer = 60;
         this.demonicClawOwnerLocked = true;
+
+        soundSystem.playSfx("heavenDevouringAbyss");
 
         console.log("Demonic Heaven's Abyss activated! Gravitational pull for 5 seconds!");
       }
@@ -1266,6 +1319,13 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       let totalDuration = this.comboHits.reduce((sum, hit) => sum + hit.duration, 0);
       this.attackTimer = totalDuration;
       this.comboHitTimer = this.comboHits[0].duration;
+      // First segment of the combo string uses the same swing rules as startAttack.
+      let firstAtk = this.comboHits[0].attack;
+      if (firstAtk === "LP" || firstAtk === "HP") {
+        soundSystem.playRandomPunchSfx();
+      } else if (firstAtk === "LK" || firstAtk === "HK") {
+        soundSystem.playRandomKickSfx();
+      }
     } else {
       this.attackTimer = 25;
       this.comboHitTimer = 25;
@@ -1286,10 +1346,12 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       this.velY = -this.jumpPower * 1.2;
       this.diveVelX = this.facing * 12;
       this.diveVelY = 0;
+      soundSystem.playRandomJumpSfx();
     }
 
     // Ethan Li - Sword Qi Strike
     if (comboData.name === "Sword Qi Strike") {
+      soundSystem.playSfx("whiteWindSword");
       let spawnX = this.facing === 1 ? this.x + this.w : this.x;
       let spawnY = this.y + 50;
       spawnProjectile(spawnX, spawnY, this.facing, this, "sword_qi");
@@ -1301,6 +1363,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.y -= (this.standH - this.h);
         this.h = this.standH;
       }
+      soundSystem.playSfx("unstoppableSword");
 
       this.isLunging = true;
       this.lungeTimer = 35;
@@ -1312,6 +1375,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ethan Li - Sword God Slash
     if (comboData.name === "Sword God Slash") {
+      soundSystem.playSfx("heavenfallSlash");
       this.isGodSlashing = true;
       this.godSlashTimer = 40;
       this.godSlashPhase = "teleport";
@@ -1328,6 +1392,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ethan Li - Sword God Judgment
     if (comboData.name === "Sword God Judgment") {
+      soundSystem.playSfx("swordGodJudgment");
       this.hasUsedJudgment = true;
       let opponent = getOpponent();
       let spawnX = opponent.x + opponent.w / 2;
@@ -1348,6 +1413,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       let spawnX = this.facing === 1 ? this.x + this.w : this.x;
       let spawnY = this.y + 50;
       spawnProjectile(spawnX, spawnY, this.facing, this, "poison_qi");
+      soundSystem.playSfx("projectileAbility");
 
       console.log("Poison Qi Palm fired! Poison Hands ended.");
     }
@@ -1357,6 +1423,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       let spawnX = this.facing === 1 ? this.x + this.w : this.x;
       let spawnY = this.y + 50;
       spawnProjectile(spawnX, spawnY, this.facing, this, "flame_needle");
+      soundSystem.playSfx("projectileAbility");
     }
 
     // Lucas Tang - Poison Rain
@@ -1381,6 +1448,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       this.poisonRainTimer = 300;
       this.poisonRainSpawnTimer = 0;
 
+      soundSystem.playSfx("poisonRain");
       console.log("Ten Thousand Poison Flower Rain activated!");
 
       this.hasHit = false;
@@ -1390,6 +1458,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Aaron Shu - Sea Dragon Charge
     if (comboData.name === "Unstoppable Sea Dragon") {
+      soundSystem.playSfx("unstoppableSeaDragon");
       if (this.isAzureScalesActive) {
         this.isAzureScalesActive = false;
         this.azureScalesTimer = 0;
@@ -1421,6 +1490,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Aaron Shu - Azure Flowing Dragon
     if (comboData.name === "Azure Flowing Dragon") {
+      soundSystem.playSfx("azureDragonAscension");
       this.hasUsedAzureDragon = true;
 
       if (this.isAzureScalesActive) {
@@ -1469,6 +1539,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Damon Cheon - Annihilation
     if (comboData.name === "Demonic Heaven Annihilation") {
+      soundSystem.playSfx("crimsonHeavenAnnihilation");
       this.hasUsedAnnihilation = true;
       let opponent = getOpponent();
 

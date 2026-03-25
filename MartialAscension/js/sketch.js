@@ -29,6 +29,8 @@ let campaignStages = [];
 let campaignPlayerChar = 0; 
 let singleDamageIndicators = [];
 let showHurtboxes = false;
+let activeBgmKey = null;
+let trainingStageIndex = null;
 
 function preload() {
   preloadMainMenu();
@@ -46,12 +48,17 @@ function setup() {
   p2Buffer = new InputBuffer();
   
   setupMenuLayout();
+  // Prepare sound assets early so first playback has no load delay.
+  soundSystem.init();
 }
 
 function draw() {
   resetMatrix();  
   background(0);   
   push();     
+
+  // Keep background music in sync with the current game state.
+  updateStateMusic();
 
   if (currentState !== previousState) {
     if (currentState === GAME_STATE.LORE_SCREEN) {
@@ -154,7 +161,87 @@ function draw() {
   pop();
 }
 
+function updateStateMusic() {
+  // Keep one BGM decision per frame and only switch when needed.
+  const isGameplayState =
+    currentState === GAME_STATE.MATCH ||
+    currentState === GAME_STATE.MATCH_MULTI ||
+    currentState === GAME_STATE.TRAINING ||
+    currentState === GAME_STATE.PAUSE_MENU ||
+    currentState === GAME_STATE.PAUSE_MENU_MULTI ||
+    currentState === GAME_STATE.PAUSE_MENU_TRAINING;
+
+  let targetBgmKey = "mainMenu";
+  if (!isGameplayState) {
+    // All pre-match loading showcases run without the main menu track.
+    if (
+      currentState === GAME_STATE.LOADING_MATCH ||
+      currentState === GAME_STATE.LOADING_MATCH_MULTI ||
+      currentState === GAME_STATE.LOADING_MATCH_TRAINING
+    ) {
+      targetBgmKey = null;
+    }
+  } else {
+    const mapName = getActiveMapName();
+    // Route gameplay music based on the active map name.
+    if (mapName === "Sword God Arena") {
+      targetBgmKey = "swordGodArena";
+    } else if (mapName === "Black Forest") {
+      targetBgmKey = "blackForest";
+    } else if (mapName === "Immortal Ancient Battlefield") {
+      targetBgmKey = "immortalAncientBattlefield";
+    } else {
+      targetBgmKey = null;
+    }
+  }
+
+  if (targetBgmKey === activeBgmKey) return;
+
+  if (targetBgmKey) {
+    soundSystem.playMusic(targetBgmKey);
+  } else {
+    soundSystem.stopAllMusic();
+  }
+  activeBgmKey = targetBgmKey;
+}
+
+function getActiveMapName() {
+  // Multiplayer and multiplayer pause both use the selected stage index.
+  if (
+    (currentState === GAME_STATE.MATCH_MULTI || currentState === GAME_STATE.PAUSE_MENU_MULTI) &&
+    STAGES[selectedStage]
+  ) {
+    return STAGES[selectedStage].name;
+  }
+
+  // Campaign and campaign pause maps are driven by campaign progression.
+  if (currentState === GAME_STATE.MATCH || currentState === GAME_STATE.PAUSE_MENU) {
+    const stageIndex = campaignStages[campaignProgress];
+    if (typeof stageIndex === "number" && STAGES[stageIndex]) {
+      return STAGES[stageIndex].name;
+    }
+  }
+
+  // Training maps are randomized upon initialization
+  if (currentState === GAME_STATE.TRAINING || currentState === GAME_STATE.PAUSE_MENU_TRAINING) {
+    if (typeof trainingStageIndex === "number" && STAGES[trainingStageIndex]) {
+      return STAGES[trainingStageIndex].name;
+    }
+  }
+
+  return "";
+}
+
 function mousePressed() {
+  // First click unlocks browser audio policies.
+  let wasInteracted = soundSystem.hasUserInteracted;
+  soundSystem.markUserInteraction();
+  
+  // Force retry music playback now that audio is unblocked
+  if (!wasInteracted) {
+    activeBgmKey = null;
+  }
+
   if (currentState === GAME_STATE.MENU) {
     handleMenuClick();
   }
@@ -175,7 +262,10 @@ function windowResized() {
   }
 }
 
-function keyPressed() {
+function keyPressed(keyEvent) {
+  // First key press also counts as user interaction for audio playback.
+  soundSystem.markUserInteraction();
+
   // Pause Menu Toggle (ESC during single player match)
   if (currentState === GAME_STATE.MATCH && keyCode === ESCAPE) {
     currentState = GAME_STATE.PAUSE_MENU;
@@ -221,13 +311,18 @@ if (currentState === GAME_STATE.CHARACTER_SELECT) {
   // Navigate with A/D
   if (key === 'd' || key === 'D') {
     selectedChar = (selectedChar + 1) % FIGHTERS.length;
+    // Play navigation SFX when moving to another character.
+    soundSystem.playSfx("uiSelect");
   }
   if (key === 'a' || key === 'A') {
     selectedChar = (selectedChar - 1 + FIGHTERS.length) % FIGHTERS.length;
+    // Play navigation SFX when moving to another character.
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm with Space - setup campaign and go to lore screen
   if (key === ' ') {
+    soundSystem.playSfx("uiSelect");
     setTimeout(() => {
       setupCampaign(selectedChar);
       currentState = GAME_STATE.LORE_SCREEN;
@@ -236,6 +331,7 @@ if (currentState === GAME_STATE.CHARACTER_SELECT) {
   
   // Back to menu with ESC
   if (keyCode === ESCAPE) {
+    soundSystem.playSfx("uiSelect");
     currentState = GAME_STATE.MENU;
   }
 }
@@ -245,13 +341,20 @@ if (currentState === GAME_STATE.CHARACTER_SELECT_TRAINING) {
   // Navigate with A/D
   if (key === 'd' || key === 'D') {
     selectedTrainingChar = (selectedTrainingChar + 1) % FIGHTERS.length;
+    // Play navigation SFX when moving to another character.
+    soundSystem.playSfx("uiSelect");
   }
   if (key === 'a' || key === 'A') {
     selectedTrainingChar = (selectedTrainingChar - 1 + FIGHTERS.length) % FIGHTERS.length;
+    // Play navigation SFX when moving to another character.
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm with Space
   if (key === ' ') {
+    soundSystem.playSfx("uiSelect");
+    // Character lock-in cue for training mode.
+    soundSystem.playSfx("startMatchGong");
     setTimeout(() => {
       console.log("Selected training character:", FIGHTERS[selectedTrainingChar].name);
       currentState = GAME_STATE.LOADING_MATCH_TRAINING;
@@ -260,33 +363,59 @@ if (currentState === GAME_STATE.CHARACTER_SELECT_TRAINING) {
   
   // Back to menu with ESC 
   if (keyCode === ESCAPE) {
+    soundSystem.playSfx("uiSelect");
     currentState = GAME_STATE.MENU;
   }
 }
 
 // TRAINING MODE CONTROLS
 if (currentState === GAME_STATE.TRAINING) {
-  handleTrainingInput(key, keyCode);
+  handleTrainingInput(key, keyCode, keyEvent);
 }
 
   // MULTIPLAYER CHARACTER SELECTION CONTROLS
   if (currentState === GAME_STATE.CHARACTER_SELECT_MULTI) {
     // PLAYER 1 Selection
     if (!p1Ready) {
-      if (key === 'd' || key === 'D') p1Selected = (p1Selected + 1) % FIGHTERS.length;
-      if (key === 'a' || key === 'A') p1Selected = (p1Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
-      if (key === 'f' || key === 'F') p1Ready = true;
+      if (key === 'd' || key === 'D') {
+        p1Selected = (p1Selected + 1) % FIGHTERS.length;
+        // Play navigation SFX when moving to another character.
+        soundSystem.playSfx("uiSelect");
+      }
+      if (key === 'a' || key === 'A') {
+        p1Selected = (p1Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
+        // Play navigation SFX when moving to another character.
+        soundSystem.playSfx("uiSelect");
+      }
+      if (key === 'f' || key === 'F') {
+        p1Ready = true;
+        // Play selection feedback when locking in character.
+        soundSystem.playSfx("uiSelect");
+      }
     }
 
     // PLAYER 2 Selection
     if (!p2Ready) {
-      if (keyCode === RIGHT_ARROW) p2Selected = (p2Selected + 1) % FIGHTERS.length;
-      if (keyCode === LEFT_ARROW) p2Selected = (p2Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
-      if (keyCode === ENTER) p2Ready = true;
+      if (keyCode === RIGHT_ARROW) {
+        p2Selected = (p2Selected + 1) % FIGHTERS.length;
+        // Play navigation SFX when moving to another character.
+        soundSystem.playSfx("uiSelect");
+      }
+      if (keyCode === LEFT_ARROW) {
+        p2Selected = (p2Selected - 1 + FIGHTERS.length) % FIGHTERS.length;
+        // Play navigation SFX when moving to another character.
+        soundSystem.playSfx("uiSelect");
+      }
+      if (keyCode === ENTER) {
+        p2Ready = true;
+        // Play selection feedback when locking in character.
+        soundSystem.playSfx("uiSelect");
+      }
     }
 
     // Start Stage Selection
     if (p1Ready && p2Ready && key === ' ') {
+      soundSystem.playSfx("uiSelect");
       setTimeout(() => {
         currentState = GAME_STATE.STAGE_SELECT_MULTI;
       }, 500);
@@ -300,6 +429,7 @@ if (currentState === GAME_STATE.TRAINING) {
 
       // Back to menu with ESC
     if (keyCode === ESCAPE) {
+      soundSystem.playSfx("uiSelect");
       currentState = GAME_STATE.MENU;
     }
   }
@@ -309,13 +439,18 @@ if (currentState === GAME_STATE.TRAINING) {
     // Navigate with A/D or Arrow Keys
     if (key === 'd' || key === 'D' || keyCode === RIGHT_ARROW) {
       selectedStage = (selectedStage + 1) % STAGES.length;
+      // Play navigation SFX when moving to another stage.
+      soundSystem.playSfx("uiSelect");
     }
     if (key === 'a' || key === 'A' || keyCode === LEFT_ARROW) {
       selectedStage = (selectedStage - 1 + STAGES.length) % STAGES.length;
+      // Play navigation SFX when moving to another stage.
+      soundSystem.playSfx("uiSelect");
     }
     
     // Confirm with Space 
     if (key === ' ') {
+      soundSystem.playSfx("uiSelect");
       setTimeout(() => {
         currentRound = 1;
         currentState = GAME_STATE.LOADING_MATCH_MULTI;
@@ -324,6 +459,7 @@ if (currentState === GAME_STATE.TRAINING) {
     
     // Back to character select with Escape
     if (keyCode === ESCAPE) {
+      soundSystem.playSfx("uiSelect");
       currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
     }
   }
@@ -336,15 +472,17 @@ if (currentState === GAME_STATE.TRAINING) {
   // MATCH INPUT RECORDING (COMBO SYSTEM)
   if (currentState === GAME_STATE.MATCH) {
     // Single player uses singlePlayer1
-    if (typeof singlePlayer1 !== 'undefined') handleRecording(singlePlayer1, p1Buffer, keyCode);
+    if (typeof singlePlayer1 !== 'undefined') handleRecording(singlePlayer1, p1Buffer, keyCode, keyEvent);
   } else if (currentState === GAME_STATE.MATCH_MULTI) {
     // Multiplayer uses player1 and player2
-    if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode);
-    if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode);
+    if (typeof player1 !== 'undefined') handleRecording(player1, p1Buffer, keyCode, keyEvent);
+    if (typeof player2 !== 'undefined') handleRecording(player2, p2Buffer, keyCode, keyEvent);
   }
 }
 
-function handleRecording(char, buffer, code) {
+function handleRecording(char, buffer, code, keyEvent) {
+  if (keyEvent && keyEvent.repeat) return;
+
   //  Check correct fightStarted flag based on game mode
   if (currentState === GAME_STATE.TRAINING) {
     // Training mode - no restrictions
@@ -573,6 +711,7 @@ function mouseReleased() {
     let isClicked = mouseX > backBtn.x - btnW/2 && mouseX < backBtn.x + btnW/2 && mouseY > backBtn.y - btnH/2 && mouseY < backBtn.y + btnH/2;
     
     if (isClicked) {
+      soundSystem.playSfx("uiSelect");
       // Handle navigation based on current state
       if (currentState === GAME_STATE.STAGE_SELECT) {
         currentState = GAME_STATE.CHARACTER_SELECT;
@@ -613,19 +752,19 @@ function setupCampaign(playerCharIndex) {
   
   if (playerCharIndex === 0) { // Ethan Li
     campaignOpponents = [1, 2, 3]; // Lucas Tang, Aaron Shu, Damon Cheon
-    campaignStages = [1, 2, 3]; // Sword God Arena, Black Forest, Ancient Immortal Battlefield
+    campaignStages = [2, 0, 1]; // Sword God Arena, Black Forest, Ancient Immortal Battlefield
   } 
   else if (playerCharIndex === 1) { // Lucas Tang
     campaignOpponents = [2, 0, 3]; // Aaron Shu, Ethan Li, Damon Cheon
-    campaignStages = [2, 1, 3]; // Black Forest, Sword God Arena, Ancient Immortal Battlefield 
+    campaignStages = [0, 2, 1]; // Black Forest, Sword God Arena, Ancient Immortal Battlefield 
   } 
   else if (playerCharIndex === 2) { // Aaron Shu
     campaignOpponents = [1, 0, 3]; // Lucas Tang, Ethan Li, Damon Cheon
-    campaignStages = [2, 2, 3]; // Black Forest, Black Forest, Ancinet Immortal Battlefield
+    campaignStages = [0, 0, 1]; // Black Forest, Black Forest, Ancient Immortal Battlefield
   } 
   else if (playerCharIndex === 3) { // Damon Cheon
     campaignOpponents = [2, 1, 0]; // Aaron Shu, Lucas Tang, Ethan Li
-    campaignStages = [3, 3, 3]; // Ancinet Immortal Battlefield, Ancinet Immortal Battlefield, Ancinet Immortal Battlefield
+    campaignStages = [1, 1, 1]; // Ancient Immortal Battlefield, Ancient Immortal Battlefield, Ancient Immortal Battlefield
   }
   
   console.log(`Campaign started: ${FIGHTERS[playerCharIndex].name}`);

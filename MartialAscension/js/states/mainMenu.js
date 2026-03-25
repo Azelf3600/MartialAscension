@@ -1,5 +1,6 @@
 let metalFont;
 let singleBtn, multiBtn, trainingBtn; 
+let lastHoveredMenuButton = null;
 
 //preload font and images to avoid lag
 function preloadMainMenu() {
@@ -26,6 +27,9 @@ function preloadMainMenu() {
   // For stage images 
   STAGES.forEach(stage => {
     stage.img = loadImage(stage.path);
+    if (stage.ingamePath) {
+      stage.ingameImg = loadImage(stage.ingamePath);
+    }
   });
 
   animationSystem = new AnimationSystem();
@@ -69,6 +73,8 @@ function drawMenu() {
 
   drawTitle("Martial Ascension", centerX, centerY - height * 0.25, width * 0.1);
   drawText("Click to proceed", centerX, centerY - height * 0.03, width * 0.015);
+  // Trigger selection feedback once when hover changes to a new button.
+  updateMenuHoverSfx();
   drawButton("Campaign", singleBtn);
   drawButton("Multiplayer", multiBtn);
   drawButton("Training", trainingBtn);
@@ -82,12 +88,16 @@ function handleMenuClick() {
 if (!singleBtn || !multiBtn || !trainingBtn) return;
 
   if (isHovering(singleBtn)) {
+    // Play button select feedback before moving to the next screen.
+    soundSystem.playSfx("uiSelect");
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT;
     }, 500);
   }
 
   if (isHovering(multiBtn)) {
+    // Play button select feedback before moving to the next screen.
+    soundSystem.playSfx("uiSelect");
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT_MULTI;
     }, 500);
@@ -95,6 +105,8 @@ if (!singleBtn || !multiBtn || !trainingBtn) return;
 
   // Training button click
   if (isHovering(trainingBtn)) {
+    // Play button select feedback before moving to the next screen.
+    soundSystem.playSfx("uiSelect");
     setTimeout(() => {
       currentState = GAME_STATE.CHARACTER_SELECT_TRAINING;
     }, 500);
@@ -151,4 +163,18 @@ if (!btn) return false;
     mouseY > btn.y - btn.h / 2 &&
     mouseY < btn.y + btn.h / 2
   );
+}
+
+function updateMenuHoverSfx() {
+  let hoveredButton = null;
+
+  if (isHovering(singleBtn)) hoveredButton = "single";
+  else if (isHovering(multiBtn)) hoveredButton = "multi";
+  else if (isHovering(trainingBtn)) hoveredButton = "training";
+
+  if (hoveredButton !== lastHoveredMenuButton && hoveredButton !== null) {
+    soundSystem.playSfx("uiSelect");
+  }
+
+  lastHoveredMenuButton = hoveredButton;
 }

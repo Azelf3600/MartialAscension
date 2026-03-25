@@ -241,6 +241,7 @@ class AIController {
         this.currentMovement = "JUMP";
         this.character.velY = -this.character.jumpPower;
         this.character.isGrounded = false;
+        soundSystem.playRandomJumpSfx();
         this.movementTimer = 40;
         return;
       }
@@ -300,6 +301,7 @@ class AIController {
   
   executeDashForward() {
     if (this.character.isDashing) return;
+    soundSystem.playRandomDashSfx();
     this.character.isDashing = true;
     this.character.dashDirection = this.character.facing;
     this.character.dashTimer = 18;
@@ -309,6 +311,7 @@ class AIController {
   
   executeDashBackward() {
     if (this.character.isDashing) return;
+    soundSystem.playRandomDashSfx();
     this.character.isDashing = true;
     this.character.dashDirection = -this.character.facing;
     this.character.dashTimer = 16;

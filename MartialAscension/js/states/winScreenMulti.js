@@ -106,15 +106,18 @@ function handleWinScreenInput(key, keyCode) {
   if (key === 'w' || key === 'W' || keyCode === UP_ARROW) {
     winScreenSelection--;
     if (winScreenSelection < 0) winScreenSelection = WIN_SCREEN_OPTIONS.length - 1;
+    soundSystem.playSfx("uiSelect");
   }
   
   if (key === 's' || key === 'S' || keyCode === DOWN_ARROW) {
     winScreenSelection++;
     if (winScreenSelection >= WIN_SCREEN_OPTIONS.length) winScreenSelection = 0;
+    soundSystem.playSfx("uiSelect");
   }
   
   // Confirm selection
   if (key === ' ' || keyCode === ENTER) {
+    soundSystem.playSfx("uiSelect");
     executeWinScreenChoice();
   }
 }
