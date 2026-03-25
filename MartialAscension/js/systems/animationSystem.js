@@ -300,6 +300,18 @@ class AnimationSystem {
         let path = `Assets/sprites/characters/${folderName}/Crouch/frame${frameNum}.png`;
         this.loadedAnimations[characterName].crouch.push(loadImage(path));
       }
+      this.loadedAnimations[characterName].walk = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Walk/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].walk.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchwalk = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/CrouchWalk/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchwalk.push(loadImage(path));
+      }
     }
     if (folderName === "DamonCheon") { }
   }
