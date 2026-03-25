@@ -387,7 +387,11 @@ if (currentState === GAME_STATE.TRAINING) {
         // Play navigation SFX when moving to another character.
         soundSystem.playSfx("uiSelect");
       }
-      if (key === 'f' || key === 'F') p1Ready = true;
+      if (key === 'f' || key === 'F') {
+        p1Ready = true;
+        // Play selection feedback when locking in character.
+        soundSystem.playSfx("uiSelect");
+      }
     }
 
     // PLAYER 2 Selection
@@ -402,7 +406,11 @@ if (currentState === GAME_STATE.TRAINING) {
         // Play navigation SFX when moving to another character.
         soundSystem.playSfx("uiSelect");
       }
-      if (keyCode === ENTER) p2Ready = true;
+      if (keyCode === ENTER) {
+        p2Ready = true;
+        // Play selection feedback when locking in character.
+        soundSystem.playSfx("uiSelect");
+      }
     }
 
     // Start Stage Selection
