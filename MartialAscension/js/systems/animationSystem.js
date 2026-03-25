@@ -425,47 +425,60 @@ class AnimationSystem {
 
 // Determine which animation should play based on character state
 getAnimationState(character) {
-  if (character.isHit && character.hitStun > 0) { return "hiteffect"; }
-  
-  // Determine actual attack type (for combos)
+  // ── Hit stun always wins ─────────────────────────────────
+  if (character.isHit && character.hitStun > 0) return "hiteffect";
+ 
+  // ── Resolve actual attack type for combo hits ─────────────
   let actualAttack = character.attacking;
-  
   if (character.isPerformingCombo && character.comboHits.length > 0) {
     actualAttack = character.comboHits[character.currentComboHit].attack;
   }
-  // Check for special attacks
-  if (character.attacking === "Launcher") { return "launcher"; }
-  if (character.attacking === "Diving Kick") { return "divingkick"; }
-  if (character.attacking === "Sword Qi Strike") { return character.isCrouching ? "crouchlightpunch" : "lightpunch"; }
-  if (character.attacking === "Sword Qi Lunge") { return "heavykick"; }
-  if (character.attacking === "Sword God Slash") { return "swordgodslash"; } 
-  if (character.attacking === "Sword God Judgment") { return "heavykick"; } 
-  if (character.isAirDashing) { return "dash"; }
-  // Check for standard attacks 
-  if (actualAttack === "LP" && character.isCrouching) { return "crouchlightpunch"; }
-  if (actualAttack === "HP" && character.isCrouching) { return "crouchheavypunch"; }
-  if (actualAttack === "LK" && character.isCrouching) { return "crouchlightkick"; }
-  if (actualAttack === "HK" && character.isCrouching) { return "crouchheavykick"; }
-  if (actualAttack === "LP") return "lightpunch";
-  if (actualAttack === "HP") return "heavypunch";
-  if (actualAttack === "LK") return "lightkick";
-  if (actualAttack === "HK") return "heavykick";
-  if (character.attacking) return "attack";
-
-  // Movement states
-  if (character.isCrouchBackDashing) return "crouchbackdash";
-  if (character.isBackDashing) return "backdash"; 
-  if (character.isCrouchDashing) return "crouchdash"; 
-  if (character.isCrouching && character.isWalking) return "crouchwalk";       
-  if (character.isCrouching) return "crouch";
-  if (character.isDashing) return "dash";          
-  if (character.isFlying) return "flight";        
-  if (!character.isGrounded) {
-    if (character.velY < 0) return "jump";  
-    return "fall";                           
+ 
+  // ── Special named attacks (highest priority after hitstun) ─
+  if (character.attacking === "Launcher")              return "launcher";
+  if (character.attacking === "Diving Kick")           return "divingkick";
+  if (character.attacking === "Sword Qi Strike")       return character.isCrouching ? "crouchlightpunch" : "lightpunch";
+  if (character.attacking === "Poison Qi Palm")        return character.isCrouching ? "crouchlightpunch" : "lightpunch";
+  if (character.attacking === "Flame Poison Needle")   return character.isCrouching ? "crouchlightpunch" : "lightpunch";
+  if (character.attacking === "Sword Qi Lunge")        return "heavykick";
+  if (character.attacking === "Sword God Slash")       return "swordgodslash";
+  if (character.attacking === "Sword God Judgment")    return "heavykick";
+  if (character.attacking === "Unstoppable Sea Dragon") return "heavypunch";
+  if (character.attacking === "Azure Flowing Dragon")  return "launcher";
+ 
+  // ── Standard attack inputs (crouch variants first) ────────
+  if (actualAttack === "LP" && character.isCrouching)  return "crouchlightpunch";
+  if (actualAttack === "HP" && character.isCrouching)  return "crouchheavypunch";
+  if (actualAttack === "LK" && character.isCrouching)  return "crouchlightkick";
+  if (actualAttack === "HK" && character.isCrouching)  return "crouchheavykick";
+  if (actualAttack === "LP")                           return "lightpunch";
+  if (actualAttack === "HP")                           return "heavypunch";
+  if (actualAttack === "LK")                           return "lightkick";
+  if (actualAttack === "HK")                           return "heavykick";
+ 
+  if (character.attackTimer > 0 || character.recoveryTimer > 0) {
   }
-  if (character.isWalking) return "walk"; 
-  return "idle"; 
+ 
+  // ── Air dash (overrides all ground movement) ──────────────
+  if (character.isAirDashing) return "dash";
+ 
+  // ── Ground movement — ordered most-specific to least ──────
+  if (character.isCrouchBackDashing) return "crouchbackdash";
+  if (character.isBackDashing)       return "backdash";
+  if (character.isCrouchDashing)     return "crouchdash";
+  if (character.isDashing)           return "dash";
+ 
+  if (character.isCrouching && character.isWalking) return "crouchwalk";
+  if (character.isCrouching)                        return "crouch";
+ 
+  if (character.isFlying) return "flight";
+ 
+  if (!character.isGrounded) {
+    return character.velY < 0 ? "jump" : "fall";
+  }
+ 
+  if (character.isWalking) return "walk";
+  return "idle";
 }
 
   // Update character animation

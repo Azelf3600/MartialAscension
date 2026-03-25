@@ -511,27 +511,58 @@ draw() {
 checkCollision(target) {
   if (!this.active || this.hasHit) return false;
   if (target === this.owner) return false;
-  
-  if (this.x - this.w/2 < target.x + target.w &&
-    this.x + this.w/2 > target.x &&
-    this.y - this.h/2 < target.y + target.h &&
-    this.y + this.h/2 > target.y) {
-
-    if (this.type === "demonic_claw") {
-      return true;
-    }
-    
-    this.hasHit = true;
-    
-      if (this.type === "judgment") {
-      } else {
-        this.active = false;
-      }
-    
-      return true;
-    }
-    return false;
+ 
+  // ✅ Use hurtbox coordinates to match the new crouch system
+  let hbX = target.x + target.hurtboxOffsetX;
+  let hbY = target.y + target.hurtboxOffsetY;
+  let hbW = target.hurtboxWidth;
+  let hbH = target.hurtboxHeight;
+ 
+  // Projectile left/right/top/bottom edges
+  let projLeft   = this.x - this.w / 2;
+  let projRight  = this.x + this.w / 2;
+  let projTop    = this.y - this.h / 2;
+  let projBottom = this.y + this.h / 2;
+ 
+  // Demonic Claw uses CORNER-mode rect anchored at startY
+  if (this.type === "demonic_claw") {
+    // Only collide during rise / linger phases
+    if (this.phase !== "rise" && this.phase !== "linger") return false;
+ 
+    let clawLeft   = this.x - this.w / 2;
+    let clawRight  = this.x + this.w / 2;
+    let clawTop    = this.startY - this.h;
+    let clawBottom = this.startY;
+ 
+    return (
+      clawLeft  < hbX + hbW &&
+      clawRight > hbX       &&
+      clawTop   < hbY + hbH &&
+      clawBottom > hbY
+    );
   }
+ 
+  // All other projectiles
+  let hit = (
+    projLeft   < hbX + hbW &&
+    projRight  > hbX       &&
+    projTop    < hbY + hbH &&
+    projBottom > hbY
+  );
+ 
+  if (hit) {
+    this.hasHit = true;
+ 
+    // Judgment lingers on hit instead of deactivating
+    if (this.type !== "judgment") {
+      this.active = false;
+    }
+ 
+    return true;
+  }
+ 
+  return false;
+}
 }
 // Update all projectiles
 function updateProjectiles() {
@@ -557,37 +588,36 @@ function checkProjectileCollisions(player1, player2) {
   for (let proj of projectiles) {
     if (proj.owner === player1 && proj.checkCollision(player2)) {
       applyProjectileDamage(player2, proj, player1);
-      
+ 
       if (proj.type === "judgment" && !proj.isLingering) {
         proj.isLingering = true;
         proj.lingerTimer = 60;
       }
     } else if (proj.owner === player2 && proj.checkCollision(player1)) {
       applyProjectileDamage(player1, proj, player2);
-      
+ 
       if (proj.type === "judgment" && !proj.isLingering) {
         proj.isLingering = true;
         proj.lingerTimer = 60;
       }
     }
-    
+ 
     // Ground collision for judgment
     if (proj.type === "judgment" && !proj.isLingering) {
       let groundY = height - 100;
-      if (proj.y + proj.h/2 >= groundY) {
+      if (proj.y + proj.h / 2 >= groundY) {
         proj.isLingering = true;
         proj.lingerTimer = 60;
-        proj.y = groundY - proj.h/2;
+        proj.y = groundY - proj.h / 2;
       }
     }
+ 
     // Ground collision for poison rain
     if (proj.type === "poison_rain" && proj.active) {
       let groundY = height - 100;
-      if (proj.y + proj.h/2 >= groundY) {
+      if (proj.y + proj.h / 2 >= groundY) {
         proj.active = false;
       }
-    }
-    if (proj.type === "demonic_claw" && (proj.phase === "rise" || proj.phase === "linger")) {
     }
   }
 }
@@ -659,7 +689,7 @@ function applyProjectileDamage(target, projectile, attacker) {
   
   applyDamage(target, finalDmg, attacker, stunTime, knockback, ignoreBlock);
   
-// Demonic Claw launcher effect 
+// Demonic Claw launcher effect
 if (projectile.type === "demonic_claw") {
   if (target.isOceanMendingActive) {
     console.log("Demonic Claw launch blocked by Ocean Mending Water!");

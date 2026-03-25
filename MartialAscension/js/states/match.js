@@ -229,7 +229,7 @@ function handleSingleRoundResult() {
       if (singlePlayer1RoundsWon >= 2) {
         campaignProgress++; 
         // Check if campaign is complete 
-        if (campaignProgress >= 3) {
+        if (campaignProgress >= 2) {
           // Campaign complete - go to final lore screen 
           currentState = GAME_STATE.LORE_SCREEN;
         } else {
@@ -882,6 +882,10 @@ function updateAIPhysicsOnly(ai, opponent, groundY) {
   
   // Apply physics (gravity, special moves, etc.)
   ai.applyPhysics(groundY);
+
+    if (typeof animationSystem !== 'undefined') {
+    animationSystem.updateAnimation(ai);
+  }
 }
 
 function updateSingleMatchDamageIndicators() {

@@ -506,4 +506,8 @@ function updateDummyPhysicsOnly(dummy, opponent, groundY) {
 
   dummy.facing = (dummy.x < opponent.x) ? 1 : -1;
   dummy.applyPhysics(groundY);
+
+  if (typeof animationSystem !== 'undefined') {
+    animationSystem.updateAnimation(dummy);
+  }
 }
