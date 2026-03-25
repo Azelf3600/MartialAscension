@@ -6,6 +6,9 @@ let inputHistoryBuffer = [];
 const MAX_INPUT_HISTORY = 10;
 
 function initTraining() {
+  // Assign a random arena background
+  trainingStageIndex = Math.floor(Math.random() * STAGES.length);
+
   trainingGroundY = height - 100;
   trainingDamageIndicators = [];
   inputHistoryBuffer = [];
@@ -69,6 +72,14 @@ function drawTraining() {
   }
 
   background(20);
+
+  // Draw the random arena map as a fixed background graphic.
+  if (typeof trainingStageIndex === "number" && STAGES[trainingStageIndex] && STAGES[trainingStageIndex].img) {
+    push();
+    imageMode(CENTER);
+    image(STAGES[trainingStageIndex].img, width/2, height/2, width, height);
+    pop();
+  }
 
   gameCamera.update(trainingPlayer, trainingDummy);
 

@@ -30,6 +30,7 @@ let campaignPlayerChar = 0;
 let singleDamageIndicators = [];
 let showHurtboxes = false;
 let activeBgmKey = null;
+let trainingStageIndex = null;
 
 function preload() {
   preloadMainMenu();
@@ -218,6 +219,13 @@ function getActiveMapName() {
     const stageIndex = campaignStages[campaignProgress];
     if (typeof stageIndex === "number" && STAGES[stageIndex]) {
       return STAGES[stageIndex].name;
+    }
+  }
+
+  // Training maps are randomized upon initialization
+  if (currentState === GAME_STATE.TRAINING || currentState === GAME_STATE.PAUSE_MENU_TRAINING) {
+    if (typeof trainingStageIndex === "number" && STAGES[trainingStageIndex]) {
+      return STAGES[trainingStageIndex].name;
     }
   }
 
@@ -736,19 +744,19 @@ function setupCampaign(playerCharIndex) {
   
   if (playerCharIndex === 0) { // Ethan Li
     campaignOpponents = [1, 2, 3]; // Lucas Tang, Aaron Shu, Damon Cheon
-    campaignStages = [1, 2, 3]; // Sword God Arena, Black Forest, Ancient Immortal Battlefield
+    campaignStages = [2, 0, 1]; // Sword God Arena, Black Forest, Ancient Immortal Battlefield
   } 
   else if (playerCharIndex === 1) { // Lucas Tang
     campaignOpponents = [2, 0, 3]; // Aaron Shu, Ethan Li, Damon Cheon
-    campaignStages = [2, 1, 3]; // Black Forest, Sword God Arena, Ancient Immortal Battlefield 
+    campaignStages = [0, 2, 1]; // Black Forest, Sword God Arena, Ancient Immortal Battlefield 
   } 
   else if (playerCharIndex === 2) { // Aaron Shu
     campaignOpponents = [1, 0, 3]; // Lucas Tang, Ethan Li, Damon Cheon
-    campaignStages = [2, 2, 3]; // Black Forest, Black Forest, Ancinet Immortal Battlefield
+    campaignStages = [0, 0, 1]; // Black Forest, Black Forest, Ancient Immortal Battlefield
   } 
   else if (playerCharIndex === 3) { // Damon Cheon
     campaignOpponents = [2, 1, 0]; // Aaron Shu, Lucas Tang, Ethan Li
-    campaignStages = [3, 3, 3]; // Ancinet Immortal Battlefield, Ancinet Immortal Battlefield, Ancinet Immortal Battlefield
+    campaignStages = [1, 1, 1]; // Ancient Immortal Battlefield, Ancient Immortal Battlefield, Ancient Immortal Battlefield
   }
   
   console.log(`Campaign started: ${FIGHTERS[playerCharIndex].name}`);

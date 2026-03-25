@@ -125,6 +125,15 @@ function drawMatch() {
 
   background(20);
   
+  // Render the unique campaign location before updating camera offsets!
+  let cStageIndex = campaignStages[campaignProgress];
+  if (typeof cStageIndex === "number" && STAGES[cStageIndex] && STAGES[cStageIndex].img) {
+    push();
+    imageMode(CENTER);
+    image(STAGES[cStageIndex].img, width/2, height/2, width, height);
+    pop();
+  }
+
   gameCamera.update(singlePlayer1, singlePlayer2);
 
   if (p1Buffer) p1Buffer.update();

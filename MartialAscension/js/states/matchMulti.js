@@ -222,6 +222,15 @@ function drawMatchMulti() {
 
   background(20); 
 
+  // Draw the selected arena map as a fixed background graphic.
+  // The camera transformations applied below will only move fighters and the physical floor.
+  if (STAGES[selectedStage] && STAGES[selectedStage].img) {
+    push();
+    imageMode(CENTER);
+    image(STAGES[selectedStage].img, width/2, height/2, width, height);
+    pop();
+  }
+
   gameCamera.update(player1, player2);
 
   push();
