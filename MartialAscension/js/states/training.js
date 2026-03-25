@@ -79,10 +79,14 @@ function drawTraining() {
   let bgImg = currentStageMap.ingameImg || currentStageMap.img;
   
   if (bgImg) {
-    push();
-    imageMode(CENTER);
-    image(bgImg, width/2, height/2, width, height);
-    pop();
+    if (typeof drawStageBackground === "function") {
+      drawStageBackground(bgImg);
+    } else {
+      push();
+      imageMode(CENTER);
+      image(bgImg, width/2, height/2, width, height);
+      pop();
+    }
   }
 
   gameCamera.update(trainingPlayer, trainingDummy);
@@ -93,11 +97,15 @@ function drawTraining() {
   push();
   gameCamera.apply();
 
-  // Draw ground
-  rectMode(CORNER);
-  fill(60);
-  noStroke();
-  rect(-10000, trainingGroundY, 20000, 2000);
+  // Draw detailed ground
+  if (typeof drawStageGround === "function") {
+    drawStageGround(currentStageMap, trainingGroundY);
+  } else {
+    rectMode(CORNER);
+    fill(60);
+    noStroke();
+    rect(-10000, trainingGroundY, 20000, 2000);
+  }
 
   drawWorldBorders();
 
