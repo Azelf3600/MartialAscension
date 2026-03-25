@@ -1069,10 +1069,12 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
     // ✅ Dash toward opponent instead of fixed 500px
     this.demonicStepsTargetX = opponent.x + (opponent.facing === 1 ? -50 : opponent.w + 50);
     this.demonicStepsDirection = 1;
+    soundSystem.playSfx("heavenSplittingDemonStep");
     console.log("Demonic Heaven's Steps FORWARD toward enemy!");
   } else {
     this.demonicStepsTargetX = this.x + (this.facing * -500);
     this.demonicStepsDirection = -1;
+    soundSystem.playSfx("heavenShadowReversalStep");
     console.log("Demonic Heaven's Steps BACKWARD!");
   }
 
@@ -1127,6 +1129,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isAzureScalesActive = true;
         this.azureScalesTimer = comboData.duration;
         this.azureScalesCooldownPending = true;
+        soundSystem.playSfx("azureDragonScale");
         console.log("Azure Dragon Scales activated! 50% damage reflection for 5 seconds");
       }
 
@@ -1142,6 +1145,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isTortoiseBodyActive = true;
         this.tortoiseBodyTimer = comboData.duration;
         this.tortoiseBodyCooldownPending = true;
+        soundSystem.playSfx("immortalTortoiseBody");
         console.log("Undying Tortoise Body activated! +20% defense, damage boost for 5 seconds");
       }
 
@@ -1191,6 +1195,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.isOceanMendingActive = true;
         this.oceanMendingTimer = 180;
 
+        soundSystem.playSfx("oceanRebirthScripture");
         console.log(`Ocean Mending Water healed ${healAmount} HP! ${consumedBuff} consumed. Debuff immunity for 3 seconds.`);
       }
 
@@ -1211,6 +1216,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.demonicAwakeningTimer = comboData.duration;
         this.demonicAwakeningCooldownPending = true;
 
+        soundSystem.playSfx("crimsonHeavenAwakening");
         console.log("Demonic Heaven's Awakening activated! +40% damage, 50% lifesteal for 5 seconds");
       }
 
@@ -1255,6 +1261,8 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
         this.demonicAbyssCooldownPending = true;
         this.demonicAbyssDmgTickTimer = 60;
         this.demonicClawOwnerLocked = true;
+
+        soundSystem.playSfx("heavenDevouringAbyss");
 
         console.log("Demonic Heaven's Abyss activated! Gravitational pull for 5 seconds!");
       }
@@ -1369,6 +1377,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Ethan Li - Sword God Judgment
     if (comboData.name === "Sword God Judgment") {
+      soundSystem.playSfx("swordGodJudgment");
       this.hasUsedJudgment = true;
       let opponent = getOpponent();
       let spawnX = opponent.x + opponent.w / 2;
@@ -1424,6 +1433,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
       this.poisonRainTimer = 300;
       this.poisonRainSpawnTimer = 0;
 
+      soundSystem.playSfx("poisonRain");
       console.log("Ten Thousand Poison Flower Rain activated!");
 
       this.hasHit = false;
@@ -1433,6 +1443,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Aaron Shu - Sea Dragon Charge
     if (comboData.name === "Unstoppable Sea Dragon") {
+      soundSystem.playSfx("unstoppableSeaDragon");
       if (this.isAzureScalesActive) {
         this.isAzureScalesActive = false;
         this.azureScalesTimer = 0;
@@ -1464,6 +1475,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Aaron Shu - Azure Flowing Dragon
     if (comboData.name === "Azure Flowing Dragon") {
+      soundSystem.playSfx("azureDragonAscension");
       this.hasUsedAzureDragon = true;
 
       if (this.isAzureScalesActive) {
@@ -1512,6 +1524,7 @@ if (keyIsDown(this.controls.crouch) && this.isGrounded && !this.isLunging) {
 
     // Damon Cheon - Annihilation
     if (comboData.name === "Demonic Heaven Annihilation") {
+      soundSystem.playSfx("crimsonHeavenAnnihilation");
       this.hasUsedAnnihilation = true;
       let opponent = getOpponent();
 

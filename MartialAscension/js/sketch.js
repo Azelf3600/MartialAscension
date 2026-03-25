@@ -226,7 +226,13 @@ function getActiveMapName() {
 
 function mousePressed() {
   // First click unlocks browser audio policies.
+  let wasInteracted = soundSystem.hasUserInteracted;
   soundSystem.markUserInteraction();
+  
+  // Force retry music playback now that audio is unblocked
+  if (!wasInteracted) {
+    activeBgmKey = null;
+  }
 
   if (currentState === GAME_STATE.MENU) {
     handleMenuClick();

@@ -106,7 +106,7 @@ const soundSystem = {
     this.sfx.victoryVoice = new Audio("Assets/audio/sfx/Victory-VoiceBosch.mp3");
     this.sfx.victoryVoice.volume = this.sfxVolume;
 
-    //Lucas tang
+    //Lucas Tang
     this.sfx.myriadVenomBody = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/Myriad Venom Body.wav");
     this.sfx.myriadVenomBody.volume = this.sfxVolume;
     this.sfx.netherBlossomDomain = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/Nether Blossom Domain.wav");
@@ -125,6 +125,38 @@ const soundSystem = {
     this.sfx.skySeveringStep.volume = this.sfxVolume;
     this.sfx.heavenfallSlash = new Audio("Assets/audio/sfx/UniqueAbilities/Ethan Li/Heavenfall Sword God Slash.wav");
     this.sfx.heavenfallSlash.volume = this.sfxVolume;
+    this.sfx.swordGodJudgment = new Audio("Assets/audio/sfx/UniqueAbilities/Ethan Li/White Gods True Judgement.wav");
+    this.sfx.swordGodJudgment.volume = this.sfxVolume;
+
+    // Aaron Shu
+    this.sfx.azureDragonScale = new Audio("Assets/audio/sfx/UniqueAbilities/Aaron Shu/Azure Dragon Scale.wav");
+    this.sfx.azureDragonScale.volume = this.sfxVolume;
+    this.sfx.immortalTortoiseBody = new Audio("Assets/audio/sfx/UniqueAbilities/Aaron Shu/Immortal Tortoise Body.wav");
+    this.sfx.immortalTortoiseBody.volume = this.sfxVolume;
+    this.sfx.oceanRebirthScripture = new Audio("Assets/audio/sfx/UniqueAbilities/Aaron Shu/Ocean Rebirth Scripture.wav");
+    this.sfx.oceanRebirthScripture.volume = this.sfxVolume;
+    this.sfx.unstoppableSeaDragon = new Audio("Assets/audio/sfx/UniqueAbilities/Aaron Shu/Unstoppable Sea Dragon.wav");
+    this.sfx.unstoppableSeaDragon.volume = this.sfxVolume;
+    this.sfx.azureDragonAscension = new Audio("Assets/audio/sfx/UniqueAbilities/Aaron Shu/Azure Dragon Ascension.wav");
+    this.sfx.azureDragonAscension.volume = this.sfxVolume;
+
+    // Damon Cheon
+    this.sfx.crimsonHeavenAwakening = new Audio("Assets/audio/sfx/UniqueAbilities/Dameon Cheon/Crimson Heaven Awakening.wav");
+    this.sfx.crimsonHeavenAwakening.volume = this.sfxVolume;
+    this.sfx.heavenSplittingDemonStep = new Audio("Assets/audio/sfx/UniqueAbilities/Dameon Cheon/Heaven Splitting Demon Step.wav");
+    this.sfx.heavenSplittingDemonStep.volume = this.sfxVolume;
+    this.sfx.heavenShadowReversalStep = new Audio("Assets/audio/sfx/UniqueAbilities/Dameon Cheon/Heaven Shadow Reversal Step.wav");
+    this.sfx.heavenShadowReversalStep.volume = this.sfxVolume;
+    this.sfx.heavenDevouringAbyss = new Audio("Assets/audio/sfx/UniqueAbilities/Dameon Cheon/Heaven Devouring Abyss.wav");
+    this.sfx.heavenDevouringAbyss.volume = this.sfxVolume;
+    this.sfx.crimsonHeavenAnnihilation = new Audio("Assets/audio/sfx/UniqueAbilities/Dameon Cheon/Crimson Heaven Annihilation.wav");
+    this.sfx.crimsonHeavenAnnihilation.volume = this.sfxVolume;
+
+    // Lucas Tang Ultimate
+    this.sfx.poisonRain = new Audio("Assets/audio/sfx/UniqueAbilities/Lucas Tang/Ten Thousand Venoms Flower Rain.wav");
+    this.sfx.poisonRain.volume = this.sfxVolume;
+
+
     this.sfx.uiSelect = new Audio("Assets/audio/sfx/UISelect.mp3");
     this.sfx.uiSelect.volume = this.sfxVolume;
 
