@@ -312,6 +312,108 @@ class AnimationSystem {
         let path = `Assets/sprites/characters/${folderName}/CrouchWalk/frame${frameNum}.png`;
         this.loadedAnimations[characterName].crouchwalk.push(loadImage(path));
       }
+      this.loadedAnimations[characterName].jump = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Jump/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].jump.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].fall = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Fall/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].fall.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].dash = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Dash/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].dash.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchdash = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Dash/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchdash.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].backdash = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/BackDash/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].backdash.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchbackdash = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/BackDash/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchbackdash.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].lightpunch = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/LightPunch/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].lightpunch.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchlightpunch = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/LightPunch/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchlightpunch.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].heavypunch = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/HeavyPunch/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].heavypunch.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchheavypunch = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/HeavyPunch/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchheavypunch.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].lightkick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/LightKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].lightkick.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchlightkick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/LightKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchlightkick.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].heavykick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/HeavyKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].heavykick.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].crouchheavykick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/HeavyKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].crouchheavykick.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].launcher = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/Launcher/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].launcher.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].divingkick = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/DivingKick/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].divingkick.push(loadImage(path));
+      }
+      this.loadedAnimations[characterName].hiteffect = [];
+      for (let i = 0; i <= 12; i++) {
+        let frameNum = i.toString().padStart(4, '0');
+        let path = `Assets/sprites/characters/${folderName}/HitEffect/frame${frameNum}.png`;
+        this.loadedAnimations[characterName].hiteffect.push(loadImage(path));
+      }
     }
     if (folderName === "DamonCheon") { }
   }
