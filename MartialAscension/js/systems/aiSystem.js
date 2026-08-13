@@ -275,7 +275,7 @@ class AIController {
     }
   }
   
-  executeMovement() {
+executeMovement() {
     if (this.currentMovement === "WALK_FORWARD" || this.currentMovement === "WALK_BACKWARD") {
       if (this.isWalking && !this.character.attacking) {
         let walkSpeed = this.character.speed * this.speedMultiplier;
@@ -286,16 +286,25 @@ class AIController {
         }
       }
     } else if (this.currentMovement === "CROUCH") {
-      if (this.character.isGrounded && this.character.h !== this.character.crouchH) {
-        this.character.y += (this.character.h - this.character.crouchH);
-        this.character.h = this.character.crouchH;
+      // ✅ UPDATED: Use the same hurtbox-offset crouch system as fighterClass.js
+      if (this.character.isGrounded && !this.character.isLunging) {
+        if (!this.character.isCrouching) {
+          this.character.isCrouching = true;
+
+          // Move hurtbox down so bottom stays at ground level
+          this.character.hurtboxOffsetY = this.character.standH - this.character.crouchH;
+          this.character.hurtboxHeight = this.character.crouchH;
+        }
       }
     }
-    
-    // Uncrouch
-    if (this.currentMovement !== "CROUCH" && this.character.h !== this.character.standH) {
-      this.character.y -= (this.character.standH - this.character.h);
-      this.character.h = this.character.standH;
+
+    // ✅ UPDATED: Uncrouch using the same hurtbox-offset system
+    if (this.currentMovement !== "CROUCH" && this.character.isCrouching) {
+      this.character.isCrouching = false;
+
+      // Restore original hurtbox position and size
+      this.character.hurtboxOffsetY = -60;
+      this.character.hurtboxHeight = this.character.standH + 60;
     }
   }
   
